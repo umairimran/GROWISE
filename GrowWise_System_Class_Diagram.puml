@@ -1,0 +1,257 @@
+@startuml GrowWise_System_Class_Diagram
+' ===============================
+'  GrowWise AI Learning Platform
+' ===============================
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide circle
+
+title **GrowWise AI Learning Platform - UML Class Diagram**
+
+package "User Management" {
+    class User {
+        - user_id: int
+        - email: string
+        - password_hash: string
+        - first_name: string
+        - last_name: string
+        - user_type: enum
+        - created_at: timestamp
+        - updated_at: timestamp
+        - is_active: boolean
+        + login()
+        + logout()
+        + updateProfile()
+    }
+
+    class UserTrackSelection {
+        - selection_id: int
+        - user_id: int
+        - track_id: int
+        - selected_at: timestamp
+        + selectTrack()
+        + changeTrack()
+    }
+
+    class UserInsights {
+        - insight_id: int
+        - user_id: int
+        - insight_type: enum
+        - insight_data: json
+        - generated_at: timestamp
+        - is_viewed: boolean
+        - priority: enum
+        + generateInsight()
+        + markAsViewed()
+        + getInsights()
+    }
+}
+
+package "Learning Management" {
+    class LearningTrack {
+        - track_id: int
+        - track_name: string
+        - description: text
+        - difficulty_level: enum
+        - estimated_duration_hours: int
+        - created_at: timestamp
+        - updated_at: timestamp
+        - is_active: boolean
+        + createTrack()
+        + updateTrack()
+        + deleteTrack()
+    }
+
+    class LearningModule {
+        - module_id: int
+        - track_id: int
+        - module_name: string
+        - description: text
+        - module_order: int
+        - content_type: enum
+        - estimated_duration_minutes: int
+        - prerequisites: json
+        - learning_objectives: text
+        - created_at: timestamp
+        - updated_at: timestamp
+        - is_active: boolean
+        + createModule()
+        + updateModule()
+        + getContent()
+    }
+
+    class UserProgress {
+        - progress_id: int
+        - user_id: int
+        - module_id: int
+        - path_id: int
+        - status: enum
+        - started_at: timestamp
+        - completed_at: timestamp
+        - time_spent_minutes: int
+        - progress_percentage: decimal
+        - last_accessed: timestamp
+        + startModule()
+        + completeModule()
+        + updateProgress()
+    }
+
+    class SkillAssessment {
+        - assessment_id: int
+        - user_id: int
+        - track_id: int
+        - total_questions: int
+        - correct_answers: int
+        - score_percentage: decimal
+        - assessment_data: json
+        - completed_at: timestamp
+        - assessment_type: enum
+        + startAssessment()
+        + submitAnswers()
+        + calculateScore()
+    }
+
+    class PersonalizedLearningPath {
+        - path_id: int
+        - user_id: int
+        - track_id: int
+        - assessment_id: int
+        - path_data: json
+        - created_at: timestamp
+        - updated_at: timestamp
+        - status: enum
+        + generatePath()
+        + updatePath()
+        + getNextModule()
+    }
+}
+
+package "AI & Knowledge" {
+    class RAGKnowledgeBase {
+        - knowledge_id: int
+        - module_id: int
+        - content_type: enum
+        - title: string
+        - content: text
+        - metadata: json
+        - embedding_vector: vector
+        - created_at: timestamp
+        - updated_at: timestamp
+        - is_active: boolean
+        + addContent()
+        + searchContent()
+        + updateContent()
+    }
+
+    class AIMentorInteraction {
+        - interaction_id: int
+        - user_id: int
+        - module_id: int
+        - user_question: text
+        - ai_response: text
+        - context_data: json
+        - response_time_ms: int
+        - created_at: timestamp
+        - feedback_rating: int
+        + askQuestion()
+        + getResponse()
+        + rateResponse()
+    }
+
+    abstract class RAGAssistant {
+        + retrieveInfo(question: string, context: json): string
+        + generateResponse(question: string, knowledge: json): string
+        + getContext(moduleId: int): json
+    }
+
+    abstract class PathGenerator {
+        + generatePath(assessment: SkillAssessment): PersonalizedLearningPath
+        + adaptPath(userProgress: UserProgress): PersonalizedLearningPath
+        + updatePath(pathId: int, newData: json): void
+    }
+}
+
+package "Projects & Evaluation" {
+    class ProjectAssignment {
+        - project_id: int
+        - user_id: int
+        - track_id: int
+        - project_title: string
+        - project_description: text
+        - requirements: json
+        - difficulty_level: enum
+        - assigned_at: timestamp
+        - due_date: timestamp
+        - status: enum
+        + assignProject()
+        + updateStatus()
+        + getRequirements()
+    }
+
+    class ProjectSubmission {
+        - submission_id: int
+        - project_id: int
+        - user_id: int
+        - submission_data: json
+        - submission_text: text
+        - submitted_at: timestamp
+        - ai_evaluation: json
+        - human_feedback: text
+        - score: decimal
+        - evaluation_criteria: json
+        + submitProject()
+        + evaluateSubmission()
+        + getFeedback()
+    }
+
+    abstract class ProjectEvaluator {
+        + evaluateCode(submission: ProjectSubmission): json
+        + assessApproach(submission: ProjectSubmission): json
+        + provideFeedback(evaluation: json): string
+    }
+}
+
+' ===============================
+'  Relationships
+' ===============================
+
+' User Management Relationships
+User ||--o{ UserTrackSelection : "selects"
+User ||--o{ UserInsights : "receives"
+
+' Learning Track Relationships
+LearningTrack ||--o{ UserTrackSelection : "selected by"
+LearningTrack ||--o{ LearningModule : "contains"
+LearningTrack ||--o{ SkillAssessment : "assessed for"
+LearningTrack ||--o{ PersonalizedLearningPath : "generates for"
+LearningTrack ||--o{ ProjectAssignment : "projects for"
+
+' User Progress Relationships
+User ||--o{ UserProgress : "tracks"
+LearningModule ||--o{ UserProgress : "progressed in"
+PersonalizedLearningPath ||--o{ UserProgress : "follows"
+
+' Assessment and Path Relationships
+User ||--o{ SkillAssessment : "takes"
+SkillAssessment ||--o{ PersonalizedLearningPath : "based on"
+User ||--o{ PersonalizedLearningPath : "has"
+
+' AI and Knowledge Relationships
+LearningModule ||--o{ RAGKnowledgeBase : "has content"
+User ||--o{ AIMentorInteraction : "interacts"
+LearningModule ||--o{ AIMentorInteraction : "discussed in"
+
+' Project Relationships
+User ||--o{ ProjectAssignment : "assigned"
+ProjectAssignment ||--o{ ProjectSubmission : "submitted as"
+User ||--o{ ProjectSubmission : "submits"
+
+' AI Component Relationships
+PathGenerator ..> SkillAssessment : "uses"
+PathGenerator ..> PersonalizedLearningPath : "creates"
+RAGAssistant ..> RAGKnowledgeBase : "queries"
+RAGAssistant ..> AIMentorInteraction : "powers"
+ProjectEvaluator ..> ProjectSubmission : "evaluates"
+
+@enduml
