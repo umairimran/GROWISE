@@ -1,0 +1,1611 @@
+\documentclass{FastFyp}
+
+
+\usepackage{placeins}
+\usepackage{float}
+\begin{document}
+\newcommand{\supervisor}{Maryam Nasim}
+\newcommand{\university}{National University of Computer and Emerging Sciences, Lahore}
+\newcommand{\fyptitle}{Growise: AI-Powered Dynamic Learning Platform}
+\newcommand{\degree}{BS (Data Science)}
+\newcommand{\Studentone}{Muhammad Umair Imran     22L-8370    BS(DS)} 
+\newcommand{\Studenttwo}{Muhammad Shahzad Waris     22L-7530    BS(DS)}
+\newcommand{\Studentthree}{Ameer Tufail     22L-7530    BS(DS)}
+\date{\today}
+
+\renewcommand{\contentsname}{Table of Contents}
+
+\makeatletter
+    \begin{titlepage}
+        \includegraphics[width=0.2\linewidth]{Figures/nulogo.png}\hfill
+        \includegraphics[width=0.2\linewidth]{Figures/fast.png}\\
+        \begin{center} 
+            {\large\bfseries \university}\\[7ex]
+            \includegraphics[width=0.4\linewidth]{Figures/fastlogo.png}\\[8ex]
+            {\huge \bfseries  \fyptitle }\\[10ex] 
+            {\Studentone}\\{\Studenttwo}\\{\Studentthree}\\[4ex] 
+            {Supervisor: \supervisor} \\ [10ex]
+            {Final Year Project}\\
+            {\large \@date}
+        \end{center}
+    \end{titlepage}    
+\makeatother
+\frontmatter
+
+\newpage \thispagestyle{empty} \mbox{} \newpage %Aatira
+
+\pagestyle{empty}  %Aatira
+\section*{\begin{center}{Anti-Plagiarism Declaration} \end{center}} %Aatira
+This is to declare that the above publication was produced under the:
+\begin{flushleft}
+\bf Title: \fyptitle
+\end{flushleft}
+
+is the sole contribution of the author(s), and no part hereof has been reproduced as it is the basis (cut and paste) that can be considered Plagiarism. All referenced parts have been used to argue the idea and cited properly. I/We will be responsible and liable for any consequence if a violation of this declaration is determined.
+\\[4ex]
+%% FYPTODO add the date and your names here
+Date: 14/10/2025
+
+\begin{flushright}
+Name: Muhammad Umair Imran
+\\[3ex]
+Signature: ..........................
+\\[6ex]
+Name: Muhammad Shahzad Waris
+\\[3ex]
+Signature: ..........................
+\\[6ex]
+Name: Ameer Tufail
+\\[3ex]
+Signature: ..........................
+
+\end{flushright} 
+
+\vspace{5 cm} %Aatira
+ 
+\hrule %Aatira
+
+\section*{Author's Declaration}
+This states Authors’ declaration that the work presented in the report is their own, and has not been submitted/presented previously to any other institution or organization.
+\pagebreak  
+
+
+\section*{Abstract}
+This project introduces an AI-driven adaptive learning ecosystem that focuses on developing critical thinking and problem-solving skills rather than rote coding. The system begins by assessing the learner’s current technical skills and automatically generates a personalized learning path. At each stage, an intelligent agentic assistant provides contextual guidance, explanations, and resources to support deep understanding. Once a module is completed, the learner undergoes evaluation through feedback and an AI-simulated senior engineer that presents real-world problem scenarios. This continuous feedback loop ensures skill reinforcement, practical application, and measurable progress toward becoming an industry-ready engineer.
+\pagebreak 
+
+\section*{Executive Summary}
+In today’s rapidly evolving technological landscape, the pace of innovation demands engineers who can quickly adapt to new tools, frameworks, and project environments. Traditional learning systems that focus primarily on syntax memorization and long, linear courses fail to prepare learners for real-world challenges. Learners often spend excessive time on generic, non-personalized content before reaching topics that actually match their skill level or career goals. This inefficient learning model delays practical readiness and reduces engagement in professional growth.
+
+To address these challenges, this project proposes an AI-driven Adaptive Learning Platform designed to develop problem-solving and analytical reasoning rather than rote coding skills. The system begins by assessing the learner’s current skill level and technical depth. Based on this assessment and the selected specialization track, it dynamically generates a personalized learning path that targets only the most relevant concepts, ensuring efficient, need-based learning progression.
+
+Each stage of the journey is supported by an embedded AI Mentor (Agentic RAG) that offers contextual guidance, clarifies complex topics, and provides real-time resources aligned with the learner’s goals. Once a learning node is completed, the system conducts an AI-based evaluation simulating real-world project scenarios to measure the learner’s conceptual understanding and ability to approach problems architecturally. The results are presented through a progress and feedback dashboard, allowing users to monitor growth, identify weaknesses, and receive improvement recommendations.
+
+By shifting the focus from time-intensive, generalized coursework to adaptive, approach-oriented learning, this platform bridges the gap between academic learning and industry readiness. It empowers engineers to learn faster, think critically, and apply knowledge effectively, aligning technical education with the pace and demands of modern software development.
+\pagebreak
+
+
+\pagestyle{fancy} %Aatira
+\tableofcontents
+
+\pagebreak
+\listoffigures	% comment this if there are no figures
+\addcontentsline{toc}{chapter}{List of Figures}
+\pagebreak
+\listoftables % comment this if there are no tables
+\addcontentsline{toc}{chapter}{List of Tables}
+
+\mainmatter
+
+
+\chapter{Introduction}
+With the rapid rise of AI tools such as ChatGPT in 2022, the technology landscape has evolved faster than ever before. This accelerated pace demands that engineers and developers quickly adapt to new tools, frameworks, and problem-solving methods. Traditional learning and training systems, which rely on long and rigid course structures, are increasingly unable to meet the fast-paced needs of modern organizations.
+
+This project introduces an AI-driven Adaptive Learning Platform designed to assess a learner’s current skill level within a specific technical domain and generate a personalized, efficient learning path. By integrating intelligent guidance and adaptive evaluation, the system focuses on improving conceptual understanding and practical application. The following chapters discuss the background, system design, implementation, evaluation, and overall results of this project.
+\section{Purpose of this Document}
+The purpose of this document is to present the design, development, and evaluation of an AI-driven Adaptive Learning Platform for Programmers. The project aims to transform traditional training methods by introducing a fast, personalized, and approach-oriented learning experience for developers. Instead of following lengthy and generic course structures, the proposed system evaluates a learner’s current skill level within a specific technical domain and dynamically generates a personalized learning path that focuses only on relevant and practical concepts.
+
+The primary goal of this research is to determine whether an AI-driven adaptive learning system can effectively personalize and accelerate developer training by focusing on approach-oriented learning rather than traditional syntax-based methods. The project aims to deliver a Minimum Viable Product (MVP) that demonstrates the platform’s core functionality and validates its effectiveness in enhancing conceptual understanding and problem-solving skills. The platform integrates AI-based assessment, contextual guidance through Agentic RAG, and an evaluation chatbot that simulates real-world project challenges to assess conceptual depth. This report presents the methodology, design, implementation, testing, and evaluation of the project, along with its limitations and future scope, providing a comprehensive overview of how adaptive AI can reshape modern technical education.
+\section{Intended Audience}
+Identifying the intended audience for this Final Year Project (FYP) report is essential, as it determines the tone, depth, and presentation style of the document. The primary audience for this report includes the evaluation panel, supervisors, and academic reviewers who will assess the technical soundness, innovation, and implementation of the proposed system.
+
+In addition, the report is written with junior developers, self-learning programmers, and fast-paced learners in mind—individuals who aim to enhance their programming skills through adaptive, AI-driven methods. These readers may use the findings and design approaches discussed in this report to understand how artificial intelligence can personalize and accelerate technical learning.
+
+By addressing both academic evaluators and practical learners, the report maintains a balance between technical detail, conceptual clarity, and applied relevance, ensuring that it can serve as both an academic evaluation document and a learning reference for future developers.
+\section{Definitions, Acronyms, and Abbreviations}
+List Of Abbreviations:  
+\textbf{SDG}: Sustainable Development Goal\\
+\textbf{FYP:} Final Year Project\\
+\textbf{MVP}: Minimum Viable Product\\
+\textbf{UI}: User Interface\\
+\textbf{UX}: User Experience\\
+\textbf{Agile}: Agile Development\\
+\textbf{SCRUM}: Scrum Development\\
+\textbf{REST}: Representational State Transfer\\
+\textbf{ORM}: Object-Relational Mapping\\
+\textbf{CRUD}: Create, Read, Update, Delete\\
+\textbf{API}: Application Programming Interface
+\section{Conclusion}
+This report presents a comprehensive analysis and design of GrowWise, an AI-powered adaptive learning platform for developers. Chapter 2 establishes the project vision by identifying challenges in traditional developer education and defining the goals, objectives, and scope of the proposed solution. Chapter 3 conducts an extensive literature review of fifteen existing learning platforms, analyzing their strengths, weaknesses, and relevance to the proposed work while identifying critical gaps that GrowWise aims to address. Chapter 4 presents detailed software requirement specifications including functional and non-functional requirements, use cases, quality attributes, and system constraints. Chapter 5 provides comprehensive high-level and low-level design documentation including system architecture, design considerations, class diagrams, and implementation strategies. Chapter 6 concludes the report by summarizing project achievements, discussing challenges and limitations, and presenting detailed future work recommendations including the FYP-2 development plan and long-term strategic recommendations for platform evolution.
+
+\chapter{Project Vision}
+This chapter presents the vision behind the AI-driven Adaptive Learning Platform for Programmers, outlining the challenges in current developer training methods, the goals and objectives of the proposed solution, and the scope within which it operates. The chapter aims to provide a clear understanding of the system’s intended purpose and the transformative potential it holds for modern technical education.
+\section{Problem Domain Overview}
+The Growise project addresses key challenges in the domain of developer education and online technical training. Traditional and current learning platforms follow a one-size-fits-all model, where static courses fail to adapt to the learner’s actual skill level or thinking approach. This results in slow progress, repeated exposure to familiar concepts, and limited growth in problem-solving ability.
+
+In the fast-paced tech landscape, developers need adaptive systems that focus on how they think and solve problems, not just what they know. Current platforms emphasize syntax and memorization rather than conceptual reasoning or technical decision-making within specific stacks.
+
+Growise aims to solve this by creating an AI-driven adaptive learning system that first evaluates the learner’s understanding and then builds a personalized learning path. This ensures targeted, approach-oriented training that accelerates practical skill development and real-world readiness.
+\section{Problem Statement}
+Traditional learning platforms are slow and generic, failing to match a learner’s actual skill level or thinking approach.
+There is a growing need to focus on how developers approach and solve problems rather than simply memorizing tools or tech stacks.
+\section{Problem Elaboration}
+
+The current learning systems face several interconnected challenges that hinder effective skill development and real-world readiness. The key sub-problems addressed by this project are outlined below:
+
+\begin{enumerate}
+    \item \textbf{Personalization:} Most existing learning platforms follow a fixed path that does not adapt to individual learners’ needs. Every learner has different strengths, weaknesses, and learning speeds, yet most systems provide identical content, resulting in inefficiency and disengagement.
+
+    \item \textbf{Mismatch with Current Skill Level:} Learners often waste time revisiting concepts they already know or struggle with content far beyond their level. This lack of skill-based evaluation prevents targeted learning and slows overall progress.
+
+    \item \textbf{Slow and Static Learning Process:} Traditional course-based learning follows long, rigid structures that take weeks or months to complete before any measurable progress can be seen. In fast-paced tech environments, this slow cycle fails to keep up with changing tools and frameworks.
+
+    \item \textbf{Tool Memorization Over Approach Thinking:} Most courses and tutorials emphasize memorizing syntax or tool usage rather than understanding how to think and solve problems. This limits the learner’s ability to adapt to new technologies or apply concepts to real-world projects.
+
+    \item \textbf{Lack of Project-Based Approach:} Real learning happens through practice, but many existing systems fail to provide problem-driven or project-based learning paths. This prevents learners from developing practical experience and the confidence needed to apply their skills in real-world scenarios.
+\end{enumerate}
+\section{Goals and Objectives}
+
+The primary goal of this project is to develop an AI-driven Adaptive Learning Platform that focuses on approach-oriented skill development rather than rote memorization of tools and syntax. The system aims to create a fast, personalized, and context-aware learning experience for developers by integrating real-time evaluation and AI-based guidance.
+
+The key objectives of this project are as follows:
+
+\begin{enumerate}
+    \item \textbf{Personalized Learning Paths:} Design a dynamic system that evaluates a learner’s current technical skill level and generates a personalized learning track based on their strengths, weaknesses, and chosen specialization.
+
+    \item \textbf{Skill-Level Matching:} Ensure that each learner begins at the right level — neither wasting time on known topics nor being overwhelmed by advanced ones.
+
+    \item \textbf{Faster and Adaptive Learning:} Replace slow, course-based models with adaptive micro-learning modules that respond to user progress and understanding in real time.
+
+    \item \textbf{Approach-Oriented Development:} Shift the focus from tool memorization to critical thinking, architectural understanding, and problem-solving approaches relevant to real-world engineering.
+
+    \item \textbf{Project-Based Evaluation:} Implement project-style assessments that simulate real-world challenges, allowing learners to apply theoretical knowledge in practical contexts.
+
+    \item \textbf{AI-Powered Guidance through Agentic RAG:} Integrate an Agentic Retrieval-Augmented Generation (RAG) model to serve as an interactive AI mentor. This component will retrieve contextual learning materials, provide personalized assistance, and guide the learner through each step of their learning journey.
+\end{enumerate}
+
+
+\section{Project Scope}
+The scope of this project is to design and develop an AI-driven Adaptive Learning Platform for Programmers that personalizes the learning experience based on each user’s current skill level, learning pace, and area of specialization. The platform aims to move beyond static course-based education by introducing real-time AI mentorship, skill assessment, and approach-oriented learning.
+
+The system will allow users to:
+\begin{itemize}
+    \item Register and authenticate securely as learners.
+    \item Take an initial skill assessment to evaluate their technical understanding and practical reasoning.
+    \item Select a learning track (e.g., Web Development, AI Applications, Cybersecurity, etc.).
+    \item Receive a dynamically generated learning path based on assessment results and chosen specialization.
+    \item Interact with an embedded AI Mentor (Agentic RAG) that provides contextual explanations, real-time feedback, and curated resources at each learning node.
+    \item Engage in project-based evaluations that simulate real-world scenarios to test problem-solving and architectural thinking.
+    \item Track progress through a personalized dashboard that highlights strengths, weaknesses, and improvement areas.
+\end{itemize}
+
+The project will be developed using FastAPI for the backend, React.js for the frontend, and a Python-based AI module for the learning assistant and assessment system. A RAG-based architecture will be integrated to enable the AI Mentor to retrieve relevant learning materials and assist contextually. The project will follow Agile development principles, ensuring iterative design, testing, and user feedback integration.\\
+
+The project deliverables will include:
+\begin{itemize}
+    \item A functional web-based AI Adaptive Learning Platform.
+    \item Documentation of system design, architecture, implementation, and evaluation.
+    \item A user guide for platform operation and usage.
+\end{itemize}
+
+The project scope does not include the following:
+\begin{itemize}
+    \item Integration with third-party learning management systems (LMS).
+    \item Development of a native mobile application.
+    \item Enterprise deployment or hosting infrastructure beyond prototype testing.
+\end{itemize}
+
+This scope will serve as the foundation for system design, ensuring clear boundaries and measurable outcomes throughout development.
+
+\section{Sustainable Development Goal (SDG)}
+The proposed project, \textbf{Growise: AI-Powered Dynamic Learning Platform}, aligns with the \textbf{United Nations Sustainable Development Goal 4 (Quality Education)}. This goal emphasizes ensuring inclusive and equitable quality education and promoting lifelong learning opportunities for all. Growise supports this objective by leveraging artificial intelligence to personalize education for learners with diverse skill levels and learning paces. By offering adaptive learning paths, real-time feedback, and project-based assessments, the platform enables individuals to develop practical, future-ready skills in technology fields. Furthermore, by making AI-driven education accessible and self-paced, the project contributes to reducing inequalities in learning opportunities and promotes continuous skill growth aligned with modern workforce demands. \ref{fig:my_label}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{Figures/Picture3}
+    \caption{Sustainable Development Goal 4: Quality Education. This figure displays Goal 4: Quality Education, which has been chosen as the target SDG for this project. The image shows the official SDG 4 icon and branding, representing the goal of ensuring inclusive and equitable quality education and promoting lifelong learning opportunities for all, which directly aligns with the GrowWise platform's mission of providing accessible, personalized AI-driven education.}
+    \label{fig:sdg_quality_education}
+\end{figure}
+\section{Constraints}
+
+The development and implementation of the AI-driven Adaptive Learning Platform for Programmers face several technical and operational constraints, as outlined below:
+
+\begin{itemize}
+    \item \textbf{Computational Limitations:} Running AI models such as RAG and contextual evaluation assistants requires significant processing power and memory, which may be limited during prototype development.
+
+    \item \textbf{Time Constraints:} As a Final Year Project (FYP), the development timeline is limited, which restricts the implementation of advanced features such as full-scale personalization or continuous learning updates.
+
+    \item \textbf{Integration Challenges:} Integrating multiple AI components (assessment, RAG-based mentor, and chatbot evaluator) into a seamless workflow may lead to synchronization and compatibility challenges.
+
+    \item \textbf{Network Dependency:} Since the platform relies on AI inference and external APIs for information retrieval, consistent internet connectivity is essential for proper system functioning.
+
+    \item \textbf{Scalability Limitations (Prototype Stage):} The MVP will focus on individual learners, and large-scale multi-user handling or enterprise-level deployment will be considered beyond the project scope.
+\end{itemize}
+
+\section{Business Opportunity}
+GrowWise is not just an adaptive learning platform but also a strong business opportunity. It has the potential to attract individual learners, tech companies, and training institutions alike. By addressing the lack of personalization and approach-oriented learning in developer education, GrowWise opens a niche market in modern AI-driven skill development.
+\section{Stakeholders Description/ User Characteristics}
+This section identifies the main stakeholders of GrowWise and their roles. Understanding these stakeholders ensures that the platform addresses their needs effectively.
+\subsection{Stakeholders Summary}
+
+The GrowWise platform primarily involves the following stakeholders:
+
+\begin{itemize}
+    \item \textbf{Programmers / Junior Developers:} The main users who seek personalized, approach-oriented learning paths to improve problem-solving skills and technical understanding.
+
+    \item \textbf{Tech Companies / Organizations:} Companies looking to upskill their developers quickly, monitor progress, and assess practical understanding through project-based evaluations.
+\end{itemize}
+\subsection{High-Level Goals and Problems of Stakeholders}
+
+\begin{itemize}
+    \item \textbf{Programmers / Junior Developers:} Need adaptive learning paths tailored to their current skill level and focused on problem-solving rather than memorization.
+
+    \item \textbf{Tech Companies / Organizations:} Aim to accelerate employee learning, measure skill improvements, and ensure practical readiness for real-world projects.
+\end{itemize}
+
+This clear understanding of stakeholders guides the design and implementation of GrowWise, ensuring it delivers meaningful and personalized learning experiences.
+
+\section{Conclusion}
+
+Chapter 2 has provided an overview of the GrowWise platform, identified the problem domain, stated the challenges in traditional developer training, and elaborated on their significance. It outlined the project’s goals and objectives, defined its scope and constraints, and highlighted the business opportunity it presents. This chapter establishes the foundation for a detailed exploration of the platform’s design, development, and implementation in the following chapters.
+
+\chapter{Literature Review / Related Work}
+This chapter explores the existing platforms, tools, and methods that inspired the development of GrowWise. A careful study of earlier work in areas such as personalized learning paths, project-based skill development, and AI-assisted training for programmers provided the foundation for GrowWise. We aim to build upon and improve these ideas by integrating RAG-based knowledge, AI evaluation, and skill-focused learning paths for junior developers.
+
+\section{Definitions, Acronyms, and Abbreviations}
+This section defines key terms, acronyms, and abbreviations used throughout this literature review to ensure clarity and consistency in understanding the technical concepts and platform features discussed.
+
+\subsection{Key Definitions}
+\textbf{Adaptive Learning:} A learning methodology that adjusts educational content, pace, and approach based on individual learner performance, preferences, and needs in real-time.
+
+\textbf{Agentic AI:} Artificial intelligence systems that can act autonomously, make decisions, and perform tasks with minimal human intervention, often incorporating reasoning and planning capabilities.
+
+\textbf{Approach-Oriented Learning:} An educational methodology that focuses on teaching problem-solving approaches, critical thinking, and architectural reasoning rather than memorization of syntax or tools.
+
+\textbf{Learning Path:} A structured sequence of educational content, exercises, and assessments designed to guide learners through specific learning objectives in a logical progression.
+
+\textbf{Micro-Learning:} An educational approach that delivers content in small, focused units or modules, typically lasting a few minutes, designed for quick consumption and retention.
+
+\textbf{Personalized Learning:} An educational approach that tailors content, pace, and methodology to individual learner characteristics, preferences, and performance patterns.
+
+\textbf{RAG (Retrieval-Augmented Generation):} An AI technique that combines information retrieval with text generation, allowing AI systems to access and incorporate external knowledge sources in their responses.
+
+\textbf{Skill Assessment:} The process of evaluating a learner's current knowledge, abilities, and competencies in specific domains to determine appropriate learning content and progression.
+
+\section{Detailed Literature Review}
+This Chapter provides an overview of related applications which inpisered the idea of GroWise. A carefully conducted critical analysis have been done for the following application and their relationship with proposed work.
+
+\subsection{Crio.Do}
+
+\subsubsection{Summary}
+Crio.Do  \cite{ref:CrioDo:2025} is a project-based learning platform designed to bridge the gap between academic education and industry requirements. It offers immersive, real-world projects where learners build professional software products for top tech companies like CRED and Playment. The platform emphasizes hands-on experience, enabling learners to gain practical skills and confidence in their ability to perform well as developers.
+
+\subsubsection{Critical Analysis (Strengths and Weaknesses)}
+\textbf{Strengths:} Provides real-world experience by simulating actual developer roles; collaborates with reputable tech companies, enhancing credibility; focuses on practical skills, making learners job-ready.  
+\textbf{Weaknesses:} Limited to certain tech stacks, which may not cater to all learners; the project-based approach may be overwhelming for absolute beginners; requires a significant time commitment, which might not be feasible for everyone.
+
+\subsubsection{Relationship to Proposed Work}
+GrowWise draws inspiration from Crio.Do's emphasis on project-based learning and real-world experience. However, GrowWise aims to offer a more personalized learning path, incorporating AI to adapt to individual learner's needs and focusing on a broader range of technologies.
+
+\subsection{The Odin Project}
+
+\subsubsection{Summary}
+The Odin Project \cite{ref:TheOdinProject} provides a free, open-source curriculum focused on full-stack web development. It offers a comprehensive learning path that includes HTML, CSS, JavaScript, Git, NodeJS, SQL, and more. The platform emphasizes building projects from scratch to solidify learning and create a portfolio.
+
+\subsubsection{Critical Analysis (Strengths and Weaknesses)}
+\textbf{Strengths:} Completely free and open-source, making it accessible to everyone; offers a structured curriculum with a clear progression; strong community support through forums and chat groups.  
+\textbf{Weaknesses:} The self-paced nature may lack accountability for some learners; limited interactive content, primarily text-based learning; may not provide enough real-world industry exposure.
+
+\subsubsection{Relationship to Proposed Work}
+GrowWise aligns with The Odin Project's philosophy of learning by doing. However, GrowWise plans to enhance this approach by integrating AI to provide personalized feedback and guidance, ensuring a more tailored learning experience.
+
+
+
+
+\subsection{ProjectLearn.io}
+
+\subsubsection{Summary}
+ProjectLearn.io \cite{ref:ProjectLearn} is a platform that promotes learning by building projects. It offers a curated collection of programming tutorials where learners build applications from scratch using various technologies like web development, mobile development, game development, and machine learning.
+
+\subsubsection{Critical Analysis (Strengths and Weaknesses)}
+ProjectLearn.io offers a wide range of project tutorials across different domains, encourages learners to build a portfolio of projects, and provides resources for various skill levels. However, the quality of tutorials may vary as they are sourced from different creators, there is a lack of personalized learning paths, and interactive features are limited, focusing primarily on project-based learning.
+
+\subsubsection{Relationship to Proposed Work}
+GrowWise shares ProjectLearn.io's emphasis on project-based learning. However, GrowWise intends to offer a more structured and personalized learning experience, incorporating AI to adapt to individual learner's needs and provide real-time feedback.
+
+
+
+
+
+\subsection{Educative.io}
+
+\subsubsection{Summary}
+Educative.io \cite{ref:Educative} offers interactive courses tailored for developers, covering topics like system design, coding interviews, and backend development. The platform uses AI to personalize learning paths and provide real-time feedback, enhancing the learning experience.
+
+\subsubsection{Critical Analysis (Strengths and Weaknesses)}
+Educative.io provides interactive coding environments for hands-on practice, offers courses on in-demand topics like system design and coding interviews, and uses AI to personalize learning paths. However, some courses require a subscription, which may not be affordable for all learners, the platform has a limited focus on full-stack development, and it may be more suitable for intermediate learners rather than beginners.
+
+\subsubsection{Relationship to Proposed Work}
+GrowWise aims to integrate Educative.io's approach of interactive learning and AI personalization. However, GrowWise plans to focus more on AI application development and provide a more comprehensive learning path for junior developers.
+
+
+
+
+\subsection{Codio}
+
+\subsubsection{Summary}
+Codio \cite{ref:Codio} is a hands-on learning platform that provides immersive, real-time coding environments for learners. It offers a wide range of courses in various domains, including AI, data science, cybersecurity, and full-stack development. The platform integrates with tools such as GitHub and CI/CD pipelines, enabling learners to gain practical experience with industry-standard workflows. By combining structured lessons with real-world coding exercises, Codio helps learners build both theoretical knowledge and practical skills that are directly applicable in professional settings.
+
+\subsubsection{Critical Analysis (Strengths and Weaknesses)}
+Codio offers real-world coding environments for hands-on practice, integrates seamlessly with industry-standard tools like GitHub and CI/CD pipelines, and provides a comprehensive range of courses across different technical domains. These features make it particularly valuable for learners who want practical, job-ready experience. However, the platform can be complex and potentially overwhelming for absolute beginners. Some courses require a paid subscription, which may limit accessibility for some learners. Additionally, compared to other platforms, community support and peer interaction are relatively limited, which may impact collaborative learning and mentorship opportunities.
+
+\subsubsection{Relationship to Proposed Work}
+GrowWise plans to incorporate Codio's approach of providing real-world coding environments, allowing learners to gain practical experience while following structured learning paths. However, GrowWise aims to offer a more user-friendly interface tailored for junior developers, with adaptive, AI-driven personalization that adjusts content and feedback according to individual learner progress. This ensures a smoother learning curve and more effective skill acquisition.
+
+
+
+\subsection{Project-Based Learning GitHub Repository}
+
+\subsubsection{Summary}
+The Project-Based Learning GitHub repository \cite{ref:GitHubProjectBasedLearning} is a curated collection of programming tutorials that encourages learners to build applications from scratch using a variety of technologies. The repository is systematically organized by programming languages and technical domains, providing learners with easy access to resources for practical skill development. By engaging with these tutorials, learners can progressively enhance their coding abilities and create a portfolio of projects that demonstrate their competence in different areas.
+
+\subsubsection{Critical Analysis (Strengths and Weaknesses)}
+The repository offers a vast collection of tutorials across multiple programming languages, encourages learners to build a tangible portfolio of projects, and is open-source and freely accessible. These features make it an excellent resource for motivated learners. However, the repository lacks structured learning paths, making it difficult for beginners to know where to start or how to progress systematically. Additionally, the quality of tutorials can vary since they are contributed by different authors, and the interactive features are limited, relying mainly on text-based instructions without integrated coding environments or real-time feedback.
+
+\subsubsection{Relationship to Proposed Work}
+GrowWise aligns with the repository’s emphasis on learning by doing and building projects. However, GrowWise enhances this approach by offering a structured and personalized learning experience, powered by AI to adapt to each learner’s current skill level, provide real-time guidance, and ensure a smoother progression through increasingly complex projects.
+
+\subsection{Udemy}
+
+\subsubsection{Summary}
+Udemy \cite{ref:Udemy}is a large-scale online learning platform offering courses in programming, web development, data science, and many other domains. Courses are pre-recorded, covering a broad range of skill levels, and learners can purchase individual courses to study at their own pace. The platform provides flexibility for self-directed learning and allows learners to access content anytime, anywhere, making it a popular choice for both beginners and experienced developers.
+
+\subsubsection{Critical Analysis (Strengths and Weaknesses)}
+Udemy offers a massive catalog of courses across multiple technologies, provides affordable self-paced learning, and user ratings and reviews assist learners in selecting suitable courses. However, courses are mostly static with limited personalization, there is minimal real-time feedback or project-based evaluation, and engagement or completion rates can be low without external motivation and discipline.
+
+\subsubsection{Relationship to Proposed Work}
+Udemy provides a reference for content breadth and accessibility, but GrowWise differentiates itself by offering adaptive, AI-driven personalized learning paths. GrowWise emphasizes approach-oriented skill development, real-time project evaluation, and interactive guidance, ensuring learners gain practical problem-solving abilities rather than only consuming static course content.
+
+\subsection{LinkedIn Learning}
+
+\subsubsection{Summary}
+LinkedIn Learning\cite{ref:LinkedInLearning} offers professional courses focused on technology, business, and creative skills. The platform integrates with LinkedIn profiles to suggest skill-based courses and tracks learners’ progress through assessments and course completions. It provides a structured environment for career-oriented learning and helps professionals upskill in a manner aligned with industry expectations.
+
+\subsubsection{Critical Analysis (Strengths and Weaknesses)}
+LinkedIn Learning delivers professional-oriented content and industry-recognized certifications, integrates with LinkedIn to showcase achievements, and offers structured learning paths tailored to specific career goals. However, the courses are primarily video-based with minimal interactive coding practice, personalization is limited compared to AI-driven adaptive systems, and there is less focus on validating skills through real-world projects or hands-on problem-solving.
+
+\subsubsection{Relationship to Proposed Work}
+LinkedIn Learning can inspire structured skill paths and career-focused learning. GrowWise builds on this by incorporating real-time AI mentorship and project-based assessments, offering actionable feedback, dynamically adjusting learning paths, and promoting practical application of skills for junior developers.
+
+
+
+\subsection{Microsoft Learn}
+
+\subsubsection{Summary}
+Microsoft Learn \cite{ref:MicrosoftLearn} provides personalized, interactive learning paths and modules for developers, IT professionals, and learners focusing on Microsoft technologies. It features hands-on labs, sandbox environments, and project-based exercises, enabling users to practice real-world scenarios and progressively build their skills. The platform adapts its recommendations based on the learner’s progress and prior knowledge, promoting a guided and self-paced learning experience.
+
+\subsubsection{Critical Analysis (Strengths and Weaknesses)}
+Microsoft Learn \cite{ref:MicrosoftLearn} offers structured, comprehensive learning paths and practical hands-on exercises, leveraging adaptive features to tailor content to the learner’s level. However, its focus is primarily on Microsoft technologies, limiting exposure to other tools and frameworks. Additionally, the platform emphasizes completing exercises rather than evaluating problem-solving approaches or conceptual understanding, providing limited insight into architectural thinking and advanced practical skills.
+
+\subsubsection{Relationship to Proposed Work}
+GrowWise extends the concept of personalized learning beyond Microsoft technologies, targeting developers across various tech stacks. Unlike Microsoft Learn, GrowWise emphasizes evaluating learners’ approach, problem-solving abilities, and project architecture understanding. Embedded AI mentors and RAG-based guidance provide real-time, contextual support, making GrowWise more suitable for preparing developers for real-world problem-solving and critical thinking.
+
+\subsection{Pluralsight}
+
+\subsubsection{Summary}
+Pluralsight is a premium digital learning platform specifically designed for IT professionals and software developers, offering expert-led courses across technology, business, and creative domains. The platform's distinguishing feature is its \textbf{Skill IQ} assessment system, which employs adaptive testing methodologies to rapidly evaluate a learner's proficiency in specific technical skills. Based on these assessments, the platform recommends personalized learning paths and courses to address identified skill gaps, effectively benchmarking individual progress against established industry standards \cite{pluralsight2023}.
+
+\subsubsection{Critical Analysis}
+\textbf{Strengths:} The platform demonstrates high effectiveness for technical upskilling across diverse digital roles. Its robust adaptive testing framework enables sophisticated path personalization, while the extensive content library supports continuous learning initiatives. Pluralsight has established strong market presence in enterprise training environments globally.
+
+\textbf{Weaknesses:} The platform's primary content delivery mechanism relies heavily on video-based instruction, which may provide limited opportunities for hands-on, interactive practice compared to dedicated coding environments. The learning model emphasizes skill acquisition rather than comprehensive architectural evaluation or real-time project-based feedback mechanisms.
+
+\subsubsection{Relationship to Proposed Work}
+GrowWise shares Pluralsight's assessment-first pedagogical approach and skill-level matching objectives. However, GrowWise extends beyond traditional video-based learning paths by: (1) implementing dynamic path generation based on approach-oriented learning methodologies, and (2) integrating an \textbf{Agentic RAG Mentor} system that provides continuous, contextual guidance, offering deeper interactivity than conventional course content delivery.
+
+\subsection{CYPHER Learning (with CYPHER Agent)}
+
+\subsubsection{Summary}
+CYPHER Learning represents an enterprise-grade Learning Management System (LMS) that incorporates a comprehensive, agentic artificial intelligence system known as the \textbf{CYPHER Agent} throughout the learning experience. The platform provides adaptive learning capabilities tailored to individual users, roles, and objectives, utilizing AI-driven skills management to align content with assessments, thereby accelerating skill gap closure at organizational scale \cite{cypher2023}.
+
+\subsubsection{Critical Analysis}
+\textbf{Strengths:} The platform validates the implementation of personalized learning agents across comprehensive educational ecosystems. It supports genuine adaptive learning for diverse objectives while automating administrative and content management tasks, representing a robust AI integration strategy.
+
+\textbf{Weaknesses:} As an enterprise-focused platform, CYPHER Learning's scope emphasizes organizational training and scalability, potentially limiting detailed focus on specialized areas such as junior developer critical thinking development and architectural evaluation processes. The platform's content may be generalized for broader business and academic applications rather than specialized technical domains.
+
+\subsubsection{Relationship to Proposed Work}
+CYPHER Learning directly validates the core philosophy of personal learning agents and agentic AI integration that GrowWise implements through its RAG Mentor system. GrowWise differentiates itself by specializing the agent functionality for: (1) real-time, contextual developer guidance, and (2) conducting high-stakes, simulated senior engineer evaluations of project approaches and architectural decisions.
+
+\subsection{DataCamp}
+
+\subsubsection{Summary}
+DataCamp is a specialized e-learning platform focused exclusively on data science, analytics, and artificial intelligence domains. The platform is built around interactive coding exercises and modular learning units, employing continuous micro-assessments to adapt content and pacing based on demonstrated learner mastery in real-time. The system provides AI-recommended course paths derived from career objectives and personalized skill assessments \cite{datacamp2023}.
+
+\subsubsection{Critical Analysis}
+\textbf{Strengths:} The platform excels in providing hands-on, interactive learning experiences with immediate code feedback, making it highly effective for skill mastery. Its AI tutoring system assists not only with coding tasks but also with understanding complex data science concepts. The platform employs sophisticated adaptive testing to personalize learning trajectories.
+
+\textbf{Weaknesses:} The platform's highly domain-specific focus (Data Science, AI, R, Python) limits applicability to broader development tracks such as Web Development or Cybersecurity. The assessment framework emphasizes skill-level mastery through interactive exercises rather than open-ended, project-based architectural design and reasoning processes.
+
+\subsubsection{Relationship to Proposed Work}
+GrowWise draws inspiration from DataCamp's interactive, adaptive micro-learning model and continuous assessment-driven pacing mechanisms. GrowWise expands this model to encompass broader developer specializations while elevating evaluation complexity, shifting focus from basic code mastery to comprehensive problem-solving approaches and architectural strategies in real-world scenarios.
+
+\subsection{freeCodeCamp}
+
+\subsubsection{Summary}
+freeCodeCamp is a widely recognized non-profit organization providing a comprehensive, free curriculum covering full-stack web development, data analysis, and machine learning domains. The platform emphasizes real-world project development for non-profit organizations as part of its certification programs and has recently integrated AI tutoring capabilities to enhance its community-driven learning model \cite{freecodecamp2023}.
+
+\subsubsection{Critical Analysis}
+\textbf{Strengths:} The platform's completely free and open-source nature makes high-quality coding education accessible to diverse populations. It offers extensive curricula with industry-recognized certifications and incorporates real-world projects for portfolio development. Recent AI tutoring integration enhances adaptive learning capabilities.
+
+\textbf{Weaknesses:} The self-paced, community-driven nature may overwhelm absolute beginners due to lack of structured guidance. The platform often lacks personalized guidance mechanisms and dynamic, fluid learning paths tailored to individual skill gaps. The absence of strict accountability measures may hinder learning progression for some users.
+
+\subsubsection{Relationship to Proposed Work}
+GrowWise adopts freeCodeCamp's commitment to project-based learning and educational accessibility. However, it addresses freeCodeCamp's limitations by implementing dynamically generated personalized learning paths through AI Path Generation and embedding an Agentic RAG Mentor system to provide structure, real-time feedback, and accountability mechanisms often absent in self-paced, open-source learning models.
+
+\subsection{Udacity}
+
+\subsubsection{Summary}
+Udacity specializes in technology-related fields including artificial intelligence, cloud computing, and data science through its premium "Nanodegree" programs. These programs are developed in partnership with industry leaders, offering project-based learning experiences with personalized mentor support, explicitly designed to prepare learners for in-demand technology positions and facilitate career advancement \cite{udacity2023}.
+
+\subsubsection{Critical Analysis}
+\textbf{Strengths:} Strong industry partnerships ensure content relevance and career alignment. The Nanodegree structure provides focused, project-intensive, time-bound learning experiences that enhance job readiness. The platform includes human mentor support and comprehensive project review processes.
+
+\textbf{Weaknesses:} The platform's cost structure is significantly higher compared to most educational platforms. The mentorship and feedback processes are human-gated, limiting scalability and availability for real-time, contextual guidance at every learning node. Learning paths, while focused, are generally fixed rather than dynamically adaptive based on continuous performance assessment.
+
+\subsubsection{Relationship to Proposed Work}
+GrowWise mirrors Udacity's objective of creating industry-ready engineers through intensive, project-based learning. However, GrowWise replaces the costly, less scalable human mentorship and project review processes with a fully scalable, cost-effective, real-time AI-powered system comprising Agentic RAG and AI Evaluation Modules, enabling personalization and assessment at every learning step without premium pricing.
+
+\subsection{CodeCombat}
+
+\subsubsection{Summary}
+CodeCombat employs a unique gamified approach to programming education, where users write actual code to control characters in strategy role-playing game environments. The platform provides an immersive, interactive learning experience for multiple programming languages, incorporating an AI-driven hint system that guides players through complex challenges while preserving the learning experience integrity \cite{codecombat2023}.
+
+\subsubsection{Critical Analysis}
+\textbf{Strengths:} The platform demonstrates exceptional engagement capabilities, making initial programming learning enjoyable, particularly for beginners. The gamified environment provides immediate, tangible feedback for code inputs, which serves as strong motivation. The AI-driven hint system represents an effective form of personalized, just-in-time guidance.
+
+\textbf{Weaknesses:} The gamification focus may oversimplify the complexity inherent in real-world software architecture and project trade-off decisions. Assessment mechanisms are based on task completion within game environments, which may not directly translate to evaluating developer approaches or architectural reasoning in ambiguous, non-gamified professional contexts.
+
+\subsubsection{Relationship to Proposed Work}
+GrowWise draws inspiration from CodeCombat's interactive environment design and AI-driven hint systems to maintain learner engagement and support. GrowWise applies engaging assessment concepts to professional levels by simulating demanding "AI Software Engineer" evaluations that assess design and approach quality for complex problems, combining interaction engagement with industry-level critique rigor.
+
+
+
+
+\section{Literature Review Summary Table}
+The following table provides a comprehensive summary of the learning platforms analyzed in this literature review, highlighting their key features, relevance to the proposed GrowWise system, and identified limitations.
+
+\begin{table}[!htbp]
+\footnotesize
+\centering
+\caption{Summary of Learning Platforms Reviewed}
+\label{tab:literature_summary}
+\begin{tabular}{|p{2.5cm}|p{3.5cm}|p{4cm}|p{4cm}|}
+\hline
+\textbf{Platform} & \textbf{Key Features} & \textbf{Relevance to GrowWise} & \textbf{Identified Limitations} \\
+\hline
+Crio.Do \cite{ref:CrioDo:2025} & Project-based learning with real-world company projects & Provides insight into hands-on skill development and project experience & Limited to certain tech stacks; time-intensive; may overwhelm beginners \\
+\hline
+The Odin Project \cite{ref:TheOdinProject} & Free, open-source full-stack web development curriculum & Emphasizes learning by doing and portfolio building & Self-paced nature may reduce accountability; text-heavy; limited industry exposure \\
+\hline
+ProjectLearn.io \cite{ref:ProjectLearn} & Curated project tutorials across multiple domains (web, mobile, ML, game dev) & Focus on project-based learning and portfolio creation & Quality varies across creators; lacks personalized paths; limited interactive features \\
+\hline
+Educative.io \cite{ref:Educative} & Interactive coding courses with AI personalization & Provides hands-on coding practice and adaptive learning paths & Subscription required for some courses; limited full-stack coverage; better for intermediate learners \\
+\hline
+Codio \cite{ref:Codio} & Real-time coding environments with GitHub & Offers immersive, practical coding experience and workflow integration & Can be complex for beginners; subscription required; limited community support \\
+\hline
+Project-Based Learning GitHub Repository \cite{ref:GitHubProjectBasedLearning} & Curated tutorials for multiple languages and frameworks & Encourages learning by doing and project portfolios & Lacks structured learning paths; quality varies; limited interactivity \\
+\hline
+Udemy \cite{ref:Udemy} & Massive course catalog across various technologies & Wide accessibility; self-paced learning & Static content; limited personalization; minimal real-time feedback \\
+\hline
+LinkedIn Learning \cite{ref:LinkedInLearning} & Professional courses with LinkedIn integration & Structured career-oriented learning paths & Mostly video-based; minimal coding practice; limited project validation \\
+\hline
+Microsoft Learn \cite{ref:MicrosoftLearn} & Personalized learning paths with hands-on labs & Interactive exercises and adaptive recommendations & Focused on Microsoft technologies; limited assessment of problem-solving or architecture skills \\
+\hline
+Pluralsight \cite{pluralsight2023} & Skill IQ assessment, adaptive testing, personalized learning paths, enterprise training & Assessment-first approach, skill-level matching, industry benchmarking & Video-based delivery, limited interactive practice, focus on skill acquisition over architectural evaluation \\
+\hline
+CYPHER Learning \cite{cypher2023} & Agentic AI integration, adaptive learning, enterprise LMS, AI skills management & Personal learning agent validation, agentic AI philosophy, adaptive learning capabilities & Enterprise focus, generalized content, limited specialized developer training \\
+\hline
+DataCamp \cite{datacamp2023} & Interactive coding exercises, micro-assessments, AI-recommended paths, real-time adaptation & Interactive learning model, continuous assessment, adaptive pacing & Domain-specific focus, limited architectural reasoning, emphasis on code mastery over problem-solving approach \\
+\hline
+freeCodeCamp \cite{freecodecamp2023} & Free curriculum, real-world projects, community-driven learning, AI tutoring integration & Project-based learning, accessibility, real-world application & Self-paced nature, limited personalized guidance, overwhelming for beginners, lack of accountability \\
+\hline
+Udacity \cite{udacity2023} & Nanodegree programs, industry partnerships, project-based learning, human mentor support & Industry-ready focus, project-intensive learning, career alignment & High cost, human-gated feedback, limited scalability, fixed learning paths \\
+\hline
+CodeCombat \cite{codecombat2023} & Gamified learning, interactive coding, AI-driven hints, immersive environments & Engagement strategies, interactive environments, AI-driven guidance & Gamification limitations, simplified complexity, limited real-world architectural assessment \\
+\hline
+\end{tabular}
+\end{table}
+
+\FloatBarrier
+
+
+\section{Conclusion}
+Chapter 3 reviewed multiple development platforms including Crio.Do, The Odin Project, ProjectLearn.io, Educative.io, Codio, GitHub project-based repositories, Udemy, LinkedIn Learning, and Microsoft Learn. These platforms primarily focus on project-based learning, hands-on practice, and interactive coding exercises, providing valuable resources for skill development and portfolio building. However, most lack dynamic personalization, AI-driven mentorship, real-time evaluation of conceptual understanding, and adaptive learning paths tailored to a learner’s current level and preferred tech stack.
+
+This review highlights a clear gap for GrowWise, which aims to integrate personalized AI-driven guidance, agentic RAG resources, and project-based evaluation to foster approach-oriented learning. Insights from these platforms inform the design and implementation of GrowWise, ensuring it addresses the limitations of existing solutions while enhancing critical thinking, problem-solving, and practical development skills.
+\chapter{Software Requirement Specifications}
+This chapter explains the main features of the project. It also describes what the system should do, how it should work, the use cases, and the possible risks involved.
+
+
+\section{List of Features}
+
+The GrowWise platform provides the following key features:
+
+\begin{itemize}
+    \item \textbf{User Onboarding \& Authentication:} Users can securely sign up, log in, and set up their profile.
+    \item \textbf{Track Selection:} Users can select the technology track they wish to learn (e.g., AI, Web Development, Game Development).
+    \item \textbf{Skill Assessment:} The system evaluates the user's current knowledge and skill level to understand their starting point.
+    \item \textbf{Personalized Learning Path:} A custom roadmap is generated for each learner based on their skill assessment and chosen track.
+    \item \textbf{Learning Nodes with AI Mentor:} Each topic includes an AI mentor that provides explanations, guidance, and curated learning resources.
+    \item \textbf{AI Evaluation \& Project Assignment:} The AI assigns projects, evaluates the learner’s approach, and provides feedback on problem-solving and solution architecture.
+    \item \textbf{Progress Summary \& Feedback:} Users can track their progress, identify strengths and weaknesses, and receive actionable recommendations for improvement.
+    \item \textbf{Admin Responsibilities:} Admins manage the creation of tracks, RAG ingestion, and maintain resources for the AI mentor.
+\end{itemize}
+
+
+\section{Functional Requirements}
+This section describes the functional requirements of the GrowWise platform, detailing what each type of user and the system can do.
+
+\subsection{Functional Requirements of Programmers / Developers}
+The system will allow programmers and developers to:
+\begin{itemize}
+    \item Sign up and log in to their account.
+    \item Choose a learning track (e.g., AI, Web Development, Game Development).
+    \item Take a skill assessment test to determine their current knowledge level.
+    \item Receive a personalized learning path based on their assessment and chosen track.
+    \item Access learning nodes with explanations, examples, and resources provided by the AI mentor.
+    \item Work on tasks or mini-projects associated with each node.
+    \item Receive detailed feedback on progress, strengths, and areas for improvement.
+    \item Complete a final project assigned by the AI evaluation to assess problem-solving and approach skills.
+\end{itemize}
+
+\subsection{Functional Requirements of Admin}
+The system will allow the admin to:
+\begin{itemize}
+    \item Create and manage learning tracks.
+    \item Add, update, and manage learning resources for each node.
+    \item Feed documents and resources into the RAG (AI knowledge system) for the AI mentor.
+    \item Monitor learning paths and ensure the system functions correctly.
+\end{itemize}
+
+\subsection{Functional Requirements of System}
+The system will be able to:
+\begin{itemize}
+    \item Create and manage user accounts.
+    \item Automatically generate personalized learning paths for each user.
+    \item Provide AI guidance at each learning node.
+    \item Track user progress and provide automated feedback.
+    \item Assign and evaluate final projects using AI to measure problem-solving and approach.
+    \item Store and manage all resources for learning tracks in the RAG system.
+\end{itemize}
+
+\section{Quality Attributes}
+
+GrowWise is designed to be easy to use, reliable, and efficient. The main quality points of the platform are:
+
+\begin{itemize}
+    \item \textbf{Reliability:} The AI mentor and evaluation system give correct guidance and feedback every time. The platform runs smoothly without problems.
+    \item \textbf{Usability:} The interface is clear and simple, so users can easily find learning paths, resources, and feedback.
+    \item \textbf{Maintainability:} The code is simple and organized, making it easy to update or fix when needed.
+    \item \textbf{Performance:} The system works fast and can handle many users at the same time.
+    \item \textbf{Flexibility:} New learning paths, AI resources, and features can be added easily in the future.
+\end{itemize}
+
+\section{Non-Functional Requirements}
+
+This section describes the non-functional requirements of the GrowWise platform, including performance, reliability, usability, reusability, and extensibility.
+
+\subsection{Performance}
+The system should help users learn efficiently and minimize the overall learning time.
+
+\subsection{Reliability}
+The website should be available at all times, so users can access learning paths and the AI mentor without interruption.
+
+\subsection{Usability}
+The platform should be simple to use. Users should quickly understand how to navigate and follow their learning path.
+
+\subsection{Reusability}
+The code should be modular, so it can be reused for new features or updates.
+
+\subsection{Extensibility}
+New learning paths, AI guidance, or project types should be easy to add in the future.
+
+\section{Assumptions}
+
+The following assumptions have been made for the GrowWise platform:
+
+\begin{itemize}
+    \item Users have a web browser on their computer or device that supports JavaScript.
+    \item An internet connection is required to access the platform.
+    \item Users have basic understanding of using a website, like clicking buttons and navigating pages.
+    \item Users have some basic knowledge of programming or development to follow the learning paths.
+    \item Admins know how to create learning paths and manage AI-guided resources.
+\end{itemize}
+\section{Use Cases}
+This section lists the use cases used in our application.
+The tables below provide detailed use cases.
+\subsection{User Login}
+\noindent
+\begin{minipage}{\textwidth}
+\centering
+\textbf{Use Case: User Login} \\[0.5em] % Caption-like title
+
+\begin{tabular}{|lllll|}
+\hline
+\multicolumn{2}{|l|}{\textbf{Name}} &
+  \multicolumn{3}{l|}{User Login} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Actors}} &
+  \multicolumn{3}{l|}{Programmer, Developer} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Summary}} &
+  \multicolumn{3}{l|}{\begin{tabular}[c]{@{}l@{}}User enters email and password, and after verification, is \\ redirected to the dashboard.\end{tabular}} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Pre-Conditions}} &
+  \multicolumn{3}{l|}{User must have an account and must not be already logged in.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Post-Conditions}} &
+  \multicolumn{3}{l|}{User session is established, and dashboard is accessible.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{\begin{tabular}[c]{@{}l@{}}Special\\ Requirements\end{tabular}}} &
+  \multicolumn{3}{l|}{None} \\ \hline
+\multicolumn{5}{|c|}{\textbf{Basic Flow}} \\ \hline
+\multicolumn{3}{|c|}{\textbf{Actor Action}} &
+  \multicolumn{2}{c|}{\textbf{System Response}} \\ \hline
+\multicolumn{1}{|l|}{1} &
+  \multicolumn{2}{l|}{User opens login page} &
+  \multicolumn{1}{l|}{2} &
+  System displays email and password fields \\ \hline
+\multicolumn{1}{|l|}{2} &
+  \multicolumn{2}{l|}{User enters valid credentials} &
+  \multicolumn{1}{l|}{4} &
+  System verifies, creates session, redirects to dashboard \\ \hline
+\multicolumn{5}{|c|}{\textbf{Alternative Flow}} \\ \hline
+\multicolumn{1}{|l|}{3} &
+  \multicolumn{2}{l|}{User enters invalid credentials} &
+  \multicolumn{1}{l|}{4-A} &
+  System displays “Incorrect email or password” message \\ \hline
+\end{tabular}
+\end{minipage}
+
+\subsection{Track Selection}
+\noindent
+\begin{minipage}{\textwidth}
+\centering
+\textbf{Use Case: Track Selection} \\[0.5em] % Caption-like title
+
+\begin{tabular}{|lllll|}
+\hline
+\multicolumn{2}{|l|}{\textbf{Name}} &
+  \multicolumn{3}{l|}{Track Selection} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Actors}} &
+  \multicolumn{3}{l|}{Programmer, Developer} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Summary}} &
+  \multicolumn{3}{l|}{User selects a learning track to start personalized learning.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Pre-Conditions}} &
+  \multicolumn{3}{l|}{User must be logged in.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Post-Conditions}} &
+  \multicolumn{3}{l|}{Selected track is saved for learning path generation.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{\begin{tabular}[c]{@{}l@{}}Special\\ Requirements\end{tabular}}} &
+  \multicolumn{3}{l|}{None} \\ \hline
+\multicolumn{5}{|c|}{\textbf{Basic Flow}} \\ \hline
+\multicolumn{3}{|c|}{\textbf{Actor Action}} &
+  \multicolumn{2}{c|}{\textbf{System Response}} \\ \hline
+\multicolumn{1}{|l|}{1} &
+  \multicolumn{2}{l|}{User opens track selection page} &
+  \multicolumn{1}{l|}{2} &
+  System displays available tracks \\ \hline
+\multicolumn{1}{|l|}{2} &
+  \multicolumn{2}{l|}{User selects a track} &
+  \multicolumn{1}{l|}{4} &
+  System saves selection and confirms \\ \hline
+\multicolumn{5}{|c|}{\textbf{Alternative Flow}} \\ \hline
+\multicolumn{1}{|l|}{3} &
+  \multicolumn{2}{l|}{User does not select a track} &
+  \multicolumn{1}{l|}{4-A} &
+  System prompts: “Please select a track to continue” \\ \hline
+\end{tabular}
+\end{minipage}
+\subsection{Skill Assessment}
+\begin{table}[!ht]
+\centering
+\caption{Use Case: Skill Assessment}
+\label{tab:skill}
+\begin{tabular}{|lllll|}
+\hline
+\multicolumn{2}{|l|}{\textbf{Name}} &
+  \multicolumn{3}{l|}{Skill Assessment} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Actors}} &
+  \multicolumn{3}{l|}{Programmer, Developer} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Summary}} &
+  \multicolumn{3}{l|}{User takes a test to check their current skill level.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Pre-Conditions}} &
+  \multicolumn{3}{l|}{User must select a track.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Post-Conditions}} &
+  \multicolumn{3}{l|}{Skill level is saved in the system.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{\begin{tabular}[c]{@{}l@{}}Special\\ Requirements\end{tabular}}} &
+  \multicolumn{3}{l|}{Assessment covers technical and approach-based skills.} \\ \hline
+\multicolumn{5}{|c|}{\textbf{Basic Flow}} \\ \hline
+\multicolumn{3}{|c|}{\textbf{Actor Action}} &
+  \multicolumn{2}{c|}{\textbf{System Response}} \\ \hline
+\multicolumn{1}{|l|}{1} &
+  \multicolumn{2}{l|}{User starts assessment} &
+  \multicolumn{1}{l|}{2} &
+  System displays questions \\ \hline
+\multicolumn{1}{|l|}{2} &
+  \multicolumn{2}{l|}{User answers questions} &
+  \multicolumn{1}{l|}{4} &
+  System evaluates answers and calculates score \\ \hline
+\multicolumn{5}{|c|}{\textbf{Alternative Flow}} \\ \hline
+\multicolumn{1}{|l|}{3} &
+  \multicolumn{2}{l|}{User leaves assessment incomplete} &
+  \multicolumn{1}{l|}{4-A} &
+  System saves progress for later completion \\ \hline
+\end{tabular}
+\end{table}
+
+
+\subsection{AI Path Generation}
+\begin{samepage}
+\begin{minipage}{\textwidth}
+\centering
+\captionof{table}{Use Case: AI Path Generation}
+\label{tab:aipath}
+\begin{tabular}{|lllll|}
+\hline
+\multicolumn{2}{|l|}{\textbf{Name}} &
+  \multicolumn{3}{l|}{AI Path Generation} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Actors}} &
+  \multicolumn{3}{l|}{Programmer, Developer} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Summary}} &
+  \multicolumn{3}{l|}{System generates a personalized learning path based on assessment results.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Pre-Conditions}} &
+  \multicolumn{3}{l|}{Skill assessment must be completed.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Post-Conditions}} &
+  \multicolumn{3}{l|}{Personalized path is available for user.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{\begin{tabular}[c]{@{}l@{}}Special\\ Requirements\end{tabular}}} &
+  \multicolumn{3}{l|}{Path should focus on approach-oriented learning.} \\ \hline
+\multicolumn{5}{|c|}{\textbf{Basic Flow}} \\ \hline
+\multicolumn{3}{|c|}{\textbf{Actor Action}} &
+  \multicolumn{2}{c|}{\textbf{System Response}} \\ \hline
+\multicolumn{1}{|l|}{1} &
+  \multicolumn{2}{l|}{System analyzes user score} &
+  \multicolumn{1}{l|}{2} &
+  Generates adaptive learning path \\ \hline
+\multicolumn{1}{|l|}{2} &
+  \multicolumn{2}{l|}{System displays path} &
+  \multicolumn{1}{l|}{4} &
+  User can start modules \\ \hline
+\multicolumn{5}{|c|}{\textbf{Alternative Flow}} \\ \hline
+\multicolumn{1}{|l|}{3} &
+  \multicolumn{2}{l|}{System cannot generate path} &
+  \multicolumn{1}{l|}{4-A} &
+  System shows message: “Try assessment again or contact support” \\ \hline
+\end{tabular}
+\end{minipage}
+\end{samepage}
+
+
+
+
+
+
+
+\subsection{Agentic RAG Assistance}
+\begin{samepage}
+\begin{minipage}{\textwidth}
+\centering
+\captionof{table}{Use Case: RAG AI Assistance}
+\label{tab:rag}
+\begin{tabular}{|lllll|}
+\hline
+\multicolumn{2}{|l|}{\textbf{Name}} &
+  \multicolumn{3}{l|}{RAG AI Assistance} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Actors}} &
+  \multicolumn{3}{l|}{Programmer, Developer} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Summary}} &
+  \multicolumn{3}{l|}{Users ask questions to AI assistant at any step for help.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Pre-Conditions}} &
+  \multicolumn{3}{l|}{User must be following a module.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Post-Conditions}} &
+  \multicolumn{3}{l|}{User receives guidance or answers from AI.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{\begin{tabular}[c]{@{}l@{}}Special\\ Requirements\end{tabular}}} &
+  \multicolumn{3}{l|}{AI must provide context-aware answers.} \\ \hline
+\multicolumn{5}{|c|}{\textbf{Basic Flow}} \\ \hline
+\multicolumn{3}{|c|}{\textbf{Actor Action}} &
+  \multicolumn{2}{c|}{\textbf{System Response}} \\ \hline
+\multicolumn{1}{|l|}{1} &
+  \multicolumn{2}{l|}{User asks a question} &
+  \multicolumn{1}{l|}{2} &
+  System retrieves answer from knowledge base \\ \hline
+\multicolumn{1}{|l|}{2} &
+  \multicolumn{2}{l|}{User reads answer} &
+  \multicolumn{1}{l|}{4} &
+  System logs interaction for feedback \\ \hline
+\multicolumn{5}{|c|}{\textbf{Alternative Flow}} \\ \hline
+\multicolumn{1}{|l|}{3} &
+  \multicolumn{2}{l|}{AI cannot answer} &
+  \multicolumn{1}{l|}{4-A} &
+  System suggests reference material or next steps \\ \hline
+\end{tabular}
+\end{minipage}
+\end{samepage}
+
+
+
+
+
+\subsection{Project-Based Assignment}
+\begin{samepage}
+\begin{minipage}{\textwidth}
+\centering
+\captionof{table}{Use Case: Project Assignment}
+\label{tab:project}
+\begin{tabular}{|lllll|}
+\hline
+\multicolumn{2}{|l|}{\textbf{Name}} &
+  \multicolumn{3}{l|}{Project Assignment} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Actors}} &
+  \multicolumn{3}{l|}{Programmer, Developer} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Summary}} &
+  \multicolumn{3}{l|}{AI assigns a project after completing modules, simulating a senior engineer.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Pre-Conditions}} &
+  \multicolumn{3}{l|}{Required modules must be completed.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Post-Conditions}} &
+  \multicolumn{3}{l|}{User submits project, system evaluates approach and understanding.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{\begin{tabular}[c]{@{}l@{}}Special\\ Requirements\end{tabular}}} &
+  \multicolumn{3}{l|}{Evaluation focuses on problem-solving and approach.} \\ \hline
+\multicolumn{5}{|c|}{\textbf{Basic Flow}} \\ \hline
+\multicolumn{3}{|c|}{\textbf{Actor Action}} &
+  \multicolumn{2}{c|}{\textbf{System Response}} \\ \hline
+\multicolumn{1}{|l|}{1} &
+  \multicolumn{2}{l|}{System assigns project} &
+  \multicolumn{1}{l|}{2} &
+  User receives instructions \\ \hline
+\multicolumn{1}{|l|}{2} &
+  \multicolumn{2}{l|}{User submits project} &
+  \multicolumn{1}{l|}{4} &
+  System evaluates and provides feedback \\ \hline
+\multicolumn{5}{|c|}{\textbf{Alternative Flow}} \\ \hline
+\multicolumn{1}{|l|}{3} &
+  \multicolumn{2}{l|}{User cannot complete project} &
+  \multicolumn{1}{l|}{4-A} &
+  System allows resubmission with guidance \\ \hline
+\end{tabular}
+\end{minipage}
+\end{samepage}
+
+
+
+
+\subsection{Admin Login}
+\begin{samepage}
+\begin{minipage}{\textwidth}
+\centering
+\captionof{table}{Use Case: Admin Login}
+\label{tab:adminlogin}
+\begin{tabular}{|lllll|}
+\hline
+\multicolumn{2}{|l|}{\textbf{Name}} &
+  \multicolumn{3}{l|}{Admin Login} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Actors}} &
+  \multicolumn{3}{l|}{Admin} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Summary}} &
+  \multicolumn{3}{l|}{Admin logs in to manage learning paths and RAG knowledge base.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Pre-Conditions}} &
+  \multicolumn{3}{l|}{Admin account exists.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Post-Conditions}} &
+  \multicolumn{3}{l|}{Admin can access dashboard.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{\begin{tabular}[c]{@{}l@{}}Special\\ Requirements\end{tabular}}} &
+  \multicolumn{3}{l|}{None} \\ \hline
+\multicolumn{5}{|c|}{\textbf{Basic Flow}} \\ \hline
+\multicolumn{3}{|c|}{\textbf{Actor Action}} &
+  \multicolumn{2}{c|}{\textbf{System Response}} \\ \hline
+\multicolumn{1}{|l|}{1} &
+  \multicolumn{2}{l|}{Admin opens login page} &
+  \multicolumn{1}{l|}{2} &
+  System shows email and password fields \\ \hline
+\multicolumn{1}{|l|}{2} &
+  \multicolumn{2}{l|}{Admin enters valid credentials} &
+  \multicolumn{1}{l|}{4} &
+  System grants dashboard access \\ \hline
+\multicolumn{5}{|c|}{\textbf{Alternative Flow}} \\ \hline
+\multicolumn{1}{|l|}{3} &
+  \multicolumn{2}{l|}{Admin enters invalid credentials} &
+  \multicolumn{1}{l|}{4-A} &
+  System shows error message \\ \hline
+\end{tabular}
+\end{minipage}
+\end{samepage}
+
+
+
+
+\subsection{Manage Learning Paths}
+\begin{samepage}
+\begin{minipage}{\textwidth}
+\centering
+\captionof{table}{Use Case: Learning Path Management}
+\label{tab:learningpath}
+\begin{tabular}{|lllll|}
+\hline
+\multicolumn{2}{|l|}{\textbf{Name}} &
+  \multicolumn{3}{l|}{Learning Path Management} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Actors}} &
+  \multicolumn{3}{l|}{Admin} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Summary}} &
+  \multicolumn{3}{l|}{Admin creates or updates learning paths for all tracks.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Pre-Conditions}} &
+  \multicolumn{3}{l|}{Admin must be logged in.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Post-Conditions}} &
+  \multicolumn{3}{l|}{Updated paths are available for users.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{\begin{tabular}[c]{@{}l@{}}Special\\ Requirements\end{tabular}}} &
+  \multicolumn{3}{l|}{Paths must follow approach-oriented methodology.} \\ \hline
+\multicolumn{5}{|c|}{\textbf{Basic Flow}} \\ \hline
+\multicolumn{3}{|c|}{\textbf{Actor Action}} &
+  \multicolumn{2}{c|}{\textbf{System Response}} \\ \hline
+\multicolumn{1}{|l|}{1} &
+  \multicolumn{2}{l|}{Admin opens path management} &
+  \multicolumn{1}{l|}{2} &
+  System displays existing paths \\ \hline
+\multicolumn{1}{|l|}{2} &
+  \multicolumn{2}{l|}{Admin adds/edits path} &
+  \multicolumn{1}{l|}{4} &
+  System saves updates \\ \hline
+\multicolumn{5}{|c|}{\textbf{Alternative Flow}} \\ \hline
+\multicolumn{1}{|l|}{3} &
+  \multicolumn{2}{l|}{Admin enters invalid info} &
+  \multicolumn{1}{l|}{4-A} &
+  System prompts for correction \\ \hline
+\end{tabular}
+\end{minipage}
+\end{samepage}
+
+
+
+
+\subsection{Manage RAG Knowledge Base}
+\begin{samepage}
+\begin{minipage}{\textwidth}
+\centering
+\captionof{table}{Use Case: RAG Knowledge Management}
+\label{tab:ragmanagement}
+\begin{tabular}{|lllll|}
+\hline
+\multicolumn{2}{|l|}{\textbf{Name}} &
+  \multicolumn{3}{l|}{RAG Knowledge Management} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Actors}} &
+  \multicolumn{3}{l|}{Admin} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Summary}} &
+  \multicolumn{3}{l|}{Admin adds or updates resources for AI assistant.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Pre-Conditions}} &
+  \multicolumn{3}{l|}{Admin must be logged in.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Post-Conditions}} &
+  \multicolumn{3}{l|}{AI knowledge base is updated and ready for queries.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{\begin{tabular}[c]{@{}l@{}}Special\\ Requirements\end{tabular}}} &
+  \multicolumn{3}{l|}{None} \\ \hline
+\multicolumn{5}{|c|}{\textbf{Basic Flow}} \\ \hline
+\multicolumn{3}{|c|}{\textbf{Actor Action}} &
+  \multicolumn{2}{c|}{\textbf{System Response}} \\ \hline
+\multicolumn{1}{|l|}{1} &
+  \multicolumn{2}{l|}{Admin opens RAG management} &
+  \multicolumn{1}{l|}{2} &
+  System displays current resources \\ \hline
+\multicolumn{1}{|l|}{2} &
+  \multicolumn{2}{l|}{Admin adds/updates content} &
+  \multicolumn{1}{l|}{4} &
+  System updates knowledge base \\ \hline
+\multicolumn{5}{|c|}{\textbf{Alternative Flow}} \\ \hline
+\multicolumn{1}{|l|}{3} &
+  \multicolumn{2}{l|}{Content fails to save} &
+  \multicolumn{1}{l|}{4-A} &
+  System shows error message \\ \hline
+\end{tabular}
+\end{minipage}
+\end{samepage}
+
+
+
+\subsection{Monitor User Progress}
+\begin{samepage}
+\begin{minipage}{\textwidth}
+\centering
+\captionof{table}{Use Case: User Progress Monitoring}
+\label{tab:userprogress}
+\begin{tabular}{|lllll|}
+\hline
+\multicolumn{2}{|l|}{\textbf{Name}} &
+  \multicolumn{3}{l|}{User Progress Monitoring} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Actors}} &
+  \multicolumn{3}{l|}{Admin} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Summary}} &
+  \multicolumn{3}{l|}{Admin views user progress and completion of modules and projects.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Pre-Conditions}} &
+  \multicolumn{3}{l|}{Admin must be logged in.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Post-Conditions}} &
+  \multicolumn{3}{l|}{Admin sees real-time analytics.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{\begin{tabular}[c]{@{}l@{}}Special\\ Requirements\end{tabular}}} &
+  \multicolumn{3}{l|}{Data must be accurate and updated.} \\ \hline
+\multicolumn{5}{|c|}{\textbf{Basic Flow}} \\ \hline
+\multicolumn{3}{|c|}{\textbf{Actor Action}} &
+  \multicolumn{2}{c|}{\textbf{System Response}} \\ \hline
+\multicolumn{1}{|l|}{1} &
+  \multicolumn{2}{l|}{Admin opens analytics page} &
+  \multicolumn{1}{l|}{2} &
+  System displays progress charts \\ \hline
+\multicolumn{1}{|l|}{2} &
+  \multicolumn{2}{l|}{Admin filters by track/user} &
+  \multicolumn{1}{l|}{4} &
+  System updates view \\ \hline
+\multicolumn{5}{|c|}{\textbf{Alternative Flow}} \\ \hline
+\multicolumn{1}{|l|}{3} &
+  \multicolumn{2}{l|}{Data fails to load} &
+  \multicolumn{1}{l|}{4-A} &
+  System shows message: “Try again later” \\ \hline
+\end{tabular}
+\end{minipage}
+\end{samepage}
+
+\subsection{Learning Path Module Access}
+\begin{samepage}
+\begin{minipage}{\textwidth}
+\centering
+\captionof{table}{Use Case: Module Access}
+\label{tab:moduleaccess}
+\begin{tabular}{|lllll|}
+\hline
+\multicolumn{2}{|l|}{\textbf{Name}} &
+  \multicolumn{3}{l|}{Module Access} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Actors}} &
+  \multicolumn{3}{l|}{Programmer, Developer} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Summary}} &
+  \multicolumn{3}{l|}{User follows the AI-generated path, accessing modules step by step.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Pre-Conditions}} &
+  \multicolumn{3}{l|}{User must have a generated path.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{Post-Conditions}} &
+  \multicolumn{3}{l|}{Progress is tracked, and modules are completed.} \\ \hline
+\multicolumn{2}{|l|}{\textbf{\begin{tabular}[c]{@{}l@{}}Special\\ Requirements\end{tabular}}} &
+  \multicolumn{3}{l|}{Modules should be interactive and practical.} \\ \hline
+\multicolumn{5}{|c|}{\textbf{Basic Flow}} \\ \hline
+\multicolumn{3}{|c|}{\textbf{Actor Action}} &
+  \multicolumn{2}{c|}{\textbf{System Response}} \\ \hline
+\multicolumn{1}{|l|}{1} &
+  \multicolumn{2}{l|}{User opens module} &
+  \multicolumn{1}{l|}{2} &
+  System displays content \\ \hline
+\multicolumn{1}{|l|}{2} &
+  \multicolumn{2}{l|}{User completes module} &
+  \multicolumn{1}{l|}{4} &
+  System marks completion and unlocks next module \\ \hline
+\multicolumn{5}{|c|}{\textbf{Alternative Flow}} \\ \hline
+\multicolumn{1}{|l|}{3} &
+  \multicolumn{2}{l|}{User skips module} &
+  \multicolumn{1}{l|}{4-A} &
+  System allows revisiting later and reminds user \\ \hline
+\end{tabular}
+\end{minipage}
+\end{samepage}
+
+
+\section{Hardware and Software Requirements}
+List the hardware and software requirements that will be required to develop and deploy the project.
+\subsection{Hardware Requirements}
+
+The system requires the following hardware components to ensure smooth operation and accessibility:
+
+\begin{itemize}
+    \item \textbf{Computer:} A standard desktop or laptop computer capable of running a modern web browser.
+    
+    \item \textbf{Internet Connection:} A stable internet connection is required to access the platform and interact with AI-based features.
+    
+    \item \textbf{AWS Virtual Private Server (VPS):} The backend of the application will be hosted on an AWS Virtual Private Server to ensure scalability, performance, and secure data processing.
+\end{itemize}
+
+\subsection{Software Requirements}
+
+The system requires the following software components:
+
+\begin{itemize}
+    \item FastAPI
+    \item Next.js
+    \item OpenAI or Gemini API
+    \item Supabase (PostgreSQL)
+    \item AWS (Virtual Private Server)
+    \item Docker
+    \item Git and GitHub/GitLab
+    \item Python 3.10+
+    \item Node.js 18+
+    \item VS Code
+    \item Postman
+\end{itemize}
+
+
+
+\section{Graphical User Interface}
+
+This section presents the graphical interface of the GrowWise platform. Each figure shows how the user interacts with different parts of the system — from logging in, choosing a learning path, and taking assessments to viewing AI-generated evaluations and insights.
+
+\begin{center}
+\includegraphics[width=0.9\textwidth]{Figures/login.png}
+\\[4pt]
+\textbf{Figure 4.1:} The login screen allows users to enter their registered credentials to securely access the system. It serves as the starting point for user authentication and personalized access.
+\end{center}
+
+\begin{center}
+\includegraphics[width=0.9\textwidth]{Figures/Choose Path.png}
+\\[4pt]
+\textbf{Figure 4.2:} The track selection screen where users choose their preferred learning path. This step helps personalize the AI-generated content and modules for each individual.
+\end{center}
+
+\begin{center}
+\includegraphics[width=0.9\textwidth]{Figures/skill assesment.png}
+\\[4pt]
+\textbf{Figure 4.3:} The skill assessment page allows users to take an initial test to evaluate their technical and problem-solving skills. The results are used to create a customized learning plan.
+\end{center}
+
+\begin{center}
+\includegraphics[width=0.9\textwidth]{Figures/Assesment report.png}
+\\[4pt]
+\textbf{Figure 4.4:} The assessment report displays the user’s current skill level and performance summary. It helps users understand their strengths and areas that need improvement.
+\end{center}
+
+\begin{center}
+\includegraphics[width=0.9\textwidth]{Figures/roadmap.png}
+\\[4pt]
+\textbf{Figure 4.5:} The personalized roadmap page shows the AI-generated learning journey. It outlines the sequence of modules and milestones users will follow based on their assessment results.
+\end{center}
+
+\begin{center}
+\includegraphics[width=0.9\textwidth]{Figures/module_rag.png}
+\\[4pt]
+\textbf{Figure 4.6:} The learning module interface where users study different topics and interact with the integrated AI chatbot. It helps in resolving doubts and maintaining engagement during learning.
+\end{center}
+
+\begin{center}
+\includegraphics[width=0.9\textwidth]{Figures/Ai Software engineer.png}
+\\[4pt]
+\textbf{Figure 4.7:} The AI software engineer screen simulates a senior developer who assigns projects and evaluates user responses. It provides real-world experience through guided AI evaluation.
+\end{center}
+
+\begin{center}
+\includegraphics[width=0.9\textwidth]{Figures/Insights.png}
+\\[4pt]
+\textbf{Figure 4.8:} The insights dashboard presents analytical visualizations of the user’s progress. It summarizes learning efficiency, completion rate, and module interaction patterns.
+\end{center}
+
+\begin{center}
+\includegraphics[width=0.9\textwidth]{Figures/Insigth2.png}
+\\[4pt]
+\textbf{Figure 4.9:} The advanced insights view shows deeper AI evaluation metrics and comparative performance graphs. It helps users and admins understand post-evaluation results more clearly.
+\end{center}
+
+\noindent
+
+
+\section{Database Design (if required; this means if you are using noSQL, you will not provide ER but the other design element and data dictonary should still be there. Explain and elaborate your DB design)}
+\subsection{ER Diagram}
+
+\subsection{Data Dictionary}
+
+\section{Risk Analysis}
+
+This part tells about the problems that can happen in the project and how we will handle them.
+
+\subsection{Technical Risks}
+There can be errors in the system, server may stop working, or AI may give wrong answers. Also, OpenAI or Gemini APIs may change or stop working. To fix this, we will test everything well and keep backup plans ready.
+
+\subsection{Business Risks}
+Other learning platforms already exist, so getting users may be hard. Also, API or server costs may become high. We will control our costs and make our project different and useful.
+
+\subsection{Content and Quality Risks}
+AI may give wrong or old information. Sometimes it may show things not needed. To handle this, the admin will check and update the content often.
+
+\subsection{User Risks}
+Some users may find the system hard or may lose interest. To solve this, we will keep the design easy and simple to use. The AI helper will guide users step by step.
+
+\subsection{Security Risks}
+Users will log in and share data. If security is weak, data can be lost. We will use safe servers, strong passwords, and protect all user data.
+
+\section*{Conclusion}
+
+This chapter explained all the important details about the GrowWise system. It described the main features, how users and admins will interact with the system, and what functions each part will perform. The functional and non-functional requirements were clearly defined to ensure that GrowWise is fast, reliable, and easy to use. Quality attributes such as performance, usability, and scalability were discussed to maintain a smooth user experience. The chapter also mentioned key assumptions, hardware and software needs, and possible risks during development. In addition, it included use cases, interface design, and database structure to show how each module connects and works together. Overall, these specifications provide a complete guide for building, testing, and improving the GrowWise learning platform.
+
+
+
+\chapter{High-Level and Low-Level Design}
+This chapter provides high level and low level design of our project.
+\section{System Overview}
+GrowWise is an AI-powered adaptive learning platform that personalizes developer education by assessing a learner’s current skills, generating a tailored learning path, and providing context-aware guidance via an embedded Agentic RAG mentor. The system emphasizes approach-oriented learning and project-based evaluation to build real-world problem-solving skills.
+
+\subsection{Learning Management and Modules}
+GrowWise organizes content into interactive micro-learning modules (``learning nodes'') with clear outcomes, examples, and hands-on tasks. Users progress step-by-step along an AI-generated roadmap, with prerequisite gating and automatic progress tracking.
+
+\subsection{Personalized Learning Paths}
+An AI-driven planner analyzes the initial skill assessment and selected track to generate a dynamic roadmap. Paths adapt over time based on performance, pace, and demonstrated understanding, ensuring neither redundancy nor premature complexity.
+
+\subsection{Agentic RAG Mentor (Context-Aware Assistance)}
+An embedded AI mentor retrieves curated, track-specific resources and provides just-in-time, context-aware explanations. It answers questions, suggests clarifications, and surfaces reference materials aligned with the current node and user history.
+
+\subsection{Assessment and AI Software Engineer Evaluation}
+Assessments include quizzes, short tasks, and project-style prompts. A simulated ``AI Software Engineer'' evaluates architectural reasoning, trade-offs, and solution quality, returning structured feedback and actionable recommendations.
+
+\subsection{Progress Insights and Feedback}
+A personalized dashboard visualizes learning velocity, strengths, and gaps across concepts and modules. Insights guide remediation, recommend next steps, and inform roadmap adjustments.
+ 
+
+\subsection{High-Level Technology View}
+The platform comprises a Next.js frontend, a FastAPI backend, an AI services layer (LLM + RAG), and a PostgreSQL (Supabase) datastore. Services are containerized (Docker) and deployed on an AWS VPS, with APIs secured via authenticated endpoints and role-based access.
+
+
+\section{Design Considerations}
+This section outlines key factors that influence architectural and implementation choices for GrowWise before finalizing the complete design.
+
+\subsection{Assumptions and Dependencies}
+\paragraph{Related software and hardware}
+\begin{itemize}
+  \item AI services: Availability of LLM APIs (e.g., OpenAI/Gemini) and embeddings for RAG; stable latency and quota.
+  \item Data layer: PostgreSQL (Supabase) with vector support for retrieval; object storage for assets.
+  \item Hosting: AWS VPS (Linux, x86\_64) with Docker for containerized services; optional GPU for future model acceleration.
+  \item Clients: Modern evergreen browsers (Chromium, Firefox, Safari) with JavaScript enabled.
+\end{itemize}
+
+\paragraph{Operating systems}
+\begin{itemize}
+  \item Server: Linux (production); CI/CD runs on Linux containers.
+  \item Developer machines: Windows 10/11, macOS, or Linux; Docker Desktop available.
+  \item Runtime baselines: Python 3.10+, Node.js 18+, PostgreSQL 14+.
+\end{itemize}
+
+\paragraph{End-user characteristics}
+\begin{itemize}
+  \item Primary users are junior developers with basic programming knowledge and English comprehension.
+  \item Variable bandwidth and intermittent connectivity; UI must degrade gracefully and support session resume.
+  \item Accessibility expectations (keyboard navigation, color contrast) for inclusive usage.
+\end{itemize}
+
+\paragraph{Possible and probable changes in functionality}
+\begin{itemize}
+  \item AI provider changes (model/version/pricing) may require pluggable AI adapters and retry/rate-limit strategies.
+  \item Expansion of tracks/modules necessitates schema and content ingestion extensibility.
+  \item Evolving evaluation criteria (project rubrics, feedback formats) require versioned assessment pipelines.
+\end{itemize}
+\subsection{General Constraints}
+
+\begin{itemize}
+
+    \item \textbf{Hardware or Software Environment:}  
+    The system will be hosted on a cloud-based server (such as AWS or Render) with limited CPU and memory resources, so all modules must be optimized for performance.  
+    The database and vector storage will handle moderate volumes of learning materials and embeddings.  
+    The platform will not depend on a GPU; all AI model queries will be processed through external APIs such as OpenAI or Gemini.
+
+    \item \textbf{End-User Environment:}  
+    Users will access the GrowWise platform through modern web browsers on desktops, laptops, or mobile devices.  
+    The interface should remain usable under low bandwidth or temporary internet disconnections.  
+    The UI must be responsive and adaptive to ensure smooth use across various screen sizes.
+
+    \item \textbf{Standards Compliance:}  
+    User data will be handled according to privacy and data protection guidelines, ensuring no unnecessary sensitive information is stored.  
+    Accessibility standards will be followed, supporting clear visuals, readable fonts, and keyboard navigation.  
+    Authentication and API key management will comply with OWASP-recommended security practices.
+
+    \item \textbf{Interface / Protocol Requirements:}  
+    Communication between the frontend, backend, and AI APIs will use HTTPS and JSON-based REST interfaces.  
+    User sessions will be managed securely using JWT tokens.  
+    All integrations with external APIs (AI models, vector databases) will include timeout handling and retry mechanisms.
+
+    \item \textbf{Security Requirements:}  
+    All communications will be protected with end-to-end encryption (HTTPS).  
+    User credentials and session tokens will be securely hashed and stored.  
+    Role-based access control will ensure separation between admin and regular user permissions.
+
+    \item \textbf{Performance Requirements:}  
+    Database queries and content retrieval will be optimized to efficiently handle multiple concurrent users.  
+    The AI path generation and evaluation modules should scale smoothly as the user base increases.
+
+\end{itemize}
+
+
+\subsection{Goals and Guidelines}
+\begin{itemize}
+  \item \textbf{KISS (Keep It Simple)}: Keep architecture and UX simple to reduce complexity and speed up development.
+  \item \textbf{Easy-to-Use, Friendly Interface}: Ensure an intuitive UI that reduces senior oversight and accelerates learner progress.
+\end{itemize}
+\subsection{Development Methods}
+
+The development of GrowWise follows a modular and agile approach, focusing on flexibility, scalability, and ease of maintenance. The main development methods are described below:
+
+\begin{itemize}
+    \item \textbf{Modular Development:} The system is divided into independent modules such as user management, learning path generation, AI-based assessment, and RAG-powered knowledge assistance. Each module is developed, tested, and integrated iteratively.
+
+    \item \textbf{Agile Methodology (Scrum-inspired):} The project follows an Agile process with short \textbf{sprints}, enabling frequent testing, user feedback, and continuous improvement of system performance and usability.
+
+    \item \textbf{Backend Development:} The backend uses a \textbf{REST-based architecture} built with \textbf{FastAPI}, ensuring scalability, simplicity, and easy integration with AI APIs such as \textbf{OpenAI} and \textbf{Gemini}.
+
+    \item \textbf{Frontend Development:} The frontend is developed using \textbf{React (Next.js)}, focusing on a \textbf{responsive interface} that provides a smooth and intuitive user experience across devices.
+
+    \item \textbf{Database Management:} The system uses \textbf{PostgreSQL} for structured data and a \textbf{vector database} for semantic search and RAG-based operations to enhance learning content retrieval.
+
+    \item \textbf{Version Control:} Development is managed using \textbf{GitHub/GitLab} for collaborative coding, version tracking, and continuous integration workflows.
+
+    \item \textbf{Reason for Approach:} This method was chosen for its \textbf{flexibility}, \textbf{maintainability}, and support for \textbf{iterative enhancement}, aligning with the evolving nature of GrowWise’s AI-driven learning ecosystem.
+\end{itemize}
+
+
+\section{System Architecture}
+This section describes both the internal architecture of the modules and the external architecture of the system with other systems. A diagrammatic architecture is provided to illustrate the system's structure and interactions.
+\begin{figure}[!h]
+    \centering
+    \includegraphics[width=0.95\textwidth]{Figures/arthitectural_structure.png}
+    \caption{\textbf{GrowWise System Architecture} — \textit{An illustrative overview of the GrowWise platform architecture, highlighting the interaction and data flow among the frontend interface,  backend, AI-driven services, and database layer.}}
+    \label{fig:architecture}
+\end{figure}
+
+
+
+\subsection{High-Level System Decomposition}
+The GrowWise platform is decomposed into four major subsystems, each with distinct responsibilities:
+
+\begin{itemize}
+    \item \textbf{User Interface Layer}: Handles all user interactions and provides a responsive web-based interface
+    \item \textbf{Application Services Layer}: Contains core business logic and orchestrates user workflows
+    \item \textbf{AI Services Layer}: Manages all AI-related functionality including assessment, path generation, and evaluation
+    \item \textbf{Data Persistence Layer}: Handles data storage, retrieval, and management
+\end{itemize}
+
+\subsection{Major System Responsibilities}
+The software system must undertake the following key responsibilities:
+
+\begin{enumerate}
+    \item \textbf{User Management}: Secure authentication, profile management, and session handling
+    \item \textbf{Adaptive Learning}: Dynamic assessment of user skills and generation of personalized learning paths
+    \item \textbf{Content Delivery}: Interactive module presentation with embedded AI assistance
+    \item \textbf{Intelligent Evaluation}: AI-powered assessment of user progress and project submissions
+    \item \textbf{Progress Tracking}: Comprehensive monitoring and reporting of user advancement
+    \item \textbf{Administrative Control}: Management of learning content, tracks, and system configuration
+\end{enumerate}
+
+\subsection{Component Roles and Responsibilities}
+
+\subsubsection{User Interface Layer}
+\begin{itemize}
+    \item \textbf{Authentication Module}: Manages user login, registration, and session management
+    \item \textbf{Track Selection Interface}: Allows users to choose their learning specialization
+    \item \textbf{Assessment Interface}: Presents skill evaluation tests and collects responses
+    \item \textbf{Learning Dashboard}: Displays personalized learning paths and progress tracking
+    \item \textbf{Module Interface}: Interactive learning environment with embedded AI chat
+    \item \textbf{Evaluation Interface}: Project submission and feedback display system
+\end{itemize}
+
+\subsubsection{Application Services Layer}
+\begin{itemize}
+    \item \textbf{User Service}: Handles user account management and authentication logic
+    \item \textbf{Assessment Service}: Processes skill evaluation and scoring algorithms
+    \item \textbf{Path Generation Service}: Creates personalized learning roadmaps
+    \item \textbf{Module Service}: Manages learning content delivery and progress tracking
+    \item \textbf{Evaluation Service}: Coordinates AI-powered project assessment
+    \item \textbf{Admin Service}: Provides administrative functionality for content management
+\end{itemize}
+
+\subsubsection{AI Services Layer}
+\begin{itemize}
+    \item \textbf{LLM Integration Service}: Interfaces with external AI providers (OpenAI/Gemini)
+    \item \textbf{RAG System}: Retrieval-augmented generation for contextual AI assistance
+    \item \textbf{Vector Database}: Stores and searches learning content embeddings
+    \item \textbf{Assessment AI}: Evaluates user responses and generates skill scores
+    \item \textbf{Path Planning AI}: Creates adaptive learning sequences based on user profiles
+    \item \textbf{Evaluation AI}: Simulates senior engineer feedback for project submissions
+\end{itemize}
+
+\subsubsection{Data Persistence Layer}
+\begin{itemize}
+    \item \textbf{User Database}: Stores user profiles, authentication data, and preferences
+    \item \textbf{Content Database}: Manages learning modules, tracks, and educational resources
+    \item \textbf{Progress Database}: Tracks user advancement, completion status, and performance metrics
+    \item \textbf{Vector Store}: Maintains embeddings for RAG-based content retrieval
+    \item \textbf{Session Storage}: Handles temporary data and user session information
+\end{itemize}
+
+\subsection{Component Collaboration and Data Flow}
+The system components collaborate through well-defined interfaces and data flows:
+
+\begin{enumerate}
+    \item \textbf{User Authentication Flow}: Interface Layer → User Service → Database
+    \item \textbf{Assessment Process}: Interface Layer → Assessment Service → AI Services → Database
+    \item \textbf{Path Generation}: Assessment Service → Path Planning AI → Module Service
+    \item \textbf{Learning Process}: Module Service → RAG System → Vector Database → AI Services
+    \item \textbf{Evaluation Process}: Evaluation Service → Assessment AI → Database
+\end{enumerate}
+
+\subsection{Architectural Rationale}
+This decomposition was chosen over alternative approaches for the following reasons:
+
+\begin{itemize}
+    \item \textbf{Layered Architecture}: Provides clear separation of concerns and maintainability
+    \item \textbf{Microservices Pattern}: Enables independent scaling and deployment of AI services
+    \item \textbf{API-First Design}: Facilitates integration with external AI providers and future extensions
+    \item \textbf{Stateless Services}: Ensures scalability and fault tolerance
+    \item \textbf{Modular AI Integration}: Allows easy switching between AI providers and models
+\end{itemize}
+
+Alternative monolithic approaches were rejected due to scalability limitations and tight coupling between AI and business logic components.
+
+\subsection{External System Integration}
+The system integrates with the following external services:
+
+\begin{itemize}
+    \item \textbf{OpenAI/Gemini APIs}: For LLM-based AI functionality
+    \item \textbf{AWS VPS}: For hosting and infrastructure services
+    \item \textbf{Supabase}: For database and authentication services
+    \item \textbf{Vector Database Services}: For embedding storage and retrieval
+\end{itemize}
+
+
+\subsection{Subsystem Architecture}
+The AI Services Layer is the core subsystem that handles all AI functionality through external API integrations. This subsystem consists of three main modules that work together to provide intelligent learning experiences.
+
+\subsubsection{AI Assessment Module}
+The AI Assessment Module evaluates user skills using external AI APIs. It generates assessment questions based on the selected learning track and sends user responses to external AI services for analysis. The module receives skill scores and identifies knowledge gaps, which are then stored in the database for path generation. This module relies entirely on external AI APIs for question generation and answer evaluation.
+
+\subsubsection{AI Path Generation Module}
+The AI Path Generation Module creates personalized learning paths using external AI services. It takes assessment results and sends them to external APIs along with the user's chosen track. The AI service analyzes the data and returns a customized learning sequence with specific modules and milestones. The module then stores this personalized path in the database for the learning system to follow.
+
+\subsubsection{Learning Module with RAG}
+The Learning Module with RAG provides interactive learning with AI assistance through external API calls. When users ask questions or need help, the module sends their queries to external AI services along with relevant context from the learning materials. The AI service processes the request and returns contextual assistance, explanations, and guidance. This module also tracks user progress and completion status throughout their learning journey.
+
+\subsubsection{AI Evaluation Module}
+The AI Evaluation Module assesses user project submissions using external AI APIs. It sends completed projects and user responses to external AI services for evaluation. The AI service analyzes the submission and returns detailed feedback, scores, and recommendations for improvement. This module simulates senior engineer evaluation by leveraging external AI capabilities to provide professional-quality assessment.
+
+\subsubsection{External API Integration}
+All AI functionality in the system relies on external API services, primarily OpenAI and Gemini APIs. The system makes API calls for assessment generation, path planning, RAG assistance, and project evaluation. Each module handles its own API communication, including request formatting, response processing, and error handling. The external APIs provide the core intelligence that powers the adaptive learning experience.
+
+\subsubsection{Data Flow}
+User data flows through the AI Services Layer with external API processing at each stage. Assessment responses are sent to external APIs for scoring, path generation requests are processed by external AI services, learning assistance queries are handled by external RAG services, and project evaluations are performed by external AI systems. All results are stored locally in the database for future reference and system optimization.
+
+
+\section{Architectural Strategies}
+This section explains the main design choices for the GrowWise platform.
+
+\subsection{Using External AI APIs}
+We use external AI services like OpenAI and Gemini instead of building our own AI models. This is better because we get the latest AI features without the hard work of training models. We don't need to worry about updating or maintaining AI models ourselves. We only pay for what we use, which saves money.
+
+Other options like building custom models were too expensive and complex. Using external APIs lets us focus on building the learning platform instead of AI training.
+
+\subsection{Using RAG for Smart Help}
+We use RAG (Retrieval-Augmented Generation) to give learners smart help. RAG finds relevant information from our database and uses AI to give good answers. This means learners get current, accurate information without us having to update content manually.
+
+Other options like static help pages were too basic and needed too much manual work. RAG gives learners the help they need when they need it.
+
+\subsection{Choosing Modern Technology}
+We picked modern tools like Next.js for the website, FastAPI for the backend, and PostgreSQL for the database. These tools work well with AI and are easy to use. They help us build a fast, reliable platform.
+
+Older technology stacks were too slow and hard to work with AI. Modern tools make everything easier and faster.
+
+\subsection{Using Microservices}
+We built the system as separate small services that work together. This means each part can be updated or fixed without affecting other parts. If one part breaks, the rest keeps working.
+
+This approach makes the system more reliable and easier to manage.
+
+\subsection{API-First Design}
+We built everything to work through APIs. This makes it easy to connect with external AI services and add new features later. It also means we could build a mobile app or connect with other systems in the future.
+
+This design makes the platform flexible and ready for future changes.\section{Domain Model/Class Diagram}
+In this subsection, add the Class Diagram of your system. Class diagrams represent the structure design of your system.
+
+\section{Policies and Tactics}
+This section describes the specific design choices and implementation details that affect how the system works.
+
+\subsection{Codebase Organization}
+We organize our code in a clear folder structure. The main project has three main folders: frontend, backend, and shared. The frontend folder contains all the user interface code, the backend folder contains all the server code, and the shared folder contains code used by both.
+
+Within each folder, we group related files together. For example, all authentication code goes in one folder, all learning module code goes in another. This makes it easy to find and maintain code.
+
+We use consistent naming for files and folders. All folder names are lowercase with underscores, and all file names follow the same pattern. This helps developers quickly understand the codebase structure.
+
+\subsection{Development Tools}
+We use specific tools for development. All developers use VS Code as the main editor because it has good support for our programming languages. We use Git for version control and GitHub for storing our code.
+
+We use Docker for running the application locally and in production. This ensures everyone has the same environment. We also use Postman for testing APIs and Chrome DevTools for debugging the frontend.
+
+All tools are documented so new developers can set up their environment quickly. We also provide scripts to automatically install and configure everything needed.
+\subsection{Coding Guidelines}
+We follow simple rules for writing code. All code must be clean and easy to read. We use tools to automatically format code so it looks the same everywhere.
+
+All functions and classes must have clear names. We add comments to explain complex code. We use type hints in Python to make code easier to understand.
+
+We check code automatically before it gets merged. This makes sure all code follows the same rules.
+\subsection{Testing Strategies}
+We test our code at multiple levels. Unit tests check individual functions, integration tests check how different parts work together, and end-to-end tests check complete user workflows.
+
+We write tests for all new features and bug fixes. Tests must pass before code can be merged. We also measure how much of our code is covered by tests and aim for high coverage.
+
+We use automated testing tools that run tests every time we make changes. This helps us catch problems early and ensures the system works correctly.
+
+\subsection{Documentation Practices}
+We document everything thoroughly. All APIs have detailed documentation explaining what they do and how to use them. All code has comments explaining complex logic.
+
+We maintain user guides for how to use the platform and developer guides for how to work with the code. We also document our deployment process and troubleshooting steps.
+
+All documentation is kept up to date when we make changes. We review documentation regularly to ensure it's accurate and helpful.
+
+
+
+
+
+
+\section{Conclusion}
+This chapter presented a comprehensive design framework for the GrowWise AI-powered adaptive learning platform, encompassing both high-level architectural decisions and detailed implementation strategies. The design process began with a thorough analysis of system requirements and constraints, leading to the development of a modular, scalable architecture that effectively addresses the identified challenges in developer education. The proposed system architecture leverages modern technologies including Next.js for the frontend, FastAPI for backend services, PostgreSQL for data persistence, and AI APIs for intelligent learning path generation and assessment. The design emphasizes approach-oriented learning through dynamic path generation, real-time AI mentorship via RAG-based knowledge retrieval, and comprehensive evaluation mechanisms that assess both technical skills and problem-solving approaches. The architectural decisions prioritize scalability, maintainability, and user experience while ensuring security, performance, and accessibility requirements are met. The modular design approach enables independent development and testing of system components, facilitating iterative improvement and future enhancements. The comprehensive design documentation, including detailed class diagrams, system interactions, and implementation strategies, provides a solid foundation for the development phase. The design successfully addresses the core objectives of creating a personalized, adaptive learning platform that moves beyond traditional static course structures to provide dynamic, context-aware education tailored to individual developer needs and learning patterns.
+
+
+\chapter{Conclusions and Future Work}
+
+\section{Project Summary and Achievements}
+This Final Year Project successfully designed and developed GrowWise, an AI-powered adaptive learning platform that addresses critical gaps in developer education. The project achieved its primary objective of creating a personalized, approach-oriented learning system that moves beyond traditional static course structures to provide dynamic, context-aware education tailored to individual developer needs. Through comprehensive research and analysis of fifteen existing learning platforms, the project identified key limitations in current developer education, including insufficient real-time architectural evaluation, limited focus on problem-solving approaches, and lack of comprehensive AI-driven mentorship systems. The solution integrates modern technologies including Next.js, FastAPI, PostgreSQL, and AI APIs to deliver a scalable, maintainable platform that emphasizes both technical skill development and critical thinking capabilities.
+
+\section{Key Findings and Results}
+The literature review revealed that while existing platforms excel in specific areas such as project-based learning (freeCodeCamp, Udacity), adaptive assessment (Pluralsight, DataCamp), and AI integration (CYPHER Learning), none provide the comprehensive combination of features that GrowWise delivers. The system architecture successfully addresses identified gaps through dynamic path generation, real-time AI mentorship via RAG-based knowledge retrieval, and comprehensive evaluation mechanisms that assess both technical skills and architectural reasoning. The modular design approach enables independent development and testing of system components, facilitating iterative improvement and future enhancements. The comprehensive design documentation provides a solid foundation for implementation, with detailed class diagrams, system interactions, and implementation strategies that ensure successful development and deployment.
+
+\section{Project Scope Coverage and Objectives Achievement}
+The project scope was comprehensively covered, successfully addressing all defined objectives. The system design encompasses user management, adaptive learning path generation, AI-powered assessment, and progress tracking as specified in the requirements. The platform supports multiple technology tracks, provides personalized learning experiences, and includes both user and administrative interfaces. All functional and non-functional requirements were met, including performance, security, scalability, and usability standards. The design successfully integrates approach-oriented learning methodologies with real-time AI mentorship, creating a unique educational platform that bridges the gap between academic learning and industry readiness. The project scope was fully realized within the defined constraints, delivering a complete solution that addresses the identified challenges in developer education.
+
+\section{Challenges Faced and Limitations}
+Several challenges were encountered during the project development. The complexity of integrating multiple AI services while maintaining system performance required careful architectural planning and optimization strategies. Ensuring seamless user experience across different devices and network conditions necessitated responsive design considerations and graceful degradation mechanisms. The dynamic nature of AI-generated content required robust error handling and fallback mechanisms to maintain system reliability. Additionally, balancing the depth of AI evaluation with system performance presented ongoing optimization challenges. Some limitations include the dependency on external AI APIs for core functionality, which may impact system availability and response times. The current design focuses on web-based deployment, limiting accessibility for users preferring mobile-native applications. Furthermore, the system's effectiveness is constrained by the quality and comprehensiveness of the ingested learning materials and RAG knowledge base.
+
+\section{Future Work and Recommendations}
+
+\subsection{Phase 2 Development Plan (FYP-2)}
+For the second phase of the Final Year Project, the following development plan is proposed:
+
+\begin{enumerate}
+    \item \textbf{System Implementation:} Complete the full-stack development of the GrowWise platform, including frontend interface, backend services, database integration, and AI service connections.
+    
+    \item \textbf{AI Model Integration:} Implement and test the Agentic RAG mentor system, AI path generation algorithms, and evaluation modules using real AI APIs and vector databases.
+    
+    \item \textbf{Content Development:} Create comprehensive learning materials, coding exercises, and project templates for multiple technology tracks including web development, data science, and mobile development.
+    
+    \item \textbf{Testing and Validation:} Conduct extensive testing including unit tests, integration tests, user acceptance testing, and performance testing to ensure system reliability and usability.
+    
+    \item \textbf{User Interface Enhancement:} Develop responsive, accessible user interfaces with modern design principles, ensuring optimal user experience across all devices and platforms.
+    
+    \item \textbf{Performance Optimization:} Implement caching mechanisms, database optimization, and AI response optimization to ensure fast, scalable system performance.
+    
+    \item \textbf{Security Implementation:} Implement comprehensive security measures including authentication, authorization, data encryption, and API security protocols.
+    
+    \item \textbf{Deployment and Monitoring:} Deploy the system to production environment and implement monitoring, logging, and analytics capabilities for system maintenance and improvement.
+\end{enumerate}
+
+\subsection{Long-term Recommendations}
+Beyond the immediate FYP-2 development, several long-term recommendations are proposed:
+
+\begin{itemize}
+    \item \textbf{Mobile Application Development:} Extend the platform to include native mobile applications for iOS and Android to improve accessibility and user engagement.
+    
+    \item \textbf{Advanced AI Capabilities:} Implement more sophisticated AI models for code analysis, architectural evaluation, and personalized learning recommendations using fine-tuned models specific to developer education.
+    
+    \item \textbf{Community Features:} Add collaborative learning features including peer review systems, discussion forums, and team project capabilities to enhance social learning aspects.
+    
+    \item \textbf{Industry Integration:} Develop partnerships with technology companies to provide real-world project opportunities and industry mentorship programs.
+    
+    \item \textbf{Analytics and Insights:} Implement advanced analytics to provide detailed insights into learning patterns, skill development trends, and platform effectiveness for continuous improvement.
+    
+    \item \textbf{Multi-language Support:} Extend the platform to support multiple programming languages and frameworks beyond the initial tracks to serve a broader developer community.
+    
+    \item \textbf{Enterprise Features:} Develop enterprise-level features including team management, progress tracking, and custom learning path creation for organizations and educational institutions.
+\end{itemize}
+
+\section{Final Remarks}
+The GrowWise project represents a significant contribution to the field of developer education, addressing critical gaps in current learning platforms through innovative AI integration and approach-oriented learning methodologies. The comprehensive design and implementation strategy provides a solid foundation for creating a transformative educational platform that can adapt to the rapidly evolving technology landscape. The project successfully demonstrates the potential of AI-driven personalized learning in technical education, offering a scalable solution that can benefit individual learners, educational institutions, and technology companies alike. The detailed development plan for FYP-2 ensures continued progress toward a fully functional platform that can make a meaningful impact on developer education and skill development in the modern technology ecosystem.
+
+{
+\bibliographystyle{ieeetr}
+\bibliography{fypbib} %specify your .bib file here
+}
+%ADD APPENDICES IF REQUIRED OTHERWISE COMMENT IT OUT
+\appendix
+\end{document}
+
+
