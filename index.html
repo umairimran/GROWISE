@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grow Wise - AI Adaptive Learning</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=general-sans@400,500,600&display=swap"
+    rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['General Sans', 'sans-serif'],
+            display: ['Clash Display', 'sans-serif'],
+            serif: ['Clash Display', 'serif'],
+          },
+          colors: {
+            // Using CSS variables for Theming
+            background: 'rgb(var(--background) / <alpha-value>)',
+            surface: 'rgb(var(--surface) / <alpha-value>)',
+            contrast: 'rgb(var(--contrast) / <alpha-value>)',
+            border: 'rgb(var(--border) / <alpha-value>)',
+            accent: '#2563EB',
+          },
+          boxShadow: {
+            'soft': '0 4px 20px rgba(0,0,0,0.05)',
+            'glow': '0 0 40px rgba(37, 99, 235, 0.2)',
+          },
+          animation: {
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'scroll': 'scroll 40s linear infinite',
+            'blob': 'blob 7s infinite',
+            'fade-in-up': 'fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+            'fade-in': 'fadeIn 0.5s ease-out forwards',
+          },
+          keyframes: {
+            scroll: {
+              '0%': { transform: 'translateX(0)' },
+              '100%': { transform: 'translateX(-50%)' },
+            },
+            blob: {
+              '0%': { transform: 'translate(0px, 0px) scale(1)' },
+              '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+              '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+              '100%': { transform: 'translate(0px, 0px) scale(1)' },
+            },
+            fadeInUp: {
+              '0%': { opacity: '0', transform: 'translateY(20px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+            fadeIn: {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' },
+            }
+          }
+        },
+      },
+    }
+  </script>
+  <style>
+    :root {
+      /* Light Mode (Professional/Clean) */
+      --background: 249 249 249;
+      /* #F9F9F9 */
+      --surface: 255 255 255;
+      /* #FFFFFF */
+      --contrast: 26 26 26;
+      /* #1A1A1A (Text & Primary Elements) */
+      --border: 229 231 235;
+      /* #E5E7EB */
+    }
+
+    .dark {
+      /* Dark Mode (Rich Darks / Attio Style) */
+      --background: 10 10 10;
+      /* #0A0A0A (Deepest Charcoal) */
+      --surface: 23 23 23;
+      /* #171717 (Subtle Contrast) */
+      --contrast: 237 237 237;
+      /* #EDEDED (Soft White Text) */
+      --border: 255 255 255;
+      /* White, but used with opacity in Tailwind */
+    }
+
+    body {
+      background-color: rgb(var(--background));
+      color: rgb(var(--contrast));
+      font-family: 'General Sans', sans-serif;
+      overflow-x: hidden;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* Smooth transitions for all colored elements */
+    *,
+    *::before,
+    *::after {
+      transition-property: background-color, border-color, color, fill, stroke;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      transition-duration: 300ms;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      font-family: 'Clash Display', sans-serif;
+    }
+
+    /* Animation Delays */
+    .delay-100 {
+      animation-delay: 100ms;
+    }
+
+    .delay-200 {
+      animation-delay: 200ms;
+    }
+
+    .delay-300 {
+      animation-delay: 300ms;
+    }
+
+    .delay-400 {
+      animation-delay: 400ms;
+    }
+
+    .delay-500 {
+      animation-delay: 500ms;
+    }
+
+    .delay-700 {
+      animation-delay: 700ms;
+    }
+
+    .delay-2000 {
+      animation-delay: 2000ms;
+    }
+
+    .delay-4000 {
+      animation-delay: 4000ms;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* Specific override for dark mode borders */
+    .dark .border-border {
+      border-color: rgba(255, 255, 255, 0.1) !important;
+    }
+  </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^18.3.1",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^18.3.1/",
+    "react/": "https://aistudiocdn.com/react@^18.3.1/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.32.0",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.556.0",
+    "recharts": "https://aistudiocdn.com/recharts@^3.5.1",
+    "react-markdown": "https://aistudiocdn.com/react-markdown@^10.1.0",
+    "@supabase/supabase-js": "https://aistudiocdn.com/@supabase/supabase-js@^2.45.4",
+    "framer-motion": "https://aistudiocdn.com/framer-motion@^11.0.8",
+    "gsap": "https://aistudiocdn.com/gsap@^3.12.5",
+    "path": "https://aistudiocdn.com/path@^0.12.7",
+    "fs": "https://aistudiocdn.com/fs@^0.0.1-security",
+    "three": "https://aistudiocdn.com/three@^0.169.0",
+    "@react-three/fiber": "https://aistudiocdn.com/@react-three/fiber@^8.15.13",
+    "@react-three/drei": "https://aistudiocdn.com/@react-three/drei@^9.122.0"
+  }
+}
+</script>
+  <link rel="stylesheet" href="/index.css">
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+
+</html>
