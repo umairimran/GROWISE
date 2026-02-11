@@ -168,44 +168,6 @@ def get_stage_content(
     return result
 
 
-@router.get("/{content_id}", response_model=schemas.StageContentResponse)
-def get_content_item(
-    content_id: int,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
-):
-    """
-    Get a specific content item
-    """
-    content = db.query(models.StageContent).filter(
-        models.StageContent.content_id == content_id
-    ).first()
-    
-    if not content:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Content not found"
-        )
-    
-    # Verify content belongs to user's learning path
-    stage = db.query(models.LearningPathStage).filter(
-        models.LearningPathStage.stage_id == content.stage_id
-    ).first()
-    
-    path = db.query(models.LearningPath).filter(
-        models.LearningPath.path_id == stage.path_id,
-        models.LearningPath.user_id == current_user.user_id
-    ).first()
-    
-    if not path:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Content does not belong to your learning path"
-        )
-    
-    return content
-
-
 # ============================================================================
 # User Progress Management
 # ============================================================================
@@ -451,5 +413,43 @@ def get_my_content_progress(
     progress_list = query.order_by(models.UserContentProgress.started_at.desc()).all()
     
     return progress_list
+
+
+@router.get("/{content_id}", response_model=schemas.StageContentResponse)
+def get_content_item(
+    content_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """
+    Get a specific content item
+    """
+    content = db.query(models.StageContent).filter(
+        models.StageContent.content_id == content_id
+    ).first()
+    
+    if not content:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Content not found"
+        )
+    
+    # Verify content belongs to user's learning path
+    stage = db.query(models.LearningPathStage).filter(
+        models.LearningPathStage.stage_id == content.stage_id
+    ).first()
+    
+    path = db.query(models.LearningPath).filter(
+        models.LearningPath.path_id == stage.path_id,
+        models.LearningPath.user_id == current_user.user_id
+    ).first()
+    
+    if not path:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Content does not belong to your learning path"
+        )
+    
+    return content
 
 

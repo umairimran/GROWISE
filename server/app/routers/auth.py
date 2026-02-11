@@ -32,6 +32,9 @@ def register_user(
     Register a new user
     """
     # Check if user already exists
+    # Normalize email to lowercase
+    user_data.email = user_data.email.lower()
+    
     existing_user = db.query(models.User).filter(
         models.User.email == user_data.email
     ).first()
@@ -69,7 +72,7 @@ def login(
     """
     # Find user by email (username field in OAuth2 form)
     user = db.query(models.User).filter(
-        models.User.email == form_data.username
+        models.User.email == form_data.username.lower()
     ).first()
     
     if not user or not verify_password(form_data.password, user.password_hash):
@@ -125,7 +128,7 @@ def login_json(
     Alternative login endpoint that accepts JSON instead of form data
     """
     user = db.query(models.User).filter(
-        models.User.email == credentials.email
+        models.User.email == credentials.email.lower()
     ).first()
     
     if not user or not verify_password(credentials.password, user.password_hash):
@@ -317,8 +320,9 @@ def update_current_user(
     
     if user_data.email is not None:
         # Check if email is already taken
+        normalized_email = user_data.email.lower()
         existing_user = db.query(models.User).filter(
-            models.User.email == user_data.email,
+            models.User.email == normalized_email,
             models.User.user_id != current_user.user_id
         ).first()
         
@@ -328,7 +332,7 @@ def update_current_user(
                 detail="Email already in use"
             )
         
-        current_user.email = user_data.email
+        current_user.email = normalized_email
     
     db.commit()
     db.refresh(current_user)

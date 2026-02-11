@@ -17,7 +17,6 @@ load_dotenv()
 pwd_context = CryptContext(
     schemes=["bcrypt"],
     deprecated="auto",
-    bcrypt__truncate_error=False,
 )
 
 # JWT configuration
@@ -34,9 +33,13 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def get_password_hash(password: str) -> str:
     """Hash a password - truncate to 72 bytes if longer"""
     # Bcrypt has a 72-byte limit, so truncate if needed
-    if len(password.encode('utf-8')) > 72:
-        password = password.encode('utf-8')[:72].decode('utf-8', errors='ignore')
-    return pwd_context.hash(password)
+    password_bytes = password.encode('utf-8')
+    if len(password_bytes) > 72:
+        password_bytes = password_bytes[:72]
+    
+    # We must decode back to string because passlib expects a string, 
+    # but we've ensured the underlying byte representation is <= 72 bytes
+    return pwd_context.hash(password_bytes.decode('utf-8', errors='ignore'))
 
 
 def create_access_token(data: dict, expires_delta: timedelta = None) -> str:

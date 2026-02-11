@@ -63,7 +63,7 @@ def get_assessment_history(
     return {
         "total_attempts": len(history),
         "history": history,
-        "improvement": self._calculate_improvement(history) if len(history) > 1 else None
+        "improvement": _calculate_improvement(history) if len(history) > 1 else None
     }
 
 
@@ -299,7 +299,7 @@ def get_evaluation_history(
     return {
         "total_evaluations": len(history),
         "history": history,
-        "progression": self._calculate_evaluation_progression(history) if len(history) > 1 else None
+        "progression": _calculate_evaluation_progression(history) if len(history) > 1 else None
     }
 
 
@@ -560,5 +560,6 @@ def get_timeline_analytics(
         "total_events": len(timeline),
         "timeline": timeline
     }
+
 
 

@@ -53,71 +53,8 @@ def get_all_tracks(
     return tracks
 
 
-@router.get("/{track_id}", response_model=schemas.TrackResponse)
-def get_track(
-    track_id: int,
-    db: Session = Depends(get_db)
-):
-    """
-    Get a specific track by ID
-    """
-    track = db.query(models.Track).filter(models.Track.track_id == track_id).first()
-    if not track:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Track not found"
-        )
-    return track
-
-
-@router.put("/{track_id}", response_model=schemas.TrackResponse)
-def update_track(
-    track_id: int,
-    track_data: schemas.TrackCreate,
-    db: Session = Depends(get_db),
-    admin_user: models.User = Depends(get_admin_user)
-):
-    """
-    Update a track (Admin only)
-    """
-    track = db.query(models.Track).filter(models.Track.track_id == track_id).first()
-    if not track:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Track not found"
-        )
-    
-    for key, value in track_data.model_dump().items():
-        setattr(track, key, value)
-    
-    db.commit()
-    db.refresh(track)
-    return track
-
-
-@router.delete("/{track_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_track(
-    track_id: int,
-    db: Session = Depends(get_db),
-    admin_user: models.User = Depends(get_admin_user)
-):
-    """
-    Delete a track (Admin only)
-    """
-    track = db.query(models.Track).filter(models.Track.track_id == track_id).first()
-    if not track:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Track not found"
-        )
-    
-    db.delete(track)
-    db.commit()
-    return None
-
-
 # ============================================================================
-# User Track Selection Endpoints
+# User Track Selection Endpoints (static paths BEFORE dynamic /{track_id})
 # ============================================================================
 
 @router.post("/select", response_model=schemas.UserTrackSelectionResponse, status_code=status.HTTP_201_CREATED)
@@ -197,4 +134,71 @@ def get_my_current_track(
         )
     
     return selection.track
+
+
+# ============================================================================
+# Track CRUD by ID (dynamic path /{track_id})
+# ============================================================================
+
+@router.get("/{track_id}", response_model=schemas.TrackResponse)
+def get_track(
+    track_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Get a specific track by ID
+    """
+    track = db.query(models.Track).filter(models.Track.track_id == track_id).first()
+    if not track:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Track not found"
+        )
+    return track
+
+
+@router.put("/{track_id}", response_model=schemas.TrackResponse)
+def update_track(
+    track_id: int,
+    track_data: schemas.TrackCreate,
+    db: Session = Depends(get_db),
+    admin_user: models.User = Depends(get_admin_user)
+):
+    """
+    Update a track (Admin only)
+    """
+    track = db.query(models.Track).filter(models.Track.track_id == track_id).first()
+    if not track:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Track not found"
+        )
+    
+    for key, value in track_data.model_dump().items():
+        setattr(track, key, value)
+    
+    db.commit()
+    db.refresh(track)
+    return track
+
+
+@router.delete("/{track_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_track(
+    track_id: int,
+    db: Session = Depends(get_db),
+    admin_user: models.User = Depends(get_admin_user)
+):
+    """
+    Delete a track (Admin only)
+    """
+    track = db.query(models.Track).filter(models.Track.track_id == track_id).first()
+    if not track:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Track not found"
+        )
+    
+    db.delete(track)
+    db.commit()
+    return None
 
