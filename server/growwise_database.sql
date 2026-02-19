@@ -89,6 +89,20 @@ CREATE TABLE tracks (
     description TEXT NOT NULL
 );
 
+-- Dimensions allow multi-perspective assessment per track
+CREATE TABLE assessment_dimensions (
+    dimension_id SERIAL PRIMARY KEY,
+    track_id INTEGER NOT NULL REFERENCES tracks(track_id) ON DELETE CASCADE,
+    code VARCHAR(100) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    weight DECIMAL(4,3) NOT NULL CHECK (weight >= 0 AND weight <= 1),
+    UNIQUE(track_id, name),
+    UNIQUE(track_id, code)
+);
+
+CREATE INDEX idx_assessment_dimensions_track ON assessment_dimensions(track_id);
+
 CREATE TABLE user_track_selection (
     selection_id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
@@ -119,6 +133,7 @@ CREATE INDEX idx_assessment_sessions_status ON assessment_sessions(status);
 CREATE TABLE assessment_question_pool (
     question_id SERIAL PRIMARY KEY,
     track_id INTEGER NOT NULL REFERENCES tracks(track_id) ON DELETE CASCADE,
+    dimension_id INTEGER REFERENCES assessment_dimensions(dimension_id) ON DELETE SET NULL,
     question_text TEXT NOT NULL,
     question_type VARCHAR(20) NOT NULL CHECK (question_type IN ('mcq', 'logic', 'open')),
     difficulty VARCHAR(20) NOT NULL CHECK (difficulty IN ('low', 'medium', 'high'))
@@ -144,11 +159,28 @@ CREATE TABLE assessment_responses (
     user_answer TEXT NOT NULL,
     ai_score DECIMAL(3,2) CHECK (ai_score >= 0 AND ai_score <= 1),
     ai_explanation TEXT NOT NULL,
+    criteria_scores TEXT,
     submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_assessment_responses_session ON assessment_responses(session_id);
 CREATE INDEX idx_assessment_responses_question ON assessment_responses(question_id);
+
+-- Stores per-dimension aggregated scores after a session is completed.
+-- dimension_score is the average final_score (0-1) of all questions in that dimension.
+-- weighted_contribution = dimension_score * dimension.weight (impact on overall score).
+CREATE TABLE assessment_dimension_results (
+    dimension_result_id SERIAL PRIMARY KEY,
+    session_id INTEGER NOT NULL REFERENCES assessment_sessions(session_id) ON DELETE CASCADE,
+    dimension_id INTEGER NOT NULL REFERENCES assessment_dimensions(dimension_id) ON DELETE CASCADE,
+    dimension_score DECIMAL(4,3) NOT NULL CHECK (dimension_score >= 0 AND dimension_score <= 1),
+    weighted_contribution DECIMAL(6,4) NOT NULL,
+    questions_evaluated INTEGER NOT NULL DEFAULT 0,
+    UNIQUE(session_id, dimension_id)
+);
+
+CREATE INDEX idx_assessment_dimension_results_session ON assessment_dimension_results(session_id);
+CREATE INDEX idx_assessment_dimension_results_dimension ON assessment_dimension_results(dimension_id);
 
 CREATE TABLE assessment_results (
     result_id SERIAL PRIMARY KEY,
@@ -320,18 +352,14 @@ CREATE INDEX idx_evaluation_results_evaluation ON evaluation_results(evaluation_
 CREATE INDEX idx_evaluation_results_readiness ON evaluation_results(readiness_level);
 
 -- ============================================================================
--- SAMPLE DATA INSERTION (Optional - for testing)
+-- SAMPLE DATA (Optional — uncomment to seed initial tracks)
+-- Admin user is created automatically by the server on first boot.
 -- ============================================================================
 
--- Insert sample admin user
-INSERT INTO users (full_name, email, password_hash, role) VALUES
-('Admin User', 'admin@growwise.com', '$2b$10$examplehash', 'admin');
-
--- Insert sample tracks
-INSERT INTO tracks (track_name, description) VALUES
-('Full Stack Development', 'Complete web development including frontend, backend, and databases'),
-('Data Science', 'Machine learning, AI, and data analysis'),
-('DevOps Engineering', 'CI/CD, cloud infrastructure, and automation');
+-- INSERT INTO tracks (track_name, description) VALUES
+-- ('Full Stack Development', 'Complete web development including frontend, backend, and databases'),
+-- ('Data Science', 'Machine learning, AI, and data analysis'),
+-- ('DevOps Engineering', 'CI/CD, cloud infrastructure, and automation');
 
 -- ============================================================================
 -- USEFUL QUERIES FOR VERIFICATION

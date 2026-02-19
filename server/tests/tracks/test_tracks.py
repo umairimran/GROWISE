@@ -1,5 +1,6 @@
+import time
 import uuid
-from typing import Dict
+from typing import Dict, List
 
 import httpx
 import pytest
@@ -246,4 +247,343 @@ def test_get_my_current_track(
     current = current_resp.json()
     assert current["track_id"] == track_id
     assert current["track_name"] == name
+
+
+# ============================================================================
+# Track assessment dimensions
+# ============================================================================
+
+
+def _create_track(api_client: httpx.Client, admin_headers: Dict[str, str]) -> int:
+    """
+    Helper: create a track and return its ID.
+    """
+    name = f"Dimensions Track {uuid.uuid4()}"
+    payload = {"track_name": name, "description": "Track with dimensions"}
+    resp = api_client.post("/api/tracks/", headers=admin_headers, json=payload)
+    assert resp.status_code == 201
+    return resp.json()["track_id"]
+
+
+def test_create_dimension_requires_admin(
+    api_client: httpx.Client, auth_headers: Dict[str, str], admin_headers: Dict[str, str]
+) -> None:
+    """
+    Only admin users should be able to create dimensions for a track.
+    """
+    track_id = _create_track(api_client, admin_headers)
+
+    payload = {
+        "name": "Problem Solving",
+        "description": "Ability to break down and solve complex problems",
+        "weight": 0.4,
+    }
+
+    # Unauthenticated
+    resp_unauth = api_client.post(
+        f"/api/tracks/{track_id}/dimensions",
+        json=payload,
+    )
+    assert resp_unauth.status_code == 401
+
+    # Authenticated non-admin
+    resp_user = api_client.post(
+        f"/api/tracks/{track_id}/dimensions",
+        headers=auth_headers,
+        json=payload,
+    )
+    assert resp_user.status_code == 403
+
+
+def test_admin_can_crud_dimensions_for_track(
+    api_client: httpx.Client, admin_headers: Dict[str, str]
+) -> None:
+    """
+    Admin can create, list, update, and delete assessment dimensions for a track.
+    """
+    track_id = _create_track(api_client, admin_headers)
+
+    # CREATE
+    create_payload = {
+        "name": "Theory Understanding",
+        "description": "Depth of theoretical knowledge for this track",
+        "weight": 0.5,
+    }
+    create_resp = api_client.post(
+        f"/api/tracks/{track_id}/dimensions",
+        headers=admin_headers,
+        json=create_payload,
+    )
+    assert create_resp.status_code == 201
+    created = create_resp.json()
+    dimension_id = created["dimension_id"]
+    assert created["track_id"] == track_id
+    assert created["name"] == create_payload["name"]
+
+    # LIST
+    list_resp = api_client.get(f"/api/tracks/{track_id}/dimensions")
+    assert list_resp.status_code == 200
+    dims = list_resp.json()
+    assert any(d["dimension_id"] == dimension_id for d in dims)
+
+    # UPDATE
+    update_payload = {
+        "name": "Theory & Concepts",
+        "description": "Updated description for theory and concepts",
+        "weight": 0.6,
+    }
+    update_resp = api_client.put(
+        f"/api/tracks/dimensions/{dimension_id}",
+        headers=admin_headers,
+        json=update_payload,
+    )
+    assert update_resp.status_code == 200
+    updated = update_resp.json()
+    assert updated["name"] == update_payload["name"]
+    assert float(updated["weight"]) == update_payload["weight"]
+
+    # DELETE
+    delete_resp = api_client.delete(
+        f"/api/tracks/dimensions/{dimension_id}",
+        headers=admin_headers,
+    )
+    assert delete_resp.status_code == 204
+
+    # Ensure it's gone
+    list_after_delete = api_client.get(f"/api/tracks/{track_id}/dimensions")
+    assert list_after_delete.status_code == 200
+    dims_after = list_after_delete.json()
+    assert all(d["dimension_id"] != dimension_id for d in dims_after)
+
+
+def test_cannot_create_duplicate_dimension_name_per_track(
+    api_client: httpx.Client, admin_headers: Dict[str, str]
+) -> None:
+    """
+    Creating two dimensions with the same name for one track should return 400.
+    """
+    track_id = _create_track(api_client, admin_headers)
+
+    payload = {
+        "name": "Communication",
+        "description": "Ability to explain ideas clearly",
+        "weight": 0.3,
+    }
+
+    first = api_client.post(
+        f"/api/tracks/{track_id}/dimensions",
+        headers=admin_headers,
+        json=payload,
+    )
+    assert first.status_code == 201
+
+    second = api_client.post(
+        f"/api/tracks/{track_id}/dimensions",
+        headers=admin_headers,
+        json=payload,
+    )
+    assert second.status_code == 400
+    assert "already exists" in second.text or "already" in second.text
+
+
+# ============================================================================
+# Auto-generation of dimensions on track creation
+# ============================================================================
+
+
+def test_create_track_auto_generates_dimensions(
+    api_client: httpx.Client, admin_headers: Dict[str, str]
+) -> None:
+    """
+    When a new track is created the server fires a background task that
+    calls the dimension generator and stores the results.  After a short
+    pause we verify that at least 8 dimensions were written to the DB and
+    that every row is correctly linked to the new track.
+    """
+    track_name = f"AutoGen Track {uuid.uuid4()}"
+    resp = api_client.post(
+        "/api/tracks/",
+        headers=admin_headers,
+        json={"track_name": track_name, "description": "Track for auto-dimension test"},
+    )
+    assert resp.status_code == 201
+    track_id = resp.json()["track_id"]
+
+    # The background task is async + mock (no I/O), so it completes almost
+    # instantly; a 1-second pause is more than enough.
+    time.sleep(1)
+
+    db = SessionLocal()
+    try:
+        dimensions = (
+            db.query(models.AssessmentDimension)
+            .filter(models.AssessmentDimension.track_id == track_id)
+            .all()
+        )
+        assert len(dimensions) >= 8, (
+            f"Expected ≥8 auto-generated dimensions, got {len(dimensions)}"
+        )
+        for dim in dimensions:
+            assert dim.track_id == track_id
+    finally:
+        db.close()
+
+
+def test_auto_generated_dimensions_have_valid_weights(
+    api_client: httpx.Client, admin_headers: Dict[str, str]
+) -> None:
+    """
+    Weights of all auto-generated dimensions must:
+    - each be in the range [0, 1]
+    - sum to approximately 1.0  (±0.01 tolerance for float rounding)
+    """
+    track_name = f"Weight Check Track {uuid.uuid4()}"
+    resp = api_client.post(
+        "/api/tracks/",
+        headers=admin_headers,
+        json={"track_name": track_name, "description": "Track for weight validation"},
+    )
+    assert resp.status_code == 201
+    track_id = resp.json()["track_id"]
+
+    time.sleep(1)
+
+    db = SessionLocal()
+    try:
+        dimensions = (
+            db.query(models.AssessmentDimension)
+            .filter(models.AssessmentDimension.track_id == track_id)
+            .all()
+        )
+        assert dimensions, "No dimensions were generated"
+
+        total = sum(float(dim.weight) for dim in dimensions)
+        assert abs(total - 1.0) <= 0.01, f"Weights sum to {total:.4f}, expected ~1.0"
+
+        for dim in dimensions:
+            w = float(dim.weight)
+            assert 0.0 <= w <= 1.0, (
+                f"Dimension '{dim.name}' has out-of-range weight {w}"
+            )
+    finally:
+        db.close()
+
+
+def test_auto_generated_dimensions_have_required_fields(
+    api_client: httpx.Client, admin_headers: Dict[str, str]
+) -> None:
+    """
+    Every auto-generated dimension row must have a non-empty name and
+    description, and a numeric weight.
+    """
+    track_name = f"Fields Check Track {uuid.uuid4()}"
+    resp = api_client.post(
+        "/api/tracks/",
+        headers=admin_headers,
+        json={"track_name": track_name, "description": "Track for field validation"},
+    )
+    assert resp.status_code == 201
+    track_id = resp.json()["track_id"]
+
+    time.sleep(1)
+
+    db = SessionLocal()
+    try:
+        dimensions = (
+            db.query(models.AssessmentDimension)
+            .filter(models.AssessmentDimension.track_id == track_id)
+            .all()
+        )
+        assert dimensions, "No dimensions were generated"
+
+        for dim in dimensions:
+            assert isinstance(dim.name, str) and len(dim.name.strip()) > 0, (
+                f"dimension_id={dim.dimension_id} has blank name"
+            )
+            assert isinstance(dim.description, str) and len(dim.description.strip()) > 0, (
+                f"dimension_id={dim.dimension_id} has blank description"
+            )
+            assert dim.weight is not None, (
+                f"dimension_id={dim.dimension_id} has NULL weight"
+            )
+    finally:
+        db.close()
+
+
+def test_auto_generated_dimensions_are_api_accessible(
+    api_client: httpx.Client, admin_headers: Dict[str, str]
+) -> None:
+    """
+    The dimensions written by the background task must also be retrievable
+    through the public GET /api/tracks/{track_id}/dimensions endpoint.
+    """
+    track_name = f"API Access Track {uuid.uuid4()}"
+    resp = api_client.post(
+        "/api/tracks/",
+        headers=admin_headers,
+        json={"track_name": track_name, "description": "Track for API access test"},
+    )
+    assert resp.status_code == 201
+    track_id = resp.json()["track_id"]
+
+    time.sleep(1)
+
+    list_resp = api_client.get(f"/api/tracks/{track_id}/dimensions")
+    assert list_resp.status_code == 200
+    dims: List[Dict] = list_resp.json()
+
+    assert len(dims) >= 8
+    for dim in dims:
+        assert dim["track_id"] == track_id
+        assert "name" in dim
+        assert "description" in dim
+        assert "weight" in dim
+
+
+def test_deleting_track_removes_its_auto_generated_dimensions(
+    api_client: httpx.Client, admin_headers: Dict[str, str]
+) -> None:
+    """
+    Deleting a track (CASCADE) must also remove all its dimensions from DB.
+    """
+    track_name = f"Cascade Delete Track {uuid.uuid4()}"
+    resp = api_client.post(
+        "/api/tracks/",
+        headers=admin_headers,
+        json={"track_name": track_name, "description": "Track for cascade delete test"},
+    )
+    assert resp.status_code == 201
+    track_id = resp.json()["track_id"]
+
+    time.sleep(1)
+
+    # Verify dimensions were created
+    db = SessionLocal()
+    try:
+        count_before = (
+            db.query(models.AssessmentDimension)
+            .filter(models.AssessmentDimension.track_id == track_id)
+            .count()
+        )
+        assert count_before >= 8
+    finally:
+        db.close()
+
+    # Delete the track
+    del_resp = api_client.delete(f"/api/tracks/{track_id}", headers=admin_headers)
+    assert del_resp.status_code == 204
+
+    # Dimensions must be gone (CASCADE)
+    db = SessionLocal()
+    try:
+        count_after = (
+            db.query(models.AssessmentDimension)
+            .filter(models.AssessmentDimension.track_id == track_id)
+            .count()
+        )
+        assert count_after == 0, (
+            f"Expected 0 dimensions after track delete, found {count_after}"
+        )
+    finally:
+        db.close()
 

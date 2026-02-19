@@ -80,6 +80,29 @@ class Track(Base):
     assessment_sessions = relationship("AssessmentSession", back_populates="track", cascade="all, delete-orphan")
     questions = relationship("AssessmentQuestionPool", back_populates="track", cascade="all, delete-orphan")
     knowledge_base = relationship("KnowledgeBase", back_populates="track", cascade="all, delete-orphan")
+    dimensions = relationship("AssessmentDimension", back_populates="track", cascade="all, delete-orphan")
+
+
+class AssessmentDimension(Base):
+    __tablename__ = "assessment_dimensions"
+
+    dimension_id = Column(Integer, primary_key=True, index=True)
+    track_id = Column(Integer, ForeignKey("tracks.track_id", ondelete="CASCADE"), nullable=False)
+    code = Column(String(100), nullable=False)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=False)
+    weight = Column(DECIMAL(4, 3), nullable=False)
+
+    __table_args__ = (
+        CheckConstraint("weight >= 0 AND weight <= 1", name="check_dimension_weight_range"),
+        UniqueConstraint("track_id", "name", name="unique_track_dimension_name"),
+        UniqueConstraint("track_id", "code", name="unique_track_dimension_code"),
+    )
+
+    # Relationships
+    track = relationship("Track", back_populates="dimensions")
+    questions = relationship("AssessmentQuestionPool", back_populates="dimension")
+    results = relationship("AssessmentDimensionResult", back_populates="dimension", cascade="all, delete-orphan")
 
 
 class UserTrackSelection(Base):
@@ -115,6 +138,7 @@ class AssessmentSession(Base):
     session_questions = relationship("AssessmentSessionQuestion", back_populates="session", cascade="all, delete-orphan")
     responses = relationship("AssessmentResponse", back_populates="session", cascade="all, delete-orphan")
     result = relationship("AssessmentResult", back_populates="session", uselist=False, cascade="all, delete-orphan")
+    dimension_results = relationship("AssessmentDimensionResult", back_populates="session", cascade="all, delete-orphan")
 
 
 class AssessmentQuestionPool(Base):
@@ -122,6 +146,11 @@ class AssessmentQuestionPool(Base):
 
     question_id = Column(Integer, primary_key=True, index=True)
     track_id = Column(Integer, ForeignKey("tracks.track_id", ondelete="CASCADE"), nullable=False)
+    dimension_id = Column(
+        Integer,
+        ForeignKey("assessment_dimensions.dimension_id", ondelete="SET NULL"),
+        nullable=True,
+    )
     question_text = Column(Text, nullable=False)
     question_type = Column(String(20), nullable=False)
     difficulty = Column(String(20), nullable=False)
@@ -133,6 +162,7 @@ class AssessmentQuestionPool(Base):
 
     # Relationships
     track = relationship("Track", back_populates="questions")
+    dimension = relationship("AssessmentDimension", back_populates="questions")
     session_questions = relationship("AssessmentSessionQuestion", back_populates="question", cascade="all, delete-orphan")
     responses = relationship("AssessmentResponse", back_populates="question", cascade="all, delete-orphan")
 
@@ -158,6 +188,8 @@ class AssessmentResponse(Base):
     user_answer = Column(Text, nullable=False)
     ai_score = Column(DECIMAL(3, 2), nullable=True)
     ai_explanation = Column(Text, nullable=False)
+    # JSON string — stores criteria_scores dict from the answer evaluator
+    criteria_scores = Column(Text, nullable=True)
     submitted_at = Column(TIMESTAMP, server_default=func.current_timestamp())
 
     __table_args__ = (
@@ -167,6 +199,30 @@ class AssessmentResponse(Base):
     # Relationships
     session = relationship("AssessmentSession", back_populates="responses")
     question = relationship("AssessmentQuestionPool", back_populates="responses")
+
+
+class AssessmentDimensionResult(Base):
+    """
+    Aggregated score per dimension for one completed assessment session.
+    Populated by complete_assessment; one row per (session, dimension).
+    """
+    __tablename__ = "assessment_dimension_results"
+
+    dimension_result_id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, ForeignKey("assessment_sessions.session_id", ondelete="CASCADE"), nullable=False)
+    dimension_id = Column(Integer, ForeignKey("assessment_dimensions.dimension_id", ondelete="CASCADE"), nullable=False)
+    dimension_score = Column(DECIMAL(4, 3), nullable=False)
+    weighted_contribution = Column(DECIMAL(6, 4), nullable=False)
+    questions_evaluated = Column(Integer, nullable=False, default=0)
+
+    __table_args__ = (
+        CheckConstraint("dimension_score >= 0 AND dimension_score <= 1", name="check_dim_result_score_range"),
+        UniqueConstraint("session_id", "dimension_id", name="unique_session_dimension_result"),
+    )
+
+    # Relationships
+    session = relationship("AssessmentSession", back_populates="dimension_results")
+    dimension = relationship("AssessmentDimension", back_populates="results")
 
 
 class AssessmentResult(Base):

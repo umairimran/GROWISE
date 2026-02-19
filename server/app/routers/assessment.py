@@ -1,15 +1,24 @@
 """
 Assessment router - handles AI-driven skill assessment
 """
+import json
+import logging
+from collections import defaultdict
+from datetime import datetime
+from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List
-from datetime import datetime
 
 from app.database import get_db
 from app import models, schemas
 from app.auth_middleware import get_current_user, get_admin_user
 from app.services.ai_service import ai_service
+from app.ai_services.assessment_question_generator import generate_assessment_questions
+from app.ai_services.answer_evaluator import evaluate_answer as evaluate_answer_ai
+from app.ai_services.learning_path_generator import generate_learning_path_stages
+
+log = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/assessment", tags=["Assessment"])
 
@@ -88,36 +97,71 @@ async def create_assessment_session(
     db.add(new_session)
     db.commit()
     db.refresh(new_session)
-    
-    # Generate AI-powered questions dynamically
-    ai_questions = await ai_service.generate_assessment_questions(
-        track_name=track.track_name,
-        difficulty="medium",
-        count=5
+
+    # ------------------------------------------------------------------
+    # Fetch this track's assessment dimensions
+    # ------------------------------------------------------------------
+    dimensions_rows = (
+        db.query(models.AssessmentDimension)
+        .filter(models.AssessmentDimension.track_id == session_data.track_id)
+        .all()
     )
-    
-    # Add questions to pool and link to session
+
+    # Build dimension dicts and a code→id lookup for storing FK
+    dimensions = [
+        {
+            "code": d.code,
+            "name": d.name,
+            "description": d.description,
+            "weight": float(d.weight),
+        }
+        for d in dimensions_rows
+    ]
+    dim_code_to_id = {d.code: d.dimension_id for d in dimensions_rows}
+
+    # ------------------------------------------------------------------
+    # Generate 10 dimension-aware questions (or fall back to generic)
+    # ------------------------------------------------------------------
+    if dimensions:
+        ai_questions = await generate_assessment_questions(
+            track_name=track.track_name,
+            dimensions=dimensions,
+            count=10,
+        )
+    else:
+        # Fallback: track has no dimensions yet — use the generic generator
+        ai_questions = await ai_service.generate_assessment_questions(
+            track_name=track.track_name,
+            difficulty="medium",
+            count=10,
+        )
+
+    # ------------------------------------------------------------------
+    # Store questions in the pool and link them to this session
+    # ------------------------------------------------------------------
     for q_data in ai_questions:
-        # Create question in pool
+        dimension_id = dim_code_to_id.get(q_data.get("dimension_code"))
+
         question = models.AssessmentQuestionPool(
             track_id=session_data.track_id,
+            dimension_id=dimension_id,
             question_text=q_data["question_text"],
             question_type=q_data["question_type"],
-            difficulty=q_data["difficulty"]
+            difficulty=q_data["difficulty"],
         )
         db.add(question)
         db.flush()
-        
-        # Link question to session
-        session_question = models.AssessmentSessionQuestion(
-            session_id=new_session.session_id,
-            question_id=question.question_id
+
+        db.add(
+            models.AssessmentSessionQuestion(
+                session_id=new_session.session_id,
+                question_id=question.question_id,
+            )
         )
-        db.add(session_question)
-    
+
     db.commit()
     db.refresh(new_session)
-    
+
     return new_session
 
 
@@ -218,31 +262,53 @@ async def submit_answer(
             detail="Question not part of this assessment"
         )
     
-    # Get question details
-    question = db.query(models.AssessmentQuestionPool).filter(
-        models.AssessmentQuestionPool.question_id == answer_data.question_id
-    ).first()
-    
-    # AI evaluates the answer with comprehensive analysis
-    ai_evaluation = await ai_service.evaluate_answer(
-        question_text=question.question_text,
-        user_answer=answer_data.user_answer,
-        question_type=question.question_type
+    # Get question with its dimension and track
+    question = (
+        db.query(models.AssessmentQuestionPool)
+        .filter(models.AssessmentQuestionPool.question_id == answer_data.question_id)
+        .first()
     )
-    
-    # Save response with detailed feedback (all in explanation field)
+
+    track = db.query(models.Track).filter(
+        models.Track.track_id == question.track_id
+    ).first()
+
+    # Resolve dimension context (may be NULL if question has no dimension)
+    dimension = None
+    if question.dimension_id:
+        dimension = db.query(models.AssessmentDimension).filter(
+            models.AssessmentDimension.dimension_id == question.dimension_id
+        ).first()
+
+    # ------------------------------------------------------------------
+    # Call the new multi-criteria evaluator with full context
+    # ------------------------------------------------------------------
+    ai_evaluation = await evaluate_answer_ai(
+        user_answer=answer_data.user_answer,
+        question_text=question.question_text,
+        track_name=track.track_name if track else "Unknown Track",
+        dimension_name=dimension.name if dimension else "General",
+        dimension_description=dimension.description if dimension else "",
+        dimension_weight=float(dimension.weight) if dimension else 1.0,
+        question_type=question.question_type,
+    )
+
+    # Persist response — criteria_scores stored as a JSON string
     response = models.AssessmentResponse(
         session_id=session_id,
         question_id=answer_data.question_id,
         user_answer=answer_data.user_answer,
-        ai_score=ai_evaluation['score'],
-        ai_explanation=ai_evaluation['explanation']
+        ai_score=ai_evaluation["final_score"],
+        ai_explanation=ai_evaluation["explanation"],
+        criteria_scores=json.dumps(ai_evaluation["criteria_scores"]),
     )
-    
+
     db.add(response)
     db.commit()
     db.refresh(response)
-    
+
+    # Deserialise criteria_scores for the response body
+    response.criteria_scores = json.dumps(ai_evaluation["criteria_scores"])
     return response
 
 
@@ -272,7 +338,12 @@ async def complete_assessment(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Assessment already completed"
         )
-    
+
+    # Fetch track for context
+    track = db.query(models.Track).filter(
+        models.Track.track_id == session.track_id
+    ).first()
+
     # Get all responses for this session
     responses = db.query(models.AssessmentResponse).filter(
         models.AssessmentResponse.session_id == session_id
@@ -284,10 +355,64 @@ async def complete_assessment(
             detail="No answers submitted yet"
         )
     
+    # ------------------------------------------------------------------
+    # Aggregate per-dimension scores
+    # ------------------------------------------------------------------
+    dim_scores: dict = defaultdict(list)   # dimension_id -> [final_score, ...]
+    for resp in responses:
+        q = db.query(models.AssessmentQuestionPool).filter(
+            models.AssessmentQuestionPool.question_id == resp.question_id
+        ).first()
+        if q and q.dimension_id:
+            dim_scores[q.dimension_id].append(float(resp.ai_score) if resp.ai_score else 0.0)
+
+    # Fetch dimension weights and store per-dimension result rows
+    dimension_map: dict = {}  # dimension_id -> AssessmentDimension
+    for dim_id in dim_scores:
+        dim = db.query(models.AssessmentDimension).filter(
+            models.AssessmentDimension.dimension_id == dim_id
+        ).first()
+        if dim:
+            dimension_map[dim_id] = dim
+
+    weighted_total = 0.0
+    total_weight_used = 0.0
+
+    for dim_id, scores in dim_scores.items():
+        dim = dimension_map.get(dim_id)
+        if not dim:
+            continue
+        avg_score = sum(scores) / len(scores)
+        weight = float(dim.weight)
+        contribution = round(avg_score * weight, 4)
+        weighted_total += contribution
+        total_weight_used += weight
+
+        # Upsert: skip if already exists (idempotent)
+        existing_dr = db.query(models.AssessmentDimensionResult).filter(
+            models.AssessmentDimensionResult.session_id == session_id,
+            models.AssessmentDimensionResult.dimension_id == dim_id,
+        ).first()
+        if not existing_dr:
+            db.add(models.AssessmentDimensionResult(
+                session_id=session_id,
+                dimension_id=dim_id,
+                dimension_score=round(avg_score, 3),
+                weighted_contribution=contribution,
+                questions_evaluated=len(scores),
+            ))
+
+    # ------------------------------------------------------------------
     # Calculate overall score
-    total_score = sum([float(r.ai_score) for r in responses if r.ai_score])
-    overall_score = (total_score / len(responses)) * 100
-    
+    # ------------------------------------------------------------------
+    if total_weight_used > 0:
+        # Dimension-aware: weighted average normalised to [0, 100]
+        overall_score = round((weighted_total / total_weight_used) * 100, 2)
+    else:
+        # Fallback: plain average across all responses
+        scores_all = [float(r.ai_score) for r in responses if r.ai_score]
+        overall_score = round((sum(scores_all) / len(scores_all)) * 100, 2) if scores_all else 0.0
+
     # Determine skill level
     if overall_score >= 80:
         detected_level = "advanced"
@@ -295,11 +420,20 @@ async def complete_assessment(
         detected_level = "intermediate"
     else:
         detected_level = "beginner"
-    
+
     # AI generates reasoning
     response_data = [{"answer": r.user_answer, "score": float(r.ai_score)} for r in responses]
-    ai_reasoning = f"Based on {len(responses)} responses with average score {overall_score:.2f}, user demonstrates {detected_level} level understanding."
-    
+    dim_summary = ", ".join(
+        f"{dimension_map[d].name}: {round(sum(s)/len(s)*100, 1)}%"
+        for d, s in dim_scores.items()
+        if d in dimension_map
+    )
+    ai_reasoning = (
+        f"Based on {len(responses)} responses with weighted average score {overall_score:.2f}%, "
+        f"user demonstrates {detected_level} level understanding."
+        + (f" Dimension breakdown — {dim_summary}." if dim_summary else "")
+    )
+
     # Create assessment result
     result = models.AssessmentResult(
         session_id=session_id,
@@ -307,9 +441,9 @@ async def complete_assessment(
         detected_level=detected_level,
         ai_reasoning=ai_reasoning
     )
-    
+
     db.add(result)
-    
+
     # Update session status
     session.status = "completed"
     session.completed_at = datetime.utcnow()
@@ -342,7 +476,76 @@ async def complete_assessment(
     
     db.commit()
     db.refresh(result)
-    
+
+    # ------------------------------------------------------------------
+    # Auto-generate learning path stages from raw Q&A context
+    # ------------------------------------------------------------------
+    try:
+        # Build full Q&A context for the AI
+        questions_and_answers = []
+        for resp in responses:
+            q = db.query(models.AssessmentQuestionPool).filter(
+                models.AssessmentQuestionPool.question_id == resp.question_id
+            ).first()
+            if not q:
+                continue
+
+            dim = None
+            if q.dimension_id:
+                dim = db.query(models.AssessmentDimension).filter(
+                    models.AssessmentDimension.dimension_id == q.dimension_id
+                ).first()
+
+            raw_criteria = resp.criteria_scores
+            try:
+                criteria_scores = json.loads(raw_criteria) if isinstance(raw_criteria, str) else (raw_criteria or {})
+            except (ValueError, TypeError):
+                criteria_scores = {}
+
+            questions_and_answers.append({
+                "question_text": q.question_text,
+                "user_answer": resp.user_answer,
+                "dimension": dim.name if dim else "General",
+                "criteria_scores": criteria_scores,
+                "final_score": float(resp.ai_score) if resp.ai_score else 0.0,
+                "ai_explanation": resp.ai_explanation or "",
+            })
+
+        # Generate stages (no content yet)
+        stages_data = await generate_learning_path_stages(
+            track_name=track.track_name if track else "General Track",
+            detected_level=detected_level,
+            questions_and_answers=questions_and_answers,
+        )
+
+        # Create learning_paths row
+        learning_path = models.LearningPath(
+            user_id=current_user.user_id,
+            result_id=result.result_id,
+        )
+        db.add(learning_path)
+        db.flush()
+
+        # Create learning_path_stages rows
+        for stage_data in stages_data:
+            db.add(models.LearningPathStage(
+                path_id=learning_path.path_id,
+                stage_name=stage_data["stage_name"],
+                stage_order=stage_data["stage_order"],
+                focus_area=stage_data["focus_area"],
+            ))
+
+        db.commit()
+        db.refresh(result)
+
+        # Attach learning_path_id to the response (not a DB column — set dynamically)
+        result.learning_path_id = learning_path.path_id
+
+    except Exception as exc:
+        log.error("❌  Learning path generation failed for session %s: %s", session_id, exc, exc_info=True)
+        # Don't fail the whole request — path can be generated later
+        db.rollback()
+
     return result
 
 
@@ -370,14 +573,55 @@ def get_assessment_result(
     result = db.query(models.AssessmentResult).filter(
         models.AssessmentResult.session_id == session_id
     ).first()
-    
+
     if not result:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Assessment not completed yet"
         )
-    
+
+    # Attach learning_path_id if a path was generated for this result
+    lp = db.query(models.LearningPath).filter(
+        models.LearningPath.result_id == result.result_id
+    ).first()
+    if lp:
+        result.learning_path_id = lp.path_id
+
     return result
+
+
+@router.get("/sessions/{session_id}/learning-path", response_model=schemas.LearningPathResponse)
+def get_session_learning_path(
+    session_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    """
+    Retrieve the AI-generated learning path (stages only) for a completed session.
+    """
+    session = db.query(models.AssessmentSession).filter(
+        models.AssessmentSession.session_id == session_id,
+        models.AssessmentSession.user_id == current_user.user_id,
+    ).first()
+    if not session:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
+
+    result = db.query(models.AssessmentResult).filter(
+        models.AssessmentResult.session_id == session_id
+    ).first()
+    if not result:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assessment not completed yet")
+
+    lp = db.query(models.LearningPath).filter(
+        models.LearningPath.result_id == result.result_id
+    ).first()
+    if not lp:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Learning path not yet generated for this session",
+        )
+
+    return lp
 
 
 @router.get("/my-sessions", response_model=List[schemas.AssessmentSessionResponse])

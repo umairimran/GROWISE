@@ -152,17 +152,18 @@ class UserTrackSelectionResponse(BaseModel):
 # ============================================================================
 # Assessment Schemas
 # ============================================================================
-
 class AssessmentQuestionCreate(BaseModel):
     track_id: int
     question_text: str
     question_type: Literal["mcq", "logic", "open"]
     difficulty: Literal["low", "medium", "high"]
+    dimension_id: Optional[int] = None
 
 
 class AssessmentQuestionResponse(BaseModel):
     question_id: int
     track_id: int
+    dimension_id: Optional[int] = None
     question_text: str
     question_type: str
     difficulty: str
@@ -199,7 +200,31 @@ class AssessmentResponseResponse(BaseModel):
     user_answer: str
     ai_score: Optional[Decimal] = None
     ai_explanation: str
+    criteria_scores: Optional[dict] = None
     submitted_at: datetime
+
+    class Config:
+        from_attributes = True
+
+    @validator("criteria_scores", pre=True, always=True)
+    @classmethod
+    def parse_criteria_scores(cls, v):
+        import json
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except (ValueError, TypeError):
+                return None
+        return v
+
+
+class AssessmentDimensionResultResponse(BaseModel):
+    dimension_result_id: int
+    session_id: int
+    dimension_id: int
+    dimension_score: Decimal
+    weighted_contribution: Decimal
+    questions_evaluated: int
 
     class Config:
         from_attributes = True
@@ -211,6 +236,27 @@ class AssessmentResultResponse(BaseModel):
     overall_score: Optional[Decimal] = None
     detected_level: str
     ai_reasoning: str
+    # Populated after complete_assessment auto-generates the learning path
+    learning_path_id: Optional[int] = None
+
+    class Config:
+        from_attributes = True
+
+
+class AssessmentDimensionBase(BaseModel):
+    name: str
+    description: str
+    weight: Decimal = Field(..., ge=0, le=1)
+
+
+class AssessmentDimensionCreate(AssessmentDimensionBase):
+    pass
+
+
+class AssessmentDimensionResponse(AssessmentDimensionBase):
+    dimension_id: int
+    track_id: int
+    code: str
 
     class Config:
         from_attributes = True

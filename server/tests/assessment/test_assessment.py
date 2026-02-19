@@ -128,12 +128,13 @@ def test_create_assessment_session_generates_questions(
     )
     assert questions_resp.status_code == 200
     questions = questions_resp.json()
-    # By default, we generate 5 questions in ai_service mock
-    assert len(questions) == 5
+    # Generator now produces 10 dimension-aware questions per session
+    assert len(questions) == 10
     for q in questions:
         assert q["track_id"] == track_id
         assert "question_text" in q
         assert q["question_type"] in ["mcq", "logic", "open"]
+        assert "dimension_id" in q
 
 
 def test_get_assessment_session_only_owner_can_access(
