@@ -12,6 +12,7 @@ interface LoginProps {
   onLogin: (user: User) => void;
   onBack: () => void;
   onGoToSignup: () => void;
+  onGoToForgotPassword: () => void;
 }
 
 const mapApiUserToAppUser = (user: components["schemas"]["UserDetailedResponse"]): User => ({
@@ -21,7 +22,7 @@ const mapApiUserToAppUser = (user: components["schemas"]["UserDetailedResponse"]
   isPro: false,
 });
 
-export const Login: FC<LoginProps> = ({ onLogin, onBack, onGoToSignup }) => {
+export const Login: FC<LoginProps> = ({ onLogin, onBack, onGoToSignup, onGoToForgotPassword }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -240,6 +241,15 @@ export const Login: FC<LoginProps> = ({ onLogin, onBack, onGoToSignup }) => {
         </div>
 
         <div className="mt-6 text-center space-y-2">
+          <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+            Forgot your password?{" "}
+            <button
+              onClick={onGoToForgotPassword}
+              className={`${isDark ? "text-blue-400 hover:text-blue-300" : "text-blue-600 hover:text-blue-500"} font-semibold hover:underline`}
+            >
+              Reset it
+            </button>
+          </p>
           <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
             {"Don't have an account? "}
             <button

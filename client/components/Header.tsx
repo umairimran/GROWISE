@@ -19,7 +19,8 @@ export const Header: FC<HeaderProps> = ({ user, onLogout, onMenuToggle }) => {
   const isDashboardView =
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/validator") ||
-    pathname.startsWith("/course");
+    pathname.startsWith("/course") ||
+    pathname.startsWith("/account");
   const isSignupRoute = pathname === "/signup";
 
   const scrollToSection = (id: string) => {

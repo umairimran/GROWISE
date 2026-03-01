@@ -21,6 +21,9 @@ import { Assessment } from "./pages/Assessment";
 import { Dashboard } from "./pages/Dashboard";
 import { Course } from "./pages/Course";
 import { Validator } from "./pages/Validator";
+import { ForgotPassword } from "./pages/ForgotPassword";
+import { ResetPassword } from "./pages/ResetPassword";
+import { AccountSecurity } from "./pages/AccountSecurity";
 import { authService } from "./api/services/auth";
 import { GuestOnlyRoute, ProtectedRoute } from "./routes/guards";
 import { authStore, useAuthStore } from "./state/authStore";
@@ -126,6 +129,7 @@ const RoutedAppContent: FC<RoutedAppContentProps> = ({
                 }}
                 onBack={() => navigate("/")}
                 onGoToSignup={() => navigate("/signup")}
+                onGoToForgotPassword={() => navigate("/forgot-password")}
               />
             }
           />
@@ -142,6 +146,8 @@ const RoutedAppContent: FC<RoutedAppContentProps> = ({
               />
             }
           />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
         </Route>
 
         <Route element={<ProtectedRoute />}>
@@ -187,6 +193,7 @@ const RoutedAppContent: FC<RoutedAppContentProps> = ({
             />
             <Route path="/course" element={<Course onStartAssessment={() => navigate("/skills")} />} />
             <Route path="/validator" element={<Validator />} />
+            <Route path="/account" element={<AccountSecurity />} />
           </Route>
         </Route>
 

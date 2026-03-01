@@ -353,7 +353,10 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
       {errorMessage && (
         <div className="rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50 dark:bg-red-950/30 px-4 py-3 text-sm text-red-700 dark:text-red-300 flex items-start gap-3">
           <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
-          <span>{errorMessage}</span>
+          <span className="flex-1">{errorMessage}</span>
+          <Button size="sm" variant="ghost" onClick={() => void loadLearningPath()}>
+            Retry
+          </Button>
         </div>
       )}
 

@@ -8,6 +8,7 @@ type TokenRefresh = components["schemas"]["TokenRefresh"];
 type PasswordChange = components["schemas"]["PasswordChange"];
 type PasswordResetRequest = components["schemas"]["PasswordResetRequest"];
 type PasswordResetConfirm = components["schemas"]["PasswordResetConfirm"];
+type UserUpdate = components["schemas"]["UserUpdate"];
 type UserResponse = components["schemas"]["UserResponse"];
 type UserDetailedResponse = components["schemas"]["UserDetailedResponse"];
 type UserSessionResponse = components["schemas"]["UserSessionResponse"];
@@ -74,6 +75,36 @@ export const authService = {
     });
     authStore.setCurrentUser(user);
     return user;
+  },
+
+  async updateMe(payload: UserUpdate): Promise<UserResponse> {
+    const user = await apiClient.call({
+      path: "/api/auth/me",
+      method: "put",
+      body: payload,
+      auth: "required",
+    });
+
+    const currentUser = authStore.getState().currentUser;
+    if (currentUser) {
+      authStore.setCurrentUser({
+        ...currentUser,
+        full_name: user.full_name,
+        email: user.email,
+      });
+    }
+
+    return user;
+  },
+
+  async deleteMe(): Promise<void> {
+    await apiClient.call({
+      path: "/api/auth/me",
+      method: "delete",
+      auth: "required",
+    });
+
+    authStore.clearSession();
   },
 
   async changePassword(payload: PasswordChange): Promise<void> {

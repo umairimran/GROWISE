@@ -167,6 +167,31 @@ export const Validator: FC = () => {
     };
   }, [loadEvaluationHistory, loadMySessions, loadSession]);
 
+  const handleRetryWorkspaceLoad = useCallback(async () => {
+    setStatusMessage("Refreshing evaluation workspace...");
+    setErrorMessage(null);
+
+    try {
+      const sessions = await loadMySessions();
+      await loadEvaluationHistory();
+
+      const inProgressSession = sessions.find((session) => session.status !== "completed");
+      const initialSession = inProgressSession ?? sessions[0];
+
+      if (initialSession) {
+        await loadSession(initialSession.evaluation_id, initialSession);
+      } else {
+        setActiveSession(null);
+        setDialogues([]);
+        setResult(null);
+      }
+    } catch (error) {
+      setErrorMessage(toErrorMessage(error, "Could not refresh evaluation data."));
+    } finally {
+      setStatusMessage(null);
+    }
+  }, [loadEvaluationHistory, loadMySessions, loadSession]);
+
   const handleCreateSession = async () => {
     const pathId = Number(pathIdInput);
 
@@ -303,6 +328,17 @@ export const Validator: FC = () => {
           <p className="text-gray-500">Backend evaluation workflow with persisted interview sessions.</p>
         </div>
         <div className="flex items-center gap-3 text-sm text-gray-500">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              void handleRetryWorkspaceLoad();
+            }}
+            disabled={Boolean(statusMessage)}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
           <Clock3 className="h-4 w-4" />
           <span>
             {activeSession
@@ -313,8 +349,17 @@ export const Validator: FC = () => {
       </header>
 
       {errorMessage && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {errorMessage}
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 flex items-center gap-3">
+          <span className="flex-1">{errorMessage}</span>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              void handleRetryWorkspaceLoad();
+            }}
+          >
+            Retry
+          </Button>
         </div>
       )}
 
@@ -546,7 +591,18 @@ export const Validator: FC = () => {
           <div className="bg-surface rounded-xl border border-border shadow-soft p-4 flex-1 min-h-0 overflow-hidden">
             <h2 className="font-semibold text-contrast mb-3">Evaluation History</h2>
             {!evaluationHistory ? (
-              <p className="text-sm text-gray-500">History unavailable.</p>
+              <div className="space-y-3">
+                <p className="text-sm text-gray-500">History unavailable.</p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    void handleRetryWorkspaceLoad();
+                  }}
+                >
+                  Retry History Load
+                </Button>
+              </div>
             ) : (
               <div className="space-y-3 text-sm">
                 <div className="rounded-lg border border-border p-2">

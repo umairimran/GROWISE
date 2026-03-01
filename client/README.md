@@ -37,5 +37,6 @@ Required for API migration:
 
 ## Notes
 
-- This client is being migrated from direct Supabase/Gemini usage to backend API usage.
+- Learner flows are fully API-backed and no longer rely on direct Supabase/Gemini runtime calls.
 - Blog remains static until dedicated backend blog endpoints are introduced.
+- Phase 9 release/migration notes: `client/docs/growwise-client-phase9-release-notes.md`.

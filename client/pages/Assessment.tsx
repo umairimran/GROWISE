@@ -1,7 +1,7 @@
 import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { useParams } from "react-router-dom";
-import { AlertCircle, Clock, LogOut, X } from "lucide-react";
+import { AlertCircle, Clock, LogOut, RefreshCw, X } from "lucide-react";
 import { parseDecimalOr } from "../api/adapters/numeric";
 import { assessmentService } from "../api/services/assessment";
 import { tracksService } from "../api/services/tracks";
@@ -363,7 +363,18 @@ export const Assessment: FC<AssessmentProps> = ({ onComplete, onExit }) => {
         <p className="text-gray-400 mb-6">
           {errorMessage || "No questions were found for this session. Please start again."}
         </p>
-        <Button onClick={onExit}>Back to Track Selection</Button>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <Button
+            variant="outline"
+            onClick={() => {
+              void loadSessionData();
+            }}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Retry Load
+          </Button>
+          <Button onClick={onExit}>Back to Track Selection</Button>
+        </div>
       </div>
     );
   }
@@ -434,7 +445,18 @@ export const Assessment: FC<AssessmentProps> = ({ onComplete, onExit }) => {
           {errorMessage && (
             <div className="mb-6 rounded-xl border border-red-900/60 bg-red-900/20 text-red-200 px-4 py-3 flex items-start gap-3">
               <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
-              <span className="text-sm">{errorMessage}</span>
+              <span className="text-sm flex-1">{errorMessage}</span>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-red-100 hover:text-white hover:bg-red-900/30"
+                onClick={() => {
+                  void loadSessionData();
+                }}
+                disabled={isSubmittingAnswer || Boolean(statusMessage)}
+              >
+                Retry
+              </Button>
             </div>
           )}
 

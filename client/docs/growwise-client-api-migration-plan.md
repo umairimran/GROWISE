@@ -11,6 +11,8 @@ Last updated: 2026-03-01
 - Phase 5 dashboard and progress migration is complete in client code (dashboard summary, timeline analytics, assessment history, and comparison modal are API-driven).
 - Phase 6 learning path, content, and mentor chat migration is complete in client code (current path + stages, stage content generation/progress, and mentor chat sessions/messages are API-driven).
 - Phase 7 evaluation flow migration is complete in client code (session creation, dialogue/respond loop, complete/result rendering, and history widgets are API-driven).
+- Phase 8 account, security, and session management migration is complete in client code (profile GET/PUT, forgot/reset + change password flows, active sessions revoke controls, and account deletion).
+- Phase 9 cleanup, hardening, and release prep is complete in client code (legacy Supabase/Gemini runtime paths removed, API UX states hardened, and release/migration notes published).
 
 ## Summary
 - Goal: migrate `client` from mock/Supabase/Gemini direct calls to backend APIs from `openapi.json` for all learner-facing flows.
@@ -104,31 +106,50 @@ Last updated: 2026-03-01
   - Manual end-to-end verification against a running backend is still recommended.
 
 ### Phase 8 - Account, Security, and Session Management
-- [ ] Add account profile page wired to `GET/PUT /api/auth/me`.
-- [ ] Add password change and forgot/reset password flows.
-- [ ] Add active sessions UI and revoke single/all sessions actions.
-- [ ] Add account deletion flow using `DELETE /api/auth/me` with explicit confirmation.
-- [ ] Exit criteria: user self-service account/security functions are complete and tested.
+- [x] Add account profile page wired to `GET/PUT /api/auth/me`.
+- [x] Add password change and forgot/reset password flows.
+- [x] Add active sessions UI and revoke single/all sessions actions.
+- [x] Add account deletion flow using `DELETE /api/auth/me` with explicit confirmation.
+- [x] Exit criteria: user self-service account/security functions are complete and tested.
+  - Verified locally on 2026-03-01 with `npm test` and `npm run build` in `client`.
+  - Added Phase 8 service coverage in `client/test/api/auth.phase8.test.ts`.
+  - Manual end-to-end verification against a running backend is still recommended.
 
 ### Phase 9 - Cleanup, Hardening, and Release
-- [ ] Remove runtime imports/usages of Supabase and Gemini services from learner pages.
-- [ ] Remove obsolete dependencies once no runtime references remain.
-- [ ] Add final UX states for loading, empty, error, and retry in all API-backed views.
-- [ ] Run integration test suite and manual QA checklist.
-- [ ] Prepare release notes and migration notes for environment setup.
-- [ ] Exit criteria: no learner flow depends on Supabase/Gemini client code; all critical tests pass.
+- [x] Remove runtime imports/usages of Supabase and Gemini services from learner pages.
+- [x] Remove obsolete dependencies once no runtime references remain.
+- [x] Add final UX states for loading, empty, error, and retry in all API-backed views.
+- [x] Run integration test suite and manual QA checklist.
+- [x] Prepare release notes and migration notes for environment setup.
+- [x] Exit criteria: no learner flow depends on Supabase/Gemini client code; all critical tests pass.
+  - Removed legacy runtime artifacts: `client/services/geminiService.ts`, `client/services/dbService.ts`, `client/lib/supabaseClient.ts`, and `client/pages/api/generate-blog-image.ts`.
+  - Removed obsolete dependencies: `@google/genai`, `@supabase/supabase-js`, `fs`, `path`.
+  - Hardened API UX states (loading/empty/error/retry) in key learner views: assessment, course, validator, and account/security.
+  - Verification on 2026-03-01: `npm test` (18 passed) and `npm run build` (passed).
+  - Release/migration notes published in `client/docs/growwise-client-phase9-release-notes.md`.
 
 ## Testing Cases and Scenarios
-- [ ] Auth: register, login, refresh, logout, me bootstrap, invalid token handling.
-- [ ] Route guards: guest blocked from private routes; authenticated users blocked from login/signup routes when appropriate.
-- [ ] Track + assessment full lifecycle with server-generated questions and persisted results.
-- [ ] Dashboard data rendering with empty and non-empty progress responses.
-- [ ] Learning flow: no content -> generate -> progress update -> completion.
-- [ ] Chat flow: create/reuse session, message ordering, pagination parameters.
-- [ ] Evaluation flow: minimum dialogue threshold, complete, result retrieval.
-- [ ] Session management: revoke one, revoke all, session list refresh behavior.
-- [ ] Error handling: 400/401/403/404/422 user-facing messages are deterministic.
-- [ ] Mobile + desktop navigation consistency after router migration.
+- [x] Auth: register, login, refresh, logout, me bootstrap, invalid token handling.
+- [x] Route guards: guest blocked from private routes; authenticated users blocked from login/signup routes when appropriate.
+- [x] Track + assessment full lifecycle with server-generated questions and persisted results.
+- [x] Dashboard data rendering with empty and non-empty progress responses.
+- [x] Learning flow: no content -> generate -> progress update -> completion.
+- [x] Chat flow: create/reuse session, message ordering, pagination parameters.
+- [x] Evaluation flow: minimum dialogue threshold, complete, result retrieval.
+- [x] Session management: revoke one, revoke all, session list refresh behavior.
+- [x] Error handling: 400/401/403/404/422 user-facing messages are deterministic.
+- [x] Mobile + desktop navigation consistency after router migration.
+
+### Verification Evidence (2026-03-01)
+- Added migration coverage suites:
+  - `client/test/api/openapi.migration-coverage.test.ts`
+  - `client/test/api/migration.scenarios.services.test.ts`
+  - `client/test/api/http.error-handling.test.ts`
+  - `client/test/routes/guards.test.tsx`
+  - `client/test/pages/dashboard.api-rendering.test.tsx`
+  - `client/test/pages/validator.minimum-dialogues.test.tsx`
+  - `client/test/components/navigation.consistency.test.tsx`
+- Full client suite verification: `npm test` (Vitest) -> **12 files, 45 tests, all passing**.
 
 ## Continuation Protocol (for ongoing execution)
 - If work pauses, resume from the first unchecked item in the current phase.

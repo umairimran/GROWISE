@@ -1,7 +1,6 @@
-import { useState, useEffect, FC } from 'react';
-import { ArrowLeft, Sparkles, HardDrive } from 'lucide-react';
+import { useState, FC } from 'react';
+import { ArrowLeft, HardDrive } from 'lucide-react';
 import { BlogCard, BlogPost } from '../components/BlogCard';
-import { generateBlogImage } from '../services/geminiService';
 
 interface BlogPageProps {
   onBack: () => void;
@@ -74,37 +73,11 @@ const FILTERS = ["All", "Feature", "Engineering", "Education", "Announcements"];
 
 export const Blog: FC<BlogPageProps> = ({ onBack }) => {
   const [activeFilter, setActiveFilter] = useState("All");
-  const [posts, setPosts] = useState<BlogPost[]>(INITIAL_BLOG_POSTS);
-
-  // Generate images using client-side service
-  useEffect(() => {
-    const fetchImages = async () => {
-        // We iterate through posts and generate images if they don't have one (mocking the behavior)
-        // In a real app, you'd store these URLs in DB. Here we generate on the fly for the demo.
-        INITIAL_BLOG_POSTS.forEach(async (post) => {
-            try {
-                // Use client-side service instead of server API
-                const imageUrl = await generateBlogImage(post.title, post.description);
-                
-                if (imageUrl) {
-                    setPosts(currentPosts => currentPosts.map(p => 
-                        p.id === post.id ? { ...p, imageUrl } : p
-                    ));
-                }
-            } catch (error) {
-                console.error("Failed to load image for post:", post.id, error);
-            }
-        });
-    };
-
-    fetchImages();
-  }, []);
+  const [posts] = useState<BlogPost[]>(INITIAL_BLOG_POSTS);
 
   const filteredPosts = activeFilter === "All" 
     ? posts 
     : posts.filter(post => post.category === activeFilter);
-
-  const pendingCount = posts.filter(p => !p.imageUrl).length;
 
   return (
     <div className="min-h-screen bg-background font-sans">
@@ -118,18 +91,9 @@ export const Blog: FC<BlogPageProps> = ({ onBack }) => {
             Back to Home
          </button>
          
-         <div className="flex items-center space-x-3">
-             {pendingCount > 0 ? (
-                 <div className="flex items-center text-xs text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full border border-blue-100 animate-pulse">
-                    <Sparkles className="h-3 w-3 mr-2 text-accent" />
-                    Generating visuals with Gemini... ({pendingCount} left)
-                 </div>
-             ) : (
-                 <div className="flex items-center text-xs text-green-600 bg-green-50 px-3 py-1.5 rounded-full border border-green-100">
-                    <HardDrive className="h-3 w-3 mr-2" />
-                    All assets loaded
-                 </div>
-             )}
+         <div className="flex items-center text-xs text-green-600 bg-green-50 px-3 py-1.5 rounded-full border border-green-100">
+            <HardDrive className="h-3 w-3 mr-2" />
+            Static assets loaded
          </div>
       </div>
 
