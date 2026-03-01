@@ -1,7 +1,6 @@
-import { FC, useEffect, useState } from 'react';
+import { FC } from 'react';
 import { AssessmentResult, User } from '../types';
 import { Button } from '../components/Button';
-import { dbService } from '../services/dbService';
 import { 
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip
@@ -29,61 +28,10 @@ const activityData = [
 ];
 
 export const Dashboard: FC<DashboardProps> = ({ user, result, onGenerateCourse, isGenerating, onStartAssessment }) => {
-  const [checkingStatus, setCheckingStatus] = useState(true);
   const { theme } = useTheme();
   
   // Determine dark mode state for Charts
   const isDark = theme === 'dark' || (theme === 'system' && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-
-  // Smart Dashboard Logic
-  useEffect(() => {
-    const checkOnboardingStatus = async () => {
-        if (!user) return;
-        
-        // If we already have a result passed from App state, we don't need to check DB.
-        if (result) {
-            setCheckingStatus(false);
-            return;
-        }
-
-        try {
-            // 1. Check Skip Flag (Client Side Preference)
-            // If they skipped, they are allowed on the dashboard.
-            const skipped = localStorage.getItem(`gw_skip_${user.id}`);
-            if (skipped) {
-                setCheckingStatus(false);
-                return;
-            }
-
-            // 2. Check Database for Assessments (Server Side Check)
-            // SELECT count(*) FROM assessments WHERE user_id = current_user
-            const hasAssessment = await dbService.hasCompletedAssessment(user.id);
-            if (hasAssessment) {
-                setCheckingStatus(false);
-            } else {
-                // Scenario A: Count == 0 AND !SkipCookie -> Redirect
-                onStartAssessment();
-            }
-        } catch (e) {
-            console.error("Dashboard check failed", e);
-            setCheckingStatus(false); // Fail safe: show dashboard
-        }
-    };
-
-    checkOnboardingStatus();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
-
-  if (checkingStatus) {
-      return (
-          <div className="flex h-full items-center justify-center min-h-[50vh]">
-              <div className="flex flex-col items-center">
-                  <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full mb-4"></div>
-                  <p className="text-gray-500 text-sm">Synchronizing learning profile...</p>
-              </div>
-          </div>
-      );
-  }
 
   return (
     <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 h-auto lg:h-[calc(100vh-6rem)] pb-10">
@@ -285,8 +233,21 @@ export const Dashboard: FC<DashboardProps> = ({ user, result, onGenerateCourse, 
                 
                 <h3 className="font-serif text-lg font-medium mb-3 relative z-10">AI Insight</h3>
                 <p className="text-sm text-gray-300 mb-6 leading-relaxed relative z-10 border-l-2 border-blue-500 pl-3">
-                    Your logic in <strong>{result.topic}</strong> is sound, but you have a critical gap in <em>{result.weaknesses[0] || "Advanced Patterns"}</em>.
+                    {result.aiReasoning ? (
+                      result.aiReasoning
+                    ) : (
+                      <>
+                        Your logic in <strong>{result.topic}</strong> is sound, but you have a critical gap in{" "}
+                        <em>{result.weaknesses[0] || "Advanced Patterns"}</em>.
+                      </>
+                    )}
                 </p>
+
+                {result.learningPathId ? (
+                  <div className="text-xs text-blue-300 mb-4 relative z-10">
+                    Learning path prepared: <span className="font-semibold">#{result.learningPathId}</span>
+                  </div>
+                ) : null}
                 
                 <Button 
                     onClick={onGenerateCourse}

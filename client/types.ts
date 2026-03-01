@@ -27,6 +27,10 @@ export interface AssessmentResult {
   weaknesses: string[];
   strengths: string[];
   knowledgeGraph: { subject: string; A: number; fullMark: number }[]; // For Recharts
+  sessionId?: number;
+  learningPathId?: number | null;
+  detectedLevel?: string;
+  aiReasoning?: string;
 }
 
 export interface CourseModule {
