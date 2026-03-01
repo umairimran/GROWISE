@@ -3,8 +3,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
-import { GuestOnlyRoute, ProtectedRoute } from "../../routes/guards";
-import { authStore } from "../../state/authStore";
+import { GuestOnlyRoute, ProtectedRoute } from "../../src/routes/guards";
+import { authStore } from "../../src/state/authStore";
 
 const LocationProbe = () => {
   const location = useLocation();

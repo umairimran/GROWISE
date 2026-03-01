@@ -1,11 +1,11 @@
-﻿import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
   adaptProgressAssessmentComparison,
   adaptProgressAssessmentHistory,
   adaptProgressDashboardSummary,
   adaptProgressEvaluationHistory,
   adaptProgressTimelineAnalytics,
-} from "../../api/adapters/progress";
+} from "../../src/api/adapters/progress";
 
 describe("progress adapters", () => {
   it("adapts dashboard summary payload", () => {

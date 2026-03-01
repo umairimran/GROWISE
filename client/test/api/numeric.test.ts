@@ -6,7 +6,7 @@ import {
   adaptEvaluationScoreMetrics,
   parseDecimal,
   parseDecimalOr,
-} from "../../api/adapters/numeric";
+} from "../../src/api/adapters/numeric";
 
 describe("numeric adapters", () => {
   it("parses decimal-like values safely", () => {

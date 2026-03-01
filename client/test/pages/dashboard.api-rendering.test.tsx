@@ -3,12 +3,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { Dashboard } from "../../pages/Dashboard";
+import { Dashboard } from "../../src/pages/Dashboard";
 import type {
   ProgressAssessmentHistory,
   ProgressDashboardSummary,
   ProgressTimelineAnalytics,
-} from "../../api/services/progress";
+} from "../../src/api/services/progress";
 
 const progressMocks = vi.hoisted(() => ({
   getDashboard: vi.fn(),
@@ -18,7 +18,7 @@ const progressMocks = vi.hoisted(() => ({
   getEvaluationHistory: vi.fn(),
 }));
 
-vi.mock("../../api/services/progress", () => ({
+vi.mock("../../src/api/services/progress", () => ({
   progressService: {
     getDashboard: progressMocks.getDashboard,
     getTimeline: progressMocks.getTimeline,

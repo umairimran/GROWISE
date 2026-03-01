@@ -11,9 +11,10 @@ const httpMethods = new Set(["get", "post", "put", "patch", "delete"]);
 
 const testFileDir = path.dirname(fileURLToPath(import.meta.url));
 const clientRoot = path.resolve(testFileDir, "..", "..");
+const sourceRoot = path.join(clientRoot, "src");
 const repoRoot = path.resolve(clientRoot, "..");
 const openApiPath = path.join(repoRoot, "openapi.json");
-const servicesDirectory = path.join(clientRoot, "api", "services");
+const servicesDirectory = path.join(sourceRoot, "api", "services");
 
 const requiredLearnerOperations = new Set([
   "POST /api/auth/register",
@@ -167,21 +168,21 @@ describe("API migration OpenAPI coverage", () => {
 
 describe("API migration runtime guardrails", () => {
   it("prevents direct fetch usage outside api/http.ts", () => {
-    const sourceFiles = collectSourceFiles(clientRoot);
+    const sourceFiles = collectSourceFiles(sourceRoot);
     const offenders = sourceFiles
       .filter((fullPath) => !fullPath.endsWith(`${path.sep}api${path.sep}http.ts`))
       .filter((fullPath) => /\bfetch\s*\(/.test(readFileSync(fullPath, "utf-8")))
-      .map((fullPath) => path.relative(clientRoot, fullPath));
+      .map((fullPath) => path.relative(sourceRoot, fullPath));
 
     expect(offenders).toEqual([]);
   });
 
   it("prevents legacy Supabase or Gemini runtime references", () => {
-    const sourceFiles = collectSourceFiles(clientRoot);
+    const sourceFiles = collectSourceFiles(sourceRoot);
     const legacyPattern = /@supabase\/supabase-js|@google\/genai|geminiService|dbService|supabaseClient/i;
     const offenders = sourceFiles
       .filter((fullPath) => legacyPattern.test(readFileSync(fullPath, "utf-8")))
-      .map((fullPath) => path.relative(clientRoot, fullPath));
+      .map((fullPath) => path.relative(sourceRoot, fullPath));
 
     expect(offenders).toEqual([]);
   });

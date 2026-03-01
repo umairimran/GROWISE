@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { ApiHttpError, createHttpClient } from "../../api/http";
+import { ApiHttpError, createHttpClient } from "../../src/api/http";
 
 const jsonResponse = (body: unknown, status: number): Response =>
   new Response(JSON.stringify(body), {

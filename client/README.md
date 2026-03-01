@@ -2,10 +2,20 @@
 
 Frontend for GrowWise learner workflows.
 
+## Project Structure
+
+```
+client/
+  src/            # Runtime application code
+  test/           # Vitest suites
+  docs/           # Migration notes and regression baselines
+  index.html      # Vite HTML entry
+```
+
 ## Phase 0 Status
 
 - Migration branch: `phase0-api-migration`
-- Visual regression baseline: `client/docs/regression-baseline-2026-02-28/`
+- Visual regression baseline: `docs/regression-baseline-2026-02-28/`
 - API base URL contract introduced via `.env.example`
 
 ## Prerequisites
@@ -39,4 +49,4 @@ Required for API migration:
 
 - Learner flows are fully API-backed and no longer rely on direct Supabase/Gemini runtime calls.
 - Blog remains static until dedicated backend blog endpoints are introduced.
-- Phase 9 release/migration notes: `client/docs/growwise-client-phase9-release-notes.md`.
+- Phase 9 release/migration notes: `docs/growwise-client-phase9-release-notes.md`.

@@ -8,12 +8,12 @@ Date: 2026-03-01
 - Standardized API UX states across learner-facing API views.
 
 ## Shipped Changes
-- Reworked `client/pages/Blog.tsx` to static assets mode (no client-side Gemini image generation).
+- Reworked `client/src/pages/Blog.tsx` to static assets mode (no client-side Gemini image generation).
 - Added explicit retry actions for API error states in:
-  - `client/pages/Assessment.tsx`
-  - `client/pages/Course.tsx`
-  - `client/pages/Validator.tsx`
-  - `client/pages/AccountSecurity.tsx`
+  - `client/src/pages/Assessment.tsx`
+  - `client/src/pages/Course.tsx`
+  - `client/src/pages/Validator.tsx`
+  - `client/src/pages/AccountSecurity.tsx`
 - Removed legacy files:
   - `client/services/geminiService.ts`
   - `client/services/dbService.ts`
@@ -37,7 +37,6 @@ Date: 2026-03-01
   - `npm test` passed (`5` files, `18` tests).
   - `npm run build` passed.
 - Build warnings to track separately:
-  - `/index.css` unresolved at build time (left for runtime resolution).
   - Large JS chunk warning from Vite/Rollup.
 
 ## Manual QA Checklist (Release Gate)

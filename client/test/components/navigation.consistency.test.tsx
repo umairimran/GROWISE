@@ -3,10 +3,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { Header } from "../../components/Header";
-import { Layout } from "../../components/Layout";
+import { Header } from "../../src/components/Header";
+import { Layout } from "../../src/components/Layout";
 
-vi.mock("../../components/ThemeToggle", () => ({
+vi.mock("../../src/components/ThemeToggle", () => ({
   ThemeToggle: () => <div data-testid="theme-toggle">theme</div>,
 }));
 

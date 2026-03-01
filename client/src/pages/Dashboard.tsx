@@ -188,11 +188,12 @@ export const Dashboard: FC<DashboardProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const hasLoadedRef = useRef(false);
 
-  const isDark =
-    theme === "dark" ||
-    (theme === "system" &&
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches);
+  const systemPrefersDark =
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+  const isDark = theme === "dark" || (theme === "system" && systemPrefersDark);
 
   const loadDashboardData = useCallback(async () => {
     const isInitialLoad = !hasLoadedRef.current;

@@ -21,12 +21,12 @@ Last updated: 2026-03-01
 - Execution rule: work strictly phase-by-phase; do not start a new phase until the previous phase exit criteria are satisfied.
 
 ## Public API / Interface / Type Changes
-- Add `client/api/generated/*` from `openapi.json` (generated contract types).
-- Add `client/api/http.ts` for base URL, auth header, refresh retry, normalized errors.
-- Add `client/api/services/*.ts` modules: `auth`, `tracks`, `assessment`, `progress`, `learning`, `content`, `chat`, `evaluation`, `account`.
-- Add `client/state/authStore.ts` for tokens/session/user bootstrap state.
-- Add `client/routes/*` route map + protected/public route guards.
-- Replace `client/types.ts` with API-first domain view models and adapters.
+- Add `client/src/api/generated/*` from `openapi.json` (generated contract types).
+- Add `client/src/api/http.ts` for base URL, auth header, refresh retry, normalized errors.
+- Add `client/src/api/services/*.ts` modules: `auth`, `tracks`, `assessment`, `progress`, `learning`, `content`, `chat`, `evaluation`, `account`.
+- Add `client/src/state/authStore.ts` for tokens/session/user bootstrap state.
+- Add `client/src/routes/*` route map + protected/public route guards.
+- Replace `client/src/types.ts` with API-first domain view models and adapters.
 - Decommission runtime use of `client/services/dbService.ts` and `client/services/geminiService.ts` in learner flows.
 
 ## Phase-by-Phase Checklist
@@ -40,7 +40,7 @@ Last updated: 2026-03-01
   - Blocker: local dependency installation cannot complete (`npm install` returns `EACCES`).
 
 ### Phase 1 - Contract Generation and HTTP Core
-- [x] Generate typed OpenAPI client/types from `openapi.json` into `client/api/generated/`.
+- [x] Generate typed OpenAPI client/types from `openapi.json` into `client/src/api/generated/`.
 - [x] Implement `api/http.ts` with request helper, Bearer injection, 401 refresh retry-once, and error normalization.
 - [x] Implement shared error parser for FastAPI `detail` string and validation array formats.
 - [x] Implement numeric adapters for decimal-string fields used in charts and score cards.

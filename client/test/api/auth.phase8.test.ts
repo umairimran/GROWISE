@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { authStore } from "../../state/authStore";
-import { authService } from "../../api/services/auth";
-import { apiClient } from "../../api/services/client";
-import type { components } from "../../api/generated";
+import { authStore } from "../../src/state/authStore";
+import { authService } from "../../src/api/services/auth";
+import { apiClient } from "../../src/api/services/client";
+import type { components } from "../../src/api/generated";
 
-vi.mock("../../api/services/client", () => ({
+vi.mock("../../src/api/services/client", () => ({
   apiClient: {
     call: vi.fn(),
   },

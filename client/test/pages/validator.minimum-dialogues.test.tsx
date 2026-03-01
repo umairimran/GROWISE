@@ -2,13 +2,13 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { Validator } from "../../pages/Validator";
+import { Validator } from "../../src/pages/Validator";
 import type {
   EvaluationDialogueResponse,
   EvaluationResultResponse,
   EvaluationSessionResponse,
-} from "../../api/services/evaluation";
-import type { ProgressEvaluationHistory } from "../../api/services/progress";
+} from "../../src/api/services/evaluation";
+import type { ProgressEvaluationHistory } from "../../src/api/services/progress";
 
 const evaluationMocks = vi.hoisted(() => ({
   getMySessions: vi.fn(),
@@ -24,7 +24,7 @@ const progressMocks = vi.hoisted(() => ({
   getEvaluationHistory: vi.fn(),
 }));
 
-vi.mock("../../api/services/evaluation", () => ({
+vi.mock("../../src/api/services/evaluation", () => ({
   evaluationService: {
     getMySessions: evaluationMocks.getMySessions,
     getSession: evaluationMocks.getSession,
@@ -36,7 +36,7 @@ vi.mock("../../api/services/evaluation", () => ({
   },
 }));
 
-vi.mock("../../api/services/progress", () => ({
+vi.mock("../../src/api/services/progress", () => ({
   progressService: {
     getEvaluationHistory: progressMocks.getEvaluationHistory,
   },

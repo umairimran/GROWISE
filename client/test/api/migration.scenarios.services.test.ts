@@ -1,16 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { components } from "../../api/generated";
-import { assessmentService } from "../../api/services/assessment";
-import { authService } from "../../api/services/auth";
-import { apiClient } from "../../api/services/client";
-import { chatService } from "../../api/services/chat";
-import { contentService } from "../../api/services/content";
-import { evaluationService } from "../../api/services/evaluation";
-import { learningService } from "../../api/services/learning";
-import { tracksService } from "../../api/services/tracks";
-import { authStore } from "../../state/authStore";
+import type { components } from "../../src/api/generated";
+import { assessmentService } from "../../src/api/services/assessment";
+import { authService } from "../../src/api/services/auth";
+import { apiClient } from "../../src/api/services/client";
+import { chatService } from "../../src/api/services/chat";
+import { contentService } from "../../src/api/services/content";
+import { evaluationService } from "../../src/api/services/evaluation";
+import { learningService } from "../../src/api/services/learning";
+import { tracksService } from "../../src/api/services/tracks";
+import { authStore } from "../../src/state/authStore";
 
-vi.mock("../../api/services/client", () => ({
+vi.mock("../../src/api/services/client", () => ({
   apiClient: {
     call: vi.fn(),
   },

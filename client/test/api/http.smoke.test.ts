@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createHttpClient } from "../../api/http";
-import type { components } from "../../api/generated";
+import { createHttpClient } from "../../src/api/http";
+import type { components } from "../../src/api/generated";
 
 const jsonResponse = (body: unknown, status = 200): Response =>
   new Response(JSON.stringify(body), {
