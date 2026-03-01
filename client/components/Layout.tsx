@@ -1,6 +1,6 @@
 import { FC, ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Zap } from "lucide-react";
+import { BookOpen, LayoutDashboard, Zap } from "lucide-react";
 
 interface LayoutProps {
   children: ReactNode;
@@ -14,6 +14,7 @@ export const Layout: FC<LayoutProps> = ({ children, isSidebarOpen, onSidebarClos
 
   const navItems = [
     { path: "/dashboard", label: "Overview", icon: LayoutDashboard },
+    { path: "/course", label: "Learning Path", icon: BookOpen },
     { path: "/validator", label: "Real-World Validator", icon: Zap },
   ];
 

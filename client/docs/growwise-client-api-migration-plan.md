@@ -8,6 +8,9 @@ Last updated: 2026-03-01
 - Phase 1 core deliverables are implemented (generated contract types, HTTP core, shared error parser, numeric adapters, and smoke tests).
 - Phase 3 router migration and app shell refactor is complete (URL-based navigation + route-aware shell + onboarding skip removal).
 - Phase 4 tracks and assessment flow migration is complete in client code (API-backed track loading/selection, session-driven assessment lifecycle, and learning-path handoff wiring).
+- Phase 5 dashboard and progress migration is complete in client code (dashboard summary, timeline analytics, assessment history, and comparison modal are API-driven).
+- Phase 6 learning path, content, and mentor chat migration is complete in client code (current path + stages, stage content generation/progress, and mentor chat sessions/messages are API-driven).
+- Phase 7 evaluation flow migration is complete in client code (session creation, dialogue/respond loop, complete/result rendering, and history widgets are API-driven).
 
 ## Summary
 - Goal: migrate `client` from mock/Supabase/Gemini direct calls to backend APIs from `openapi.json` for all learner-facing flows.
@@ -72,27 +75,33 @@ Last updated: 2026-03-01
   - Manual end-to-end verification against a running backend is still recommended.
 
 ### Phase 5 - Dashboard and Progress Migration
-- [ ] Replace dashboard summary cards with `GET /api/progress/dashboard`.
-- [ ] Replace activity timeline chart with `GET /api/progress/analytics/timeline`.
-- [ ] Add assessment history with `GET /api/progress/assessments/history`.
-- [ ] Add assessment comparison modal using `GET /api/progress/assessments/compare/{id1}/{id2}`.
-- [ ] Remove remaining mock metrics and fake activity data.
-- [ ] Exit criteria: dashboard data is fully API-driven and reload-stable.
+- [x] Replace dashboard summary cards with `GET /api/progress/dashboard`.
+- [x] Replace activity timeline chart with `GET /api/progress/analytics/timeline`.
+- [x] Add assessment history with `GET /api/progress/assessments/history`.
+- [x] Add assessment comparison modal using `GET /api/progress/assessments/compare/{id1}/{id2}`.
+- [x] Remove remaining mock metrics and fake activity data.
+- [x] Exit criteria: dashboard data is fully API-driven and reload-stable.
+  - Verified locally on 2026-03-01 with `npm test` and `npm run build` in `client`.
+  - Manual end-to-end verification against a running backend is still recommended.
 
 ### Phase 6 - Learning Path, Content, and Mentor Chat
-- [ ] Replace course generation flow with `GET /api/learning/my-current-path` and `GET /api/learning/paths/{path_id}/stages`.
-- [ ] Build stage content load using `GET /api/content/stage/{stage_id}`.
-- [ ] Add generate-content action with `POST /api/content/generate` when stage content is empty.
-- [ ] Wire content progress create/update/complete endpoints and stage progress summary endpoint.
-- [ ] Replace tutor chat with chat sessions/messages endpoints.
-- [ ] Exit criteria: learning and chat experiences run entirely on backend APIs.
+- [x] Replace course generation flow with `GET /api/learning/my-current-path` and `GET /api/learning/paths/{path_id}/stages`.
+- [x] Build stage content load using `GET /api/content/stage/{stage_id}`.
+- [x] Add generate-content action with `POST /api/content/generate` when stage content is empty.
+- [x] Wire content progress create/update/complete endpoints and stage progress summary endpoint.
+- [x] Replace tutor chat with chat sessions/messages endpoints.
+- [x] Exit criteria: learning and chat experiences run entirely on backend APIs.
+  - Verified locally on 2026-03-01 with `npm test` and `npm run build` in `client`.
+  - Manual end-to-end verification against a running backend is still recommended.
 
 ### Phase 7 - Evaluation Flow (Validator Replacement)
-- [ ] Replace static validator scenario with evaluation session creation endpoint.
-- [ ] Render dialogue history from `/dialogues` and send responses via `/respond`.
-- [ ] Complete evaluation via `/complete` and render `/result`.
-- [ ] Add evaluation history widgets from `/api/evaluation/my-sessions` and `/api/progress/evaluations/history`.
-- [ ] Exit criteria: validator page becomes backend evaluation workflow with persisted session state.
+- [x] Replace static validator scenario with evaluation session creation endpoint.
+- [x] Render dialogue history from `/dialogues` and send responses via `/respond`.
+- [x] Complete evaluation via `/complete` and render `/result`.
+- [x] Add evaluation history widgets from `/api/evaluation/my-sessions` and `/api/progress/evaluations/history`.
+- [x] Exit criteria: validator page becomes backend evaluation workflow with persisted session state.
+  - Verified locally on 2026-03-01 with `npm test` and `npm run build` in `client`.
+  - Manual end-to-end verification against a running backend is still recommended.
 
 ### Phase 8 - Account, Security, and Session Management
 - [ ] Add account profile page wired to `GET/PUT /api/auth/me`.

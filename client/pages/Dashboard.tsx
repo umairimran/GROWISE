@@ -1,338 +1,693 @@
-import { FC } from 'react';
-import { AssessmentResult, User } from '../types';
-import { Button } from '../components/Button';
-import { 
-  Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip
-} from 'recharts';
-import { Check, AlertTriangle, TrendingUp, MoreHorizontal, ArrowRight, PlayCircle, Sparkles } from 'lucide-react';
-import { useTheme } from '../providers/ThemeProvider';
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
+  AlertTriangle,
+  ArrowRight,
+  BarChart3,
+  Clock3,
+  GitCompareArrows,
+  RefreshCw,
+  Sparkles,
+  TrendingUp,
+  X,
+} from "lucide-react";
+import { ApiHttpError } from "../api/http";
+import {
+  progressService,
+  type ProgressAssessmentComparison,
+  type ProgressAssessmentHistory,
+  type ProgressAssessmentHistoryItem,
+  type ProgressDashboardSummary,
+  type ProgressTimelineAnalytics,
+} from "../api/services/progress";
+import { Button } from "../components/Button";
+import { useTheme } from "../providers/ThemeProvider";
+import { AssessmentResult, User } from "../types";
 
 interface DashboardProps {
   user: User | null;
   result: AssessmentResult | null;
-  onGenerateCourse: () => void;
-  isGenerating: boolean;
+  onOpenLearningPath: () => void;
   onStartAssessment: () => void;
 }
 
-// Mock Data for Activity Graph
-const activityData = [
-  { name: 'Day 1', xp: 400 },
-  { name: 'Day 5', xp: 700 },
-  { name: 'Day 10', xp: 500 },
-  { name: 'Day 15', xp: 1200 },
-  { name: 'Day 20', xp: 1800 },
-  { name: 'Day 25', xp: 2400 },
-  { name: 'Day 30', xp: 3100 },
-];
+interface TimelinePoint {
+  date: string;
+  label: string;
+  events: number;
+  contentProgress: number;
+  assessments: number;
+  evaluations: number;
+}
 
-export const Dashboard: FC<DashboardProps> = ({ user, result, onGenerateCourse, isGenerating, onStartAssessment }) => {
+const TIMELINE_WINDOWS = [7, 30, 90] as const;
+
+const toErrorMessage = (error: unknown, fallback: string): string => {
+  if (error instanceof ApiHttpError) {
+    return error.message || fallback;
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return fallback;
+};
+
+const formatDate = (dateValue: string | null | undefined): string => {
+  if (!dateValue) {
+    return "N/A";
+  }
+
+  const parsed = new Date(dateValue);
+  if (Number.isNaN(parsed.getTime())) {
+    return "N/A";
+  }
+
+  return parsed.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
+const formatPercent = (value: number | null | undefined, digits = 0): string => {
+  if (value === null || value === undefined || !Number.isFinite(value)) {
+    return "0%";
+  }
+
+  return `${value.toFixed(digits)}%`;
+};
+
+const formatLevel = (value: string | null | undefined): string => {
+  if (!value) {
+    return "Unknown";
+  }
+
+  return value
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+};
+
+const formatScore = (value: number | null | undefined): string => {
+  if (value === null || value === undefined || !Number.isFinite(value)) {
+    return "N/A";
+  }
+
+  return `${value.toFixed(1)}%`;
+};
+
+const timeValue = (dateValue: string | null | undefined): number => {
+  if (!dateValue) {
+    return 0;
+  }
+
+  const parsed = Date.parse(dateValue);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const toTimelineChartData = (timeline: ProgressTimelineAnalytics | null): TimelinePoint[] => {
+  if (!timeline || timeline.timeline.length === 0) {
+    return [];
+  }
+
+  const buckets = new Map<string, TimelinePoint>();
+
+  timeline.timeline.forEach((event) => {
+    if (!event.date) {
+      return;
+    }
+
+    const parsedDate = new Date(event.date);
+    if (Number.isNaN(parsedDate.getTime())) {
+      return;
+    }
+
+    const key = parsedDate.toISOString().slice(0, 10);
+    const existing = buckets.get(key);
+
+    if (!existing) {
+      buckets.set(key, {
+        date: key,
+        label: parsedDate.toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+        events: 1,
+        contentProgress: event.type === "content_progress" ? 1 : 0,
+        assessments: event.type === "assessment" ? 1 : 0,
+        evaluations: event.type === "evaluation" ? 1 : 0,
+      });
+      return;
+    }
+
+    existing.events += 1;
+    if (event.type === "content_progress") {
+      existing.contentProgress += 1;
+    } else if (event.type === "assessment") {
+      existing.assessments += 1;
+    } else if (event.type === "evaluation") {
+      existing.evaluations += 1;
+    }
+  });
+
+  return [...buckets.values()].sort((a, b) => a.date.localeCompare(b.date));
+};
+
+const toSortedHistory = (history: ProgressAssessmentHistory | null): ProgressAssessmentHistoryItem[] => {
+  if (!history) {
+    return [];
+  }
+
+  return [...history.history].sort((a, b) => timeValue(b.attemptDate) - timeValue(a.attemptDate));
+};
+
+export const Dashboard: FC<DashboardProps> = ({
+  user,
+  result,
+  onOpenLearningPath,
+  onStartAssessment,
+}) => {
   const { theme } = useTheme();
-  
-  // Determine dark mode state for Charts
-  const isDark = theme === 'dark' || (theme === 'system' && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const [timelineWindowDays, setTimelineWindowDays] = useState<number>(30);
+  const [dashboardData, setDashboardData] = useState<ProgressDashboardSummary | null>(null);
+  const [timelineData, setTimelineData] = useState<ProgressTimelineAnalytics | null>(null);
+  const [assessmentHistory, setAssessmentHistory] = useState<ProgressAssessmentHistory | null>(null);
+  const [selectedSessionIds, setSelectedSessionIds] = useState<number[]>([]);
+  const [comparisonData, setComparisonData] = useState<ProgressAssessmentComparison | null>(null);
+  const [isComparisonModalOpen, setIsComparisonModalOpen] = useState(false);
+  const [isComparing, setIsComparing] = useState(false);
+  const [comparisonError, setComparisonError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const hasLoadedRef = useRef(false);
+
+  const isDark =
+    theme === "dark" ||
+    (theme === "system" &&
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches);
+
+  const loadDashboardData = useCallback(async () => {
+    const isInitialLoad = !hasLoadedRef.current;
+    if (isInitialLoad) {
+      setIsLoading(true);
+    } else {
+      setIsRefreshing(true);
+    }
+
+    setErrorMessage(null);
+
+    try {
+      const [dashboard, timeline, history] = await Promise.all([
+        progressService.getDashboard(),
+        progressService.getTimeline(timelineWindowDays),
+        progressService.getAssessmentHistory(),
+      ]);
+
+      setDashboardData(dashboard);
+      setTimelineData(timeline);
+      setAssessmentHistory(history);
+    } catch (error) {
+      setErrorMessage(toErrorMessage(error, "Failed to load dashboard progress data."));
+    } finally {
+      hasLoadedRef.current = true;
+      if (isInitialLoad) {
+        setIsLoading(false);
+      }
+      setIsRefreshing(false);
+    }
+  }, [timelineWindowDays]);
+
+  useEffect(() => {
+    void loadDashboardData();
+  }, [loadDashboardData]);
+
+  const timelineChartData = useMemo(() => toTimelineChartData(timelineData), [timelineData]);
+  const sortedHistory = useMemo(() => toSortedHistory(assessmentHistory), [assessmentHistory]);
+
+  const welcomeName = user?.name || dashboardData?.user.fullName || "Learner";
+  const totalAssessments = dashboardData?.assessments.totalCompleted ?? 0;
+  const latestAssessment = dashboardData?.assessments.latestResult;
+  const learningCompletion = dashboardData?.learning.completionPercentage ?? 0;
+  const learningHours = dashboardData?.learning.totalTimeHours ?? 0;
+
+  const insightMessage = useMemo(() => {
+    if (result?.aiReasoning) {
+      return result.aiReasoning;
+    }
+
+    const weaknesses = dashboardData?.skillProfile?.weaknesses ?? [];
+    if (weaknesses.length > 0) {
+      return `Priority focus: ${weaknesses.slice(0, 2).join(", ")}.`;
+    }
+
+    const latestLevel = dashboardData?.assessments.latestResult?.level;
+    if (latestLevel) {
+      return `Your latest detected level is ${formatLevel(latestLevel)}. Start another assessment to verify improvement.`;
+    }
+
+    return "Complete your first assessment to unlock personalized guidance.";
+  }, [dashboardData?.assessments.latestResult?.level, dashboardData?.skillProfile?.weaknesses, result?.aiReasoning]);
+
+  const toggleSessionSelection = (sessionId: number) => {
+    setSelectedSessionIds((currentSelection) => {
+      if (currentSelection.includes(sessionId)) {
+        return currentSelection.filter((id) => id !== sessionId);
+      }
+
+      if (currentSelection.length < 2) {
+        return [...currentSelection, sessionId];
+      }
+
+      return [currentSelection[1], sessionId];
+    });
+  };
+
+  const handleOpenComparison = async () => {
+    if (selectedSessionIds.length !== 2) {
+      return;
+    }
+
+    setIsComparisonModalOpen(true);
+    setIsComparing(true);
+    setComparisonData(null);
+    setComparisonError(null);
+
+    try {
+      const [sessionId1, sessionId2] = selectedSessionIds;
+      const comparison = await progressService.compareAssessments(sessionId1, sessionId2);
+      setComparisonData(comparison);
+    } catch (error) {
+      setComparisonError(toErrorMessage(error, "Failed to compare selected assessments."));
+    } finally {
+      setIsComparing(false);
+    }
+  };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 h-auto lg:h-[calc(100vh-6rem)] pb-10">
-      
-      {/* Middle Column (Main Content) - Flexible Width */}
-      <div className="flex-1 flex flex-col gap-6 lg:overflow-y-auto lg:pr-2 lg:pb-10 no-scrollbar">
-        
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end opacity-0 animate-fade-in-up delay-100 gap-2">
-          <div>
-            <h1 className="font-serif text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">Dashboard</h1>
-            <p className="text-sm lg:text-base text-slate-500 dark:text-gray-400 mt-1">{result ? "Overview of your learning momentum." : "Your personal skill hub."}</p>
+    <div className="flex flex-col gap-6 pb-10">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="font-serif text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">Dashboard</h1>
+          <p className="text-sm lg:text-base text-slate-500 dark:text-gray-400 mt-1">
+            API-backed progress overview for {welcomeName}.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <select
+            className="bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-xs font-medium text-gray-600 dark:text-gray-300 rounded-lg py-2 px-3"
+            value={timelineWindowDays}
+            onChange={(event) => {
+              setTimelineWindowDays(Number(event.target.value));
+            }}
+          >
+            {TIMELINE_WINDOWS.map((windowDays) => (
+              <option key={windowDays} value={windowDays}>
+                Last {windowDays} days
+              </option>
+            ))}
+          </select>
+          <Button variant="outline" size="sm" onClick={() => void loadDashboardData()} isLoading={isRefreshing}>
+            {!isRefreshing && <RefreshCw className="h-4 w-4" />}
+          </Button>
+        </div>
+      </div>
+
+      {errorMessage && (
+        <div className="rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50 dark:bg-red-950/30 px-4 py-3 text-sm text-red-700 dark:text-red-300 flex items-start gap-3">
+          <AlertTriangle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+          <div className="flex-1">{errorMessage}</div>
+          <Button size="sm" variant="ghost" onClick={() => void loadDashboardData()}>
+            Retry
+          </Button>
+        </div>
+      )}
+
+      {isLoading ? (
+        <div className="bg-white dark:bg-[#111111] p-8 rounded-2xl border border-gray-200 dark:border-white/10 shadow-soft text-center">
+          <div className="mx-auto h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4" />
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading dashboard metrics...</p>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            <div className="bg-white dark:bg-[#111111] p-5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-soft">
+              <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Assessments</div>
+              <div className="text-3xl font-bold text-slate-900 dark:text-white">{totalAssessments}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">Completed attempts</div>
+            </div>
+
+            <div className="bg-white dark:bg-[#111111] p-5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-soft">
+              <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Latest Score</div>
+              <div className="text-3xl font-bold text-slate-900 dark:text-white">{formatScore(latestAssessment?.score)}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                {latestAssessment ? `${formatLevel(latestAssessment.level)} • ${formatDate(latestAssessment.date)}` : "No completed assessment yet"}
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-[#111111] p-5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-soft">
+              <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Learning Completion</div>
+              <div className="text-3xl font-bold text-slate-900 dark:text-white">{formatPercent(learningCompletion)}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                {dashboardData?.learning.completedItems ?? 0} / {dashboardData?.learning.totalContentItems ?? 0} items
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-[#111111] p-5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-soft">
+              <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Learning Time</div>
+              <div className="text-3xl font-bold text-slate-900 dark:text-white">{learningHours.toFixed(1)}h</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">Tracked across all paths</div>
+            </div>
           </div>
-          <div className="text-xs lg:text-sm text-gray-400 font-mono">Updated 1m ago</div>
-        </div>
 
-        {/* Hero Widget: Active or Empty */}
-        {result ? (
-            <div className="bg-white dark:bg-[#111111] p-4 lg:p-6 rounded-2xl border border-gray-200 dark:border-white/10 shadow-soft opacity-0 animate-fade-in-up delay-200 hover:shadow-md transition-all duration-300">
-                <div className="flex flex-col sm:flex-row justify-between items-start mb-6 gap-4">
-                    <div>
-                    <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Activity Volume</div>
-                    <div className="flex items-baseline space-x-3">
-                        <span className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">3,100 XP</span>
-                        <span className="text-xs lg:text-sm font-medium text-green-600 dark:text-green-400 flex items-center bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded-full border border-green-100 dark:border-green-800 animate-pulse-slow">
-                        <TrendingUp className="h-3 w-3 mr-1" /> +12%
-                        </span>
-                    </div>
-                    </div>
-                    <select className="bg-gray-50 dark:bg-zinc-800 border-none text-xs font-medium text-gray-600 dark:text-gray-300 rounded-lg py-1.5 px-3 focus:ring-0 cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors w-full sm:w-auto">
-                    <option>Last 30 Days</option>
-                    <option>This Year</option>
-                    </select>
-                </div>
-                
-                <div className="h-[180px] lg:h-[220px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={activityData}>
-                        <defs>
-                        <linearGradient id="colorXp" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.1}/>
-                            <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
-                        </linearGradient>
-                        </defs>
-                        <CartesianGrid 
-                            strokeDasharray="3 3" 
-                            vertical={false} 
-                            stroke={isDark ? "rgba(255,255,255,0.1)" : "#f0f0f0"} 
-                        />
-                        <XAxis 
-                            dataKey="name" 
-                            axisLine={false} 
-                            tickLine={false} 
-                            tick={{fontSize: 10, fill: isDark ? '#6b7280' : '#9ca3af'}} 
-                            dy={10} 
-                            minTickGap={30} 
-                        />
-                        <YAxis 
-                            axisLine={false} 
-                            tickLine={false} 
-                            tick={{fontSize: 10, fill: isDark ? '#6b7280' : '#9ca3af'}} 
-                        />
-                        <Tooltip 
-                            contentStyle={{
-                                borderRadius: '12px', 
-                                border: isDark ? '1px solid #333' : 'none', 
-                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                                backgroundColor: isDark ? '#1a1a1a' : '#fff',
-                                color: isDark ? '#fff' : '#000'
-                            }}
-                            cursor={{stroke: '#3B82F6', strokeWidth: 1, strokeDasharray: '4 4'}}
-                        />
-                        <Area 
-                            type="monotone" 
-                            dataKey="xp" 
-                            stroke="#3B82F6" 
-                            strokeWidth={2} 
-                            fillOpacity={1} 
-                            fill="url(#colorXp)" 
-                            animationDuration={1500} 
-                        />
-                    </AreaChart>
-                    </ResponsiveContainer>
-                </div>
-            </div>
-        ) : (
-            // EMPTY STATE: Welcome Card
-            <div className="bg-white dark:bg-[#111111] p-6 lg:p-10 rounded-2xl border border-gray-200 dark:border-white/10 shadow-soft flex flex-col items-center justify-center text-center py-12 lg:py-16 opacity-0 animate-fade-in-up delay-200">
-                <div className="h-14 w-14 lg:h-16 lg:w-16 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mb-6">
-                    <Sparkles className="h-7 w-7 lg:h-8 lg:w-8 text-accent" />
-                </div>
-                <h2 className="font-serif text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white mb-3">Welcome to Grow Wise</h2>
-                <p className="text-sm lg:text-base text-slate-500 dark:text-gray-400 max-w-md mb-8 leading-relaxed">
-                    You haven't taken your diagnostic test yet. Start an assessment to build your knowledge graph and personalized curriculum.
+          <div className="bg-white dark:bg-[#111111] p-4 lg:p-6 rounded-2xl border border-gray-200 dark:border-white/10 shadow-soft">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+              <div>
+                <h2 className="font-serif text-lg font-medium text-slate-900 dark:text-white">Activity Timeline</h2>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Source: <code>/api/progress/analytics/timeline</code> ({timelineData?.totalEvents ?? 0} events)
                 </p>
-                <Button onClick={onStartAssessment} size="lg" className="w-full sm:w-auto shadow-lg shadow-blue-500/20">
-                    Start 50-min Assessment
-                </Button>
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">
+                {timelineData?.startDate ? `${formatDate(timelineData.startDate)} - ${formatDate(timelineData.endDate)}` : "No activity window"}
+              </div>
             </div>
-        )}
 
-        {/* Skill Assessment Summary */}
-        <div className="bg-white dark:bg-[#111111] p-4 lg:p-6 rounded-2xl border border-gray-200 dark:border-white/10 shadow-soft flex-1 opacity-0 animate-fade-in-up delay-300">
-           <div className="flex justify-between items-center mb-6">
-             <h3 className="font-serif text-lg font-medium text-slate-900 dark:text-white">Active Skill Status</h3>
-             <Button variant="ghost" size="sm" className="text-gray-400 hover:text-slate-900 dark:hover:text-white" disabled={!result}>Manage</Button>
-           </div>
-           
-           {result ? (
-               <div className="space-y-8">
-                  {/* Current Assessment Result */}
-                  <div className="group">
-                    <div className="flex justify-between items-center mb-3">
-                      <div className="flex items-center space-x-3">
-                        <div className="h-10 w-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-sm shadow-sm group-hover:scale-110 transition-transform">
-                          {result.topic.substring(0,2).toUpperCase()}
-                        </div>
-                        <div>
-                          <div className="font-semibold text-slate-900 dark:text-white text-sm">{result.topic}</div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">Assessment complete</div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm font-bold text-slate-900 dark:text-white">{result.score}%</div>
-                        <div className="text-[10px] text-gray-400 uppercase tracking-wide">Mastery</div>
-                      </div>
-                    </div>
-                    
-                    {/* Progress Bar */}
-                    <div className="h-2 w-full bg-gray-100 dark:bg-zinc-800 rounded-full overflow-hidden mb-3">
-                      <div className="h-full bg-accent rounded-full transition-all duration-1000 ease-out" style={{ width: '0%', animation: `growWidth 1s ease-out forwards 0.5s` }}>
-                        <style>{`@keyframes growWidth { to { width: ${result.score}% } }`}</style>
-                      </div>
-                    </div>
-                    
-                    {/* Micro-insights */}
-                    <div className="flex flex-wrap gap-2">
-                       {result.weaknesses.slice(0, 2).map((w, i) => (
-                          <span key={i} className="text-[10px] font-medium px-2 py-1 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 rounded border border-red-100 dark:border-red-900/30 flex items-center animate-fade-in" style={{ animationDelay: `${500 + (i * 100)}ms`}}>
-                            <AlertTriangle className="h-3 w-3 mr-1" /> Needs Work: {w}
-                          </span>
-                       ))}
-                       {result.strengths.slice(0, 2).map((s, i) => (
-                          <span key={i} className="text-[10px] font-medium px-2 py-1 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 rounded border border-green-100 dark:border-green-900/30 flex items-center animate-fade-in" style={{ animationDelay: `${700 + (i * 100)}ms`}}>
-                            <Check className="h-3 w-3 mr-1" /> Solid: {s}
-                          </span>
-                       ))}
-                    </div>
-                  </div>
-               </div>
-           ) : (
-                // EMPTY STATE: Placeholders
-                <div className="space-y-6 opacity-40 select-none grayscale dark:opacity-20">
-                    {/* Fake Item 1 */}
-                    <div className="group pointer-events-none">
-                        <div className="flex justify-between items-center mb-3">
-                            <div className="flex items-center space-x-3">
-                                <div className="h-10 w-10 rounded-xl bg-gray-200 dark:bg-gray-700"></div>
-                                <div>
-                                    <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded mb-1"></div>
-                                    <div className="h-3 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="h-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full"></div>
-                    </div>
-                    {/* Fake Item 2 */}
-                    <div className="group pointer-events-none">
-                        <div className="flex justify-between items-center mb-3">
-                            <div className="flex items-center space-x-3">
-                                <div className="h-10 w-10 rounded-xl bg-gray-200 dark:bg-gray-700"></div>
-                                <div>
-                                    <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded mb-1"></div>
-                                    <div className="h-3 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="h-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full"></div>
-                    </div>
-                    
-                    <div className="flex justify-center mt-8">
-                        <span className="text-xs font-medium text-gray-500 bg-gray-100 dark:bg-zinc-800 dark:text-gray-400 px-3 py-1.5 rounded-full border border-gray-200 dark:border-zinc-700">
-                            Complete assessment to view skills
-                        </span>
-                    </div>
-                </div>
-           )}
-        </div>
-      </div>
-
-      {/* Right Column (Context/Actions) */}
-      <div className="w-full lg:w-80 flex flex-col gap-6">
-        
-        {/* Recommended Next Steps */}
-        {result ? (
-            <div className="bg-[#1A1A1A] p-6 rounded-2xl text-white shadow-lg relative overflow-hidden group opacity-0 animate-fade-in-up delay-400 hover:shadow-2xl transition-all border border-gray-800">
-                {/* Abstract ambient glow */}
-                <div className="absolute top-[-50px] right-[-50px] w-32 h-32 bg-blue-500 rounded-full blur-[60px] opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
-                
-                <h3 className="font-serif text-lg font-medium mb-3 relative z-10">AI Insight</h3>
-                <p className="text-sm text-gray-300 mb-6 leading-relaxed relative z-10 border-l-2 border-blue-500 pl-3">
-                    {result.aiReasoning ? (
-                      result.aiReasoning
-                    ) : (
-                      <>
-                        Your logic in <strong>{result.topic}</strong> is sound, but you have a critical gap in{" "}
-                        <em>{result.weaknesses[0] || "Advanced Patterns"}</em>.
-                      </>
-                    )}
-                </p>
-
-                {result.learningPathId ? (
-                  <div className="text-xs text-blue-300 mb-4 relative z-10">
-                    Learning path prepared: <span className="font-semibold">#{result.learningPathId}</span>
-                  </div>
-                ) : null}
-                
-                <Button 
-                    onClick={onGenerateCourse}
-                    isLoading={isGenerating}
-                    variant="secondary"
-                    className="w-full justify-between group relative z-10 bg-white text-slate-900 hover:bg-gray-100 border-none h-12"
-                >
-                    {isGenerating ? 'Architecting...' : 'Generate Fix'}
-                    {!isGenerating && <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />}
-                </Button>
-            </div>
-        ) : (
-            // EMPTY STATE: Insight
-            <div className="bg-white dark:bg-[#111111] p-6 rounded-2xl border border-gray-200 dark:border-white/10 shadow-soft opacity-0 animate-fade-in-up delay-400">
-                <h3 className="font-serif text-lg font-medium mb-3 text-gray-400 dark:text-gray-500">AI Insight</h3>
-                <p className="text-sm text-gray-400 dark:text-gray-500 mb-6 leading-relaxed">
-                  No data available for analysis. Complete an assessment to receive personalized insights.
-                </p>
-                <Button variant="secondary" disabled className="w-full bg-gray-50 dark:bg-zinc-800 text-gray-300 dark:text-gray-600 border-gray-100 dark:border-zinc-700 cursor-not-allowed">
-                  Generate Fix
-                </Button>
-            </div>
-        )}
-
-        {/* Active Courses List */}
-        {result ? (
-            <div className="bg-white dark:bg-[#111111] p-5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-soft flex-1 opacity-0 animate-fade-in-up delay-500">
-            <h3 className="font-serif text-sm font-bold mb-4 text-gray-500 dark:text-gray-400 uppercase tracking-wide">Watchlist</h3>
-            <div className="space-y-3">
-                <div className="p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl hover:bg-white dark:hover:bg-zinc-800 hover:shadow-md transition-all cursor-pointer border border-transparent hover:border-gray-100 dark:hover:border-zinc-700 group">
-                <div className="flex justify-between items-start mb-2">
-                    <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-1.5 py-0.5 rounded">COURSE</span>
-                    <MoreHorizontal className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-                <h4 className="font-semibold text-sm text-slate-900 dark:text-white mb-1 truncate">Advanced React Patterns</h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Module 3 • 12m left</p>
-                <div className="w-full bg-gray-200 dark:bg-zinc-700 h-1 rounded-full overflow-hidden">
-                    <div className="bg-blue-600 h-full w-2/3"></div>
-                </div>
-                </div>
-
-                <div className="p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl hover:bg-white dark:hover:bg-zinc-800 hover:shadow-md transition-all cursor-pointer border border-transparent hover:border-gray-100 dark:hover:border-zinc-700 group">
-                <div className="flex justify-between items-start mb-2">
-                    <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 px-1.5 py-0.5 rounded">PROJECT</span>
-                </div>
-                <h4 className="font-semibold text-sm text-slate-900 dark:text-white mb-1 truncate">E-Commerce API Validator</h4>
-                <div className="flex items-center text-xs font-medium text-amber-600 dark:text-amber-500 mt-2">
-                    <PlayCircle className="h-3 w-3 mr-1" /> Resume Submission
-                </div>
-                </div>
-            </div>
-            </div>
-        ) : (
-            // EMPTY STATE: Watchlist
-            <div className="bg-white dark:bg-[#111111] p-5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-soft flex-1 opacity-0 animate-fade-in-up delay-500 flex flex-col items-center justify-center text-center min-h-[150px]">
-                 <h3 className="font-serif text-sm font-bold mb-4 text-gray-400 dark:text-gray-500 uppercase tracking-wide">Watchlist</h3>
-                 <p className="text-xs text-gray-400 dark:text-gray-500">Your generated courses will appear here.</p>
-            </div>
-        )}
-
-        {/* Mini Radar Context */}
-        {result && (
-            <div className="bg-white dark:bg-[#111111] p-4 rounded-2xl border border-gray-200 dark:border-white/10 shadow-soft h-[200px] flex flex-col opacity-0 animate-fade-in-up delay-700">
-                <h3 className="font-serif text-xs font-bold text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-wide">Topology</h3>
-                <div className="flex-1 w-full min-h-0 -ml-2">
+            {timelineChartData.length > 0 ? (
+              <div className="h-[240px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart cx="50%" cy="50%" outerRadius="65%" data={result.knowledgeGraph}>
-                    <PolarGrid stroke={isDark ? "rgba(255,255,255,0.1)" : "#f0f0f0"} />
-                    <PolarAngleAxis dataKey="subject" tick={{ fill: isDark ? '#6b7280' : '#9ca3af', fontSize: 9 }} />
-                    <Radar
-                        name="Skill Level"
-                        dataKey="A"
-                        stroke="#3B82F6"
-                        strokeWidth={2}
-                        fill="#3B82F6"
-                        fillOpacity={0.2}
-                        animationDuration={1500}
+                  <AreaChart data={timelineChartData}>
+                    <defs>
+                      <linearGradient id="activityGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.22} />
+                        <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      vertical={false}
+                      stroke={isDark ? "rgba(255,255,255,0.1)" : "#f0f0f0"}
                     />
-                    </RadarChart>
+                    <XAxis
+                      dataKey="label"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 11, fill: isDark ? "#9ca3af" : "#6b7280" }}
+                      minTickGap={20}
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      allowDecimals={false}
+                      tick={{ fontSize: 11, fill: isDark ? "#9ca3af" : "#6b7280" }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: "12px",
+                        border: isDark ? "1px solid #333" : "1px solid #e5e7eb",
+                        boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
+                        backgroundColor: isDark ? "#111111" : "#ffffff",
+                        color: isDark ? "#ffffff" : "#111827",
+                      }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="events"
+                      stroke="#3B82F6"
+                      strokeWidth={2}
+                      fill="url(#activityGradient)"
+                    />
+                  </AreaChart>
                 </ResponsiveContainer>
-                </div>
-            </div>
-        )}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-dashed border-gray-200 dark:border-zinc-700 p-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                No timeline activity yet. Complete content, assessments, or evaluations to populate this chart.
+              </div>
+            )}
+          </div>
 
-      </div>
+          <div className="grid grid-cols-1 xl:grid-cols-[1.8fr,1fr] gap-6">
+            <div className="bg-white dark:bg-[#111111] p-4 lg:p-6 rounded-2xl border border-gray-200 dark:border-white/10 shadow-soft">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+                <div>
+                  <h2 className="font-serif text-lg font-medium text-slate-900 dark:text-white">Assessment History</h2>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Source: <code>/api/progress/assessments/history</code>
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => void handleOpenComparison()}
+                  disabled={selectedSessionIds.length !== 2}
+                  className="gap-2"
+                >
+                  <GitCompareArrows className="h-4 w-4" />
+                  Compare Selected
+                </Button>
+              </div>
+
+              {assessmentHistory?.improvement && (
+                <div className="mb-4 rounded-xl border border-blue-200 dark:border-blue-900/40 bg-blue-50 dark:bg-blue-950/30 px-4 py-3">
+                  <div className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-300 font-medium">
+                    <TrendingUp className="h-4 w-4" />
+                    Improvement: {formatPercent(assessmentHistory.improvement.improvementPercentage, 1)} (
+                    {assessmentHistory.improvement.levelProgression})
+                  </div>
+                </div>
+              )}
+
+              {sortedHistory.length > 0 ? (
+                <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
+                  {sortedHistory.map((entry) => {
+                    const isSelected = selectedSessionIds.includes(entry.sessionId);
+                    return (
+                      <label
+                        key={entry.sessionId}
+                        className={`flex items-start gap-3 rounded-xl border p-3 cursor-pointer transition-colors ${
+                          isSelected
+                            ? "border-blue-300 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30"
+                            : "border-gray-200 dark:border-zinc-700 bg-gray-50/60 dark:bg-zinc-900/40 hover:bg-gray-50 dark:hover:bg-zinc-900/60"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="mt-1"
+                          checked={isSelected}
+                          onChange={() => toggleSessionSelection(entry.sessionId)}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                            <div className="font-medium text-sm text-slate-900 dark:text-white truncate">
+                              {entry.trackName || `Track #${entry.trackId ?? "N/A"}`}
+                            </div>
+                            <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                              {formatScore(entry.score)}
+                            </div>
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            Session #{entry.sessionId} • {formatDate(entry.attemptDate)} • {formatLevel(entry.detectedLevel)}
+                          </div>
+                          {entry.aiReasoning && (
+                            <div className="text-xs text-gray-600 dark:text-gray-300 mt-2 line-clamp-2">
+                              {entry.aiReasoning}
+                            </div>
+                          )}
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="rounded-xl border border-dashed border-gray-200 dark:border-zinc-700 p-8 text-center">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                    No completed assessments yet.
+                  </p>
+                  <Button onClick={onStartAssessment}>Start Assessment</Button>
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-6">
+              <div className="bg-[#1A1A1A] p-6 rounded-2xl text-white shadow-lg border border-gray-800">
+                <h3 className="font-serif text-lg font-medium mb-3 flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-blue-300" />
+                  AI Insight
+                </h3>
+                <p className="text-sm text-gray-300 mb-6 leading-relaxed">{insightMessage}</p>
+                <Button
+                  onClick={onOpenLearningPath}
+                  variant="secondary"
+                  className="w-full justify-between bg-white text-slate-900 hover:bg-gray-100 border-none h-11"
+                >
+                  Continue Learning
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+                <p className="text-[11px] text-gray-400 mt-3">
+                  Opens your latest backend learning path and stage content.
+                </p>
+              </div>
+
+              <div className="bg-white dark:bg-[#111111] p-5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-soft">
+                <h3 className="font-serif text-sm font-bold mb-4 text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                  Progress Snapshot
+                </h3>
+                <div className="space-y-3 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                      <BarChart3 className="h-4 w-4" />
+                      Evaluation Attempts
+                    </span>
+                    <span className="font-semibold text-slate-900 dark:text-white">
+                      {dashboardData?.evaluations.totalCompleted ?? 0}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                      <Clock3 className="h-4 w-4" />
+                      Latest Assessment Date
+                    </span>
+                    <span className="font-semibold text-slate-900 dark:text-white">
+                      {formatDate(latestAssessment?.date)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4" />
+                      Selected Tracks
+                    </span>
+                    <span className="font-semibold text-slate-900 dark:text-white">
+                      {dashboardData?.tracks.totalSelected ?? 0}
+                    </span>
+                  </div>
+                </div>
+
+                {dashboardData?.skillProfile && (
+                  <div className="mt-5 pt-4 border-t border-gray-200 dark:border-zinc-700 space-y-3">
+                    {dashboardData.skillProfile.strengths.length > 0 && (
+                      <div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wide">
+                          Strengths
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {dashboardData.skillProfile.strengths.slice(0, 3).map((item) => (
+                            <span
+                              key={item}
+                              className="text-[11px] px-2 py-1 rounded-full bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-100 dark:border-green-900/40"
+                            >
+                              {item}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {dashboardData.skillProfile.weaknesses.length > 0 && (
+                      <div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wide">
+                          Focus Areas
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {dashboardData.skillProfile.weaknesses.slice(0, 3).map((item) => (
+                            <span
+                              key={item}
+                              className="text-[11px] px-2 py-1 rounded-full bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-100 dark:border-red-900/40"
+                            >
+                              {item}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {isComparisonModalOpen && (
+        <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-3xl bg-white dark:bg-[#111111] rounded-2xl border border-gray-200 dark:border-zinc-700 shadow-2xl p-6">
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h3 className="font-serif text-xl font-semibold text-slate-900 dark:text-white">
+                  Assessment Comparison
+                </h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Source: <code>/api/progress/assessments/compare</code>
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setIsComparisonModalOpen(false);
+                }}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800"
+                aria-label="Close comparison modal"
+              >
+                <X className="h-5 w-5 text-gray-500" />
+              </button>
+            </div>
+
+            {isComparing ? (
+              <div className="py-16 text-center">
+                <div className="mx-auto h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4" />
+                <p className="text-sm text-gray-500 dark:text-gray-400">Comparing assessment sessions...</p>
+              </div>
+            ) : comparisonError ? (
+              <div className="rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50 dark:bg-red-950/30 px-4 py-3 text-sm text-red-700 dark:text-red-300">
+                {comparisonError}
+              </div>
+            ) : comparisonData ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="rounded-xl border border-gray-200 dark:border-zinc-700 p-4">
+                    <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Attempt 1</div>
+                    <div className="text-sm text-slate-900 dark:text-white space-y-1">
+                      <div>Date: {formatDate(comparisonData.attempt1.date)}</div>
+                      <div>Score: {formatScore(comparisonData.attempt1.overallScore)}</div>
+                      <div>Level: {formatLevel(comparisonData.attempt1.detectedLevel)}</div>
+                      <div>Questions: {comparisonData.attempt1.questionsAnswered}</div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-gray-200 dark:border-zinc-700 p-4">
+                    <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Attempt 2</div>
+                    <div className="text-sm text-slate-900 dark:text-white space-y-1">
+                      <div>Date: {formatDate(comparisonData.attempt2.date)}</div>
+                      <div>Score: {formatScore(comparisonData.attempt2.overallScore)}</div>
+                      <div>Level: {formatLevel(comparisonData.attempt2.detectedLevel)}</div>
+                      <div>Questions: {comparisonData.attempt2.questionsAnswered}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-blue-200 dark:border-blue-900/40 bg-blue-50 dark:bg-blue-950/30 p-4">
+                  <div className="text-xs uppercase tracking-wide text-blue-700 dark:text-blue-300 mb-2">Improvement</div>
+                  <div className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                    <div>Score Change: {formatScore(comparisonData.improvement.scoreChange)}</div>
+                    <div>
+                      Percentage Improvement: {formatPercent(comparisonData.improvement.percentageImprovement, 1)}
+                    </div>
+                    <div>Level Change: {comparisonData.improvement.levelChange ?? "N/A"}</div>
+                    <div>Time Between Attempts: {comparisonData.improvement.timeBetweenAttempts ?? "N/A"}</div>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

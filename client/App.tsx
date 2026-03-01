@@ -19,8 +19,8 @@ import { Blog } from "./pages/Blog";
 import { SkillSelection } from "./pages/SkillSelection";
 import { Assessment } from "./pages/Assessment";
 import { Dashboard } from "./pages/Dashboard";
+import { Course } from "./pages/Course";
 import { Validator } from "./pages/Validator";
-import { generateCurriculum } from "./services/geminiService";
 import { authService } from "./api/services/auth";
 import { GuestOnlyRoute, ProtectedRoute } from "./routes/guards";
 import { authStore, useAuthStore } from "./state/authStore";
@@ -57,10 +57,8 @@ interface RoutedAppContentProps {
   user: User | null;
   isAuthenticated: boolean;
   assessmentResult: AssessmentResult | null;
-  isGeneratingCourse: boolean;
   toastMessage: string | null;
   onCloseToast: () => void;
-  onGenerateCourse: () => Promise<void>;
   onAssessmentComplete: (result: AssessmentResult) => void;
   onLogout: () => Promise<void>;
   onLoginSuccess: (user: User) => void;
@@ -71,10 +69,8 @@ const RoutedAppContent: FC<RoutedAppContentProps> = ({
   user,
   isAuthenticated,
   assessmentResult,
-  isGeneratingCourse,
   toastMessage,
   onCloseToast,
-  onGenerateCourse,
   onAssessmentComplete,
   onLogout,
   onLoginSuccess,
@@ -184,15 +180,14 @@ const RoutedAppContent: FC<RoutedAppContentProps> = ({
                 <Dashboard
                   user={user}
                   result={assessmentResult}
-                  onGenerateCourse={onGenerateCourse}
-                  isGenerating={isGeneratingCourse}
+                  onOpenLearningPath={() => navigate("/course")}
                   onStartAssessment={() => navigate("/skills")}
                 />
               }
             />
+            <Route path="/course" element={<Course onStartAssessment={() => navigate("/skills")} />} />
             <Route path="/validator" element={<Validator />} />
           </Route>
-          <Route path="/course" element={<Navigate to="/dashboard" replace />} />
         </Route>
 
         <Route
@@ -206,7 +201,6 @@ const RoutedAppContent: FC<RoutedAppContentProps> = ({
 
 const App: FC = () => {
   const [assessmentResult, setAssessmentResult] = useState<AssessmentResult | null>(null);
-  const [isGeneratingCourse, setIsGeneratingCourse] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const authState = useAuthStore((snapshot) => snapshot);
@@ -261,24 +255,6 @@ const App: FC = () => {
     setToastMessage("Assessment complete. Learning path generation is in progress.");
   };
 
-  const handleGenerateCourse = async (): Promise<void> => {
-    if (!assessmentResult) {
-      return;
-    }
-
-    setIsGeneratingCourse(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      await generateCurriculum(assessmentResult.topic, assessmentResult.weaknesses);
-      setToastMessage("Course generated successfully! (Curriculum page is currently disabled)");
-    } catch (error) {
-      alert("Failed to generate course");
-      console.error(error);
-    } finally {
-      setIsGeneratingCourse(false);
-    }
-  };
-
   const handleLoginSuccess = (loggedInUser: User): void => {
     setToastMessage(`Welcome back, ${loggedInUser.name}`);
   };
@@ -304,10 +280,8 @@ const App: FC = () => {
           user={user}
           isAuthenticated={authState.isAuthenticated}
           assessmentResult={assessmentResult}
-          isGeneratingCourse={isGeneratingCourse}
           toastMessage={toastMessage}
           onCloseToast={() => setToastMessage(null)}
-          onGenerateCourse={handleGenerateCourse}
           onAssessmentComplete={handleAssessmentComplete}
           onLogout={handleLogout}
           onLoginSuccess={handleLoginSuccess}

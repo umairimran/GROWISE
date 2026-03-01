@@ -1,220 +1,672 @@
-import { useState, useEffect, FC, FormEvent } from 'react';
-import ReactMarkdown from 'react-markdown';
-import { Course, CourseModule, ChatMessage } from '../types';
-import { getTutorResponse } from '../services/geminiService';
-import { CheckCircle, PlayCircle, MessageSquare, Send } from 'lucide-react';
-import { Button } from '../components/Button';
-import { useTheme } from '../providers/ThemeProvider';
+import { FC, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import {
+  AlertCircle,
+  BookOpen,
+  CheckCircle2,
+  Clock3,
+  MessageSquare,
+  RefreshCw,
+  Send,
+  Sparkles,
+} from "lucide-react";
+import type { components } from "../api/generated/openapi";
+import { ApiHttpError } from "../api/http";
+import { chatService } from "../api/services/chat";
+import { contentService } from "../api/services/content";
+import { learningService } from "../api/services/learning";
+import { Button } from "../components/Button";
+
+type LearningPathResponse = components["schemas"]["LearningPathResponse"];
+type LearningPathStageResponse = components["schemas"]["LearningPathStageResponse"];
+type StageContentWithProgress = components["schemas"]["StageContentWithProgress"];
+type StageProgressSummary = components["schemas"]["StageProgressSummary"];
+type ChatSessionResponse = components["schemas"]["ChatSessionResponse"];
+type ChatMessageResponse = components["schemas"]["ChatMessageResponse"];
+type UserContentProgressResponse = components["schemas"]["UserContentProgressResponse"];
 
 interface CourseProps {
-    course: Course;
+  onStartAssessment: () => void;
 }
 
-export const CourseView: FC<CourseProps> = ({ course }) => {
-    const [activeModuleIndex, setActiveModuleIndex] = useState(0);
-    const [chatHistory, setChatHistory] = useState<ChatMessage[]>([
-        { role: 'model', text: "Hi! I'm your AI tutor for this module. Ask me anything about the content." }
-    ]);
-    const [chatInput, setChatInput] = useState("");
-    const [chatLoading, setChatLoading] = useState(false);
-    const { theme } = useTheme();
-    const isDark = theme === 'dark';
+const toErrorMessage = (error: unknown, fallback: string): string => {
+  if (error instanceof ApiHttpError) {
+    return error.message || fallback;
+  }
 
-    const activeModule = course.modules[activeModuleIndex];
+  if (error instanceof Error) {
+    return error.message;
+  }
 
-    // Reset chat when module changes
-    useEffect(() => {
-        setChatHistory([{ role: 'model', text: `Hi! I'm ready to help you with ${activeModule.title}.` }]);
-    }, [activeModule.id]);
+  return fallback;
+};
 
-    const handleSendMessage = async (e: FormEvent) => {
-        e.preventDefault();
-        if (!chatInput.trim()) return;
+const formatDateTime = (value: string | null | undefined): string => {
+  if (!value) {
+    return "N/A";
+  }
 
-        const userMsg: ChatMessage = { role: 'user', text: chatInput };
-        setChatHistory(prev => [...prev, userMsg]);
-        setChatInput("");
-        setChatLoading(true);
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return "N/A";
+  }
 
-        try {
-            // Convert internal chat history to Gemini format
-            const geminiHistory = chatHistory.map(m => ({
-                role: m.role,
-                parts: [{ text: m.text }]
-            }));
-            // Add current user message to context for API
-            geminiHistory.push({ role: 'user', parts: [{ text: userMsg.text }] });
+  return parsed.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
 
-            const responseText = await getTutorResponse(geminiHistory, userMsg.text);
-            setChatHistory(prev => [...prev, { role: 'model', text: responseText || "I couldn't generate a response." }]);
-        } catch (err) {
-            setChatHistory(prev => [...prev, { role: 'model', text: "Error connecting to tutor." }]);
-        } finally {
-            setChatLoading(false);
+const parseTags = (raw: string | null | undefined): string[] => {
+  if (!raw) {
+    return [];
+  }
+
+  return raw
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+};
+
+const byStageOrder = (a: LearningPathStageResponse, b: LearningPathStageResponse): number =>
+  a.stage_order - b.stage_order;
+
+const progressLabel = (progress: UserContentProgressResponse | null | undefined): string => {
+  if (!progress) {
+    return "Not started";
+  }
+
+  if (progress.is_completed) {
+    return "Completed";
+  }
+
+  return `${progress.completion_percentage}% complete`;
+};
+
+export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
+  const [path, setPath] = useState<LearningPathResponse | null>(null);
+  const [stages, setStages] = useState<LearningPathStageResponse[]>([]);
+  const [activeStageId, setActiveStageId] = useState<number | null>(null);
+
+  const [contentItems, setContentItems] = useState<StageContentWithProgress[]>([]);
+  const [stageProgress, setStageProgress] = useState<StageProgressSummary | null>(null);
+  const [chatSession, setChatSession] = useState<ChatSessionResponse | null>(null);
+  const [messages, setMessages] = useState<ChatMessageResponse[]>([]);
+
+  const [chatInput, setChatInput] = useState("");
+  const [isLoadingPath, setIsLoadingPath] = useState(true);
+  const [isLoadingStage, setIsLoadingStage] = useState(false);
+  const [isGeneratingContent, setIsGeneratingContent] = useState(false);
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [activeContentActionKey, setActiveContentActionKey] = useState<string | null>(null);
+  const [isNoPath, setIsNoPath] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const chatBottomRef = useRef<HTMLDivElement | null>(null);
+  const activeStage = useMemo(
+    () => stages.find((stage) => stage.stage_id === activeStageId) ?? null,
+    [activeStageId, stages],
+  );
+
+  const scrollChatToBottom = () => {
+    chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollChatToBottom();
+  }, [messages]);
+
+  const loadLearningPath = useCallback(async () => {
+    setIsLoadingPath(true);
+    setErrorMessage(null);
+
+    try {
+      const currentPath = await learningService.getMyCurrentPath();
+      const loadedStages = await learningService.getPathStages(currentPath.path_id);
+      const orderedStages = [...loadedStages].sort(byStageOrder);
+
+      setPath(currentPath);
+      setStages(orderedStages);
+      setIsNoPath(false);
+
+      setActiveStageId((currentStageId) => {
+        if (currentStageId && orderedStages.some((stage) => stage.stage_id === currentStageId)) {
+          return currentStageId;
         }
+
+        return orderedStages[0]?.stage_id ?? null;
+      });
+    } catch (error) {
+      if (error instanceof ApiHttpError && error.status === 404) {
+        setPath(null);
+        setStages([]);
+        setActiveStageId(null);
+        setIsNoPath(true);
+        return;
+      }
+
+      setErrorMessage(toErrorMessage(error, "Failed to load your learning path."));
+    } finally {
+      setIsLoadingPath(false);
+    }
+  }, []);
+
+  const loadStageExperience = useCallback(
+    async (stageId: number) => {
+      setIsLoadingStage(true);
+      setErrorMessage(null);
+
+      try {
+        const [stageContent, summary, existingSessions] = await Promise.all([
+          contentService.getStageContent(stageId),
+          contentService.getStageProgress(stageId),
+          chatService.getMySessions(stageId),
+        ]);
+
+        const session = existingSessions[0] ?? (await chatService.createSession(stageId));
+        const chatMessages = await chatService.getMessages(session.chat_id);
+
+        setContentItems(stageContent);
+        setStageProgress(summary);
+        setChatSession(session);
+        setMessages(chatMessages);
+      } catch (error) {
+        setErrorMessage(toErrorMessage(error, "Failed to load stage content and mentor chat."));
+      } finally {
+        setIsLoadingStage(false);
+      }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    void loadLearningPath();
+  }, [loadLearningPath]);
+
+  useEffect(() => {
+    if (!activeStageId) {
+      setContentItems([]);
+      setStageProgress(null);
+      setChatSession(null);
+      setMessages([]);
+      return;
+    }
+
+    let isCancelled = false;
+
+    const load = async () => {
+      await loadStageExperience(activeStageId);
+      if (isCancelled) {
+        return;
+      }
     };
 
-    // Chat message markdown components
-    const chatMarkdownComponents = {
-        p: ({ node, ...props }: any) => <p className="mb-2 last:mb-0" {...props} />,
-        strong: ({ node, ...props }: any) => <strong className="font-semibold" {...props} />,
-        em: ({ node, ...props }: any) => <em className="italic" {...props} />,
-        ul: ({ node, ...props }: any) => <ul className="list-disc list-inside mb-2 space-y-1" {...props} />,
-        ol: ({ node, ...props }: any) => <ol className="list-decimal list-inside mb-2 space-y-1" {...props} />,
-        li: ({ node, ...props }: any) => <li className="leading-relaxed" {...props} />,
-        code: ({ node, inline, className, children, ...props }: any) => {
-            return inline ? (
-                <code className={`px-1 py-0.5 rounded text-xs font-mono ${isDark ? 'bg-gray-700 text-blue-300' : 'bg-gray-200 text-blue-600'
-                    }`} {...props}>
-                    {children}
-                </code>
-            ) : (
-                <pre className={`p-2 rounded-lg overflow-x-auto my-2 text-xs ${isDark ? 'bg-gray-800 text-gray-100' : 'bg-gray-900 text-gray-100'
-                    }`}>
-                    <code {...props} className={className}>{children}</code>
-                </pre>
-            );
-        },
-        h1: ({ node, ...props }: any) => <h1 className="font-bold text-base mb-2" {...props} />,
-        h2: ({ node, ...props }: any) => <h2 className="font-bold text-sm mb-2" {...props} />,
-        h3: ({ node, ...props }: any) => <h3 className="font-semibold text-sm mb-1" {...props} />,
-    };
+    void load();
 
+    return () => {
+      isCancelled = true;
+    };
+  }, [activeStageId, loadStageExperience]);
+
+  const withContentAction = async (
+    actionKey: string,
+    action: () => Promise<void>,
+  ): Promise<void> => {
+    if (!activeStageId) {
+      return;
+    }
+
+    setActiveContentActionKey(actionKey);
+    setErrorMessage(null);
+
+    try {
+      await action();
+      await loadStageExperience(activeStageId);
+    } catch (error) {
+      setErrorMessage(toErrorMessage(error, "Content action failed."));
+    } finally {
+      setActiveContentActionKey(null);
+    }
+  };
+
+  const handleGenerateContent = async () => {
+    if (!activeStageId) {
+      return;
+    }
+
+    setIsGeneratingContent(true);
+    setErrorMessage(null);
+
+    try {
+      await contentService.generateStageContent({
+        stage_id: activeStageId,
+        content_count: 8,
+      });
+      await loadStageExperience(activeStageId);
+    } catch (error) {
+      setErrorMessage(toErrorMessage(error, "Could not generate content for this stage."));
+    } finally {
+      setIsGeneratingContent(false);
+    }
+  };
+
+  const handleStartProgress = async (contentId: number) => {
+    await withContentAction(`start-${contentId}`, async () => {
+      await contentService.startContentProgress({
+        content_id: contentId,
+        completion_percentage: 0,
+        time_spent_minutes: 0,
+        notes: null,
+      });
+    });
+  };
+
+  const handleUpdateProgress = async (
+    contentId: number,
+    currentProgress: UserContentProgressResponse,
+  ) => {
+    await withContentAction(`update-${contentId}`, async () => {
+      await contentService.updateContentProgress(contentId, {
+        completion_percentage: Math.min(95, currentProgress.completion_percentage + 25),
+        time_spent_minutes: currentProgress.time_spent_minutes + 10,
+        is_completed: false,
+      });
+    });
+  };
+
+  const handleCompleteContent = async (contentId: number) => {
+    await withContentAction(`complete-${contentId}`, async () => {
+      await contentService.completeContent(contentId);
+    });
+  };
+
+  const handleSendMessage = async (event: FormEvent) => {
+    event.preventDefault();
+
+    const trimmed = chatInput.trim();
+    if (!trimmed || !chatSession) {
+      return;
+    }
+
+    setIsSendingMessage(true);
+    setErrorMessage(null);
+
+    try {
+      setChatInput("");
+      await chatService.sendMessage(chatSession.chat_id, trimmed);
+      const chatMessages = await chatService.getMessages(chatSession.chat_id);
+      setMessages(chatMessages);
+    } catch (error) {
+      setErrorMessage(toErrorMessage(error, "Failed to send mentor message."));
+      setChatInput(trimmed);
+    } finally {
+      setIsSendingMessage(false);
+    }
+  };
+
+  if (isLoadingPath) {
     return (
-        <div className="flex flex-col lg:flex-row h-auto lg:h-[calc(100vh-140px)] gap-6 pb-20 lg:pb-0">
-            {/* Module List & Content - 65% width */}
-            <div className={`flex-1 flex flex-col rounded-2xl border shadow-soft overflow-hidden min-h-[500px] ${isDark ? 'bg-neutral-900 border-neutral-700' : 'bg-white border-gray-200'
-                }`}>
-                {/* Course Header */}
-                <div className={`p-4 md:p-6 border-b flex justify-between items-center sticky top-0 z-10 ${isDark ? 'bg-neutral-800 border-neutral-700' : 'bg-gray-50 border-gray-200'
-                    }`}>
-                    <div>
-                        <h2 className={`font-serif text-lg md:text-xl font-bold truncate max-w-[200px] md:max-w-none ${isDark ? 'text-white' : 'text-gray-900'
-                            }`}>{course.title}</h2>
-                        <div className="flex items-center mt-1 space-x-2">
-                            <span className={`text-xs font-semibold px-2 py-0.5 rounded shrink-0 ${isDark ? 'bg-blue-900/50 text-blue-300' : 'bg-blue-100 text-blue-800'
-                                }`}>
-                                Mod {activeModuleIndex + 1}
-                            </span>
-                            <span className={`text-xs truncate ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                                {activeModule.title}
-                            </span>
-                        </div>
-                    </div>
-                    <div className="flex space-x-2 shrink-0">
-                        <button
-                            disabled={activeModuleIndex === 0}
-                            onClick={() => setActiveModuleIndex(p => p - 1)}
-                            className={`p-2 rounded disabled:opacity-30 text-sm ${isDark ? 'hover:bg-neutral-700 text-gray-300' : 'hover:bg-gray-200 text-gray-700'
-                                }`}>Prev</button>
-                        <button
-                            disabled={activeModuleIndex === course.modules.length - 1}
-                            onClick={() => setActiveModuleIndex(p => p + 1)}
-                            className={`p-2 rounded text-white disabled:opacity-30 text-sm ${isDark ? 'bg-blue-600 hover:bg-blue-500' : 'bg-gray-900 hover:bg-gray-800'
-                                }`}>Next</button>
-                    </div>
-                </div>
-
-                {/* Content Area */}
-                <div className={`flex-1 overflow-y-auto p-4 md:p-8 prose max-w-none ${isDark ? 'prose-invert' : 'prose-slate'
-                    }`}>
-                    <ReactMarkdown
-                        components={{
-                            h1: ({ node, ...props }) => <h1 className={`font-serif text-2xl md:text-3xl font-bold mb-6 ${isDark ? 'text-white' : 'text-gray-900'
-                                }`} {...props} />,
-                            h2: ({ node, ...props }) => <h2 className={`font-serif text-xl md:text-2xl font-semibold mt-8 mb-4 ${isDark ? 'text-gray-100' : 'text-gray-900'
-                                }`} {...props} />,
-                            p: ({ node, ...props }) => <p className={`leading-relaxed mb-4 text-base md:text-lg ${isDark ? 'text-gray-300' : 'text-gray-700'
-                                }`} {...props} />,
-                            code: ({ node, inline, className, children, ...props }: any) => {
-                                return !inline ? (
-                                    <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto my-6 text-sm">
-                                        <code {...props} className={className}>{children}</code>
-                                    </pre>
-                                ) : (
-                                    <code className={`px-1 py-0.5 rounded text-sm font-mono break-all ${isDark ? 'bg-neutral-700 text-red-400' : 'bg-gray-100 text-red-600'
-                                        }`} {...props}>
-                                        {children}
-                                    </code>
-                                )
-                            }
-                        }}
-                    >
-                        {activeModule.content}
-                    </ReactMarkdown>
-                </div>
-            </div>
-
-            {/* Interactive Tutor - 35% width - Stacked at bottom on mobile */}
-            <div className={`w-full lg:w-96 flex flex-col rounded-2xl border shadow-soft overflow-hidden h-[500px] lg:h-full ${isDark ? 'bg-neutral-900 border-neutral-700' : 'bg-white border-gray-200'
-                }`}>
-                <div className={`p-4 border-b flex items-center space-x-2 ${isDark ? 'bg-neutral-800 border-neutral-700' : 'bg-white border-gray-200'
-                    }`}>
-                    <div className={`h-8 w-8 rounded-full flex items-center justify-center ${isDark ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-50 text-blue-600'
-                        }`}>
-                        <MessageSquare className="h-4 w-4" />
-                    </div>
-                    <h3 className={`font-medium text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>AI Module Tutor</h3>
-                </div>
-
-                <div className={`flex-1 overflow-y-auto p-4 space-y-4 ${isDark ? 'bg-neutral-900/50' : 'bg-gray-50/50'
-                    }`}>
-                    {chatHistory.map((msg, i) => (
-                        <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm ${msg.role === 'user'
-                                    ? `rounded-br-none ${isDark ? 'bg-blue-600 text-white' : 'bg-gray-900 text-white'}`
-                                    : `rounded-bl-none shadow-sm ${isDark
-                                        ? 'bg-neutral-800 border border-neutral-700 text-gray-200'
-                                        : 'bg-white border border-gray-200 text-gray-800'
-                                    }`
-                                }`}>
-                                {msg.role === 'user' ? (
-                                    msg.text
-                                ) : (
-                                    <ReactMarkdown components={chatMarkdownComponents}>
-                                        {msg.text}
-                                    </ReactMarkdown>
-                                )}
-                            </div>
-                        </div>
-                    ))}
-                    {chatLoading && (
-                        <div className="flex justify-start">
-                            <div className={`px-4 py-3 rounded-2xl rounded-bl-none shadow-sm ${isDark ? 'bg-neutral-800 border border-neutral-700' : 'bg-white border border-gray-200'
-                                }`}>
-                                <div className="flex space-x-1">
-                                    <div className={`w-2 h-2 rounded-full animate-bounce ${isDark ? 'bg-gray-500' : 'bg-gray-400'}`}></div>
-                                    <div className={`w-2 h-2 rounded-full animate-bounce delay-75 ${isDark ? 'bg-gray-500' : 'bg-gray-400'}`}></div>
-                                    <div className={`w-2 h-2 rounded-full animate-bounce delay-150 ${isDark ? 'bg-gray-500' : 'bg-gray-400'}`}></div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                <div className={`p-4 border-t ${isDark ? 'bg-neutral-800 border-neutral-700' : 'bg-white border-gray-200'
-                    }`}>
-                    <form onSubmit={handleSendMessage} className="relative">
-                        <input
-                            type="text"
-                            value={chatInput}
-                            onChange={(e) => setChatInput(e.target.value)}
-                            placeholder="Ask about this topic..."
-                            className={`w-full pr-10 pl-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm ${isDark
-                                    ? 'bg-neutral-700 border-neutral-600 text-white placeholder-gray-400 focus:bg-neutral-600'
-                                    : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-500 focus:bg-white'
-                                }`}
-                        />
-                        <button
-                            type="submit"
-                            disabled={!chatInput.trim() || chatLoading}
-                            className={`absolute right-2 top-2 p-1.5 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed ${isDark ? 'text-blue-400 hover:bg-neutral-600' : 'text-blue-600 hover:bg-blue-50'
-                                }`}>
-                            <Send className="h-4 w-4" />
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
+      <div className="bg-white dark:bg-[#111111] rounded-2xl border border-gray-200 dark:border-zinc-700 shadow-soft p-10 text-center">
+        <div className="mx-auto h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-sm text-gray-500 dark:text-gray-400">Loading your latest learning path...</p>
+      </div>
     );
+  }
+
+  if (isNoPath) {
+    return (
+      <div className="bg-white dark:bg-[#111111] rounded-2xl border border-gray-200 dark:border-zinc-700 shadow-soft p-8 lg:p-10 text-center">
+        <div className="mx-auto h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 flex items-center justify-center mb-4">
+          <BookOpen className="h-6 w-6" />
+        </div>
+        <h2 className="font-serif text-2xl font-semibold text-slate-900 dark:text-white mb-3">
+          No Learning Path Found
+        </h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+          Complete an assessment first so the backend can generate your personalized stages.
+        </p>
+        <Button onClick={onStartAssessment}>Start Assessment</Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-6 pb-10">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="font-serif text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">
+            Learning Path
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Path #{path?.path_id ?? "N/A"} · {stages.length} stages
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => void loadLearningPath()}>
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh Path
+        </Button>
+      </div>
+
+      {errorMessage && (
+        <div className="rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50 dark:bg-red-950/30 px-4 py-3 text-sm text-red-700 dark:text-red-300 flex items-start gap-3">
+          <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+          <span>{errorMessage}</span>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 xl:grid-cols-[1.8fr,1fr] gap-6">
+        <div className="flex flex-col gap-6">
+          <div className="bg-white dark:bg-[#111111] rounded-2xl border border-gray-200 dark:border-zinc-700 shadow-soft p-4">
+            <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3">
+              Stages
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {stages.map((stage) => {
+                const isActive = stage.stage_id === activeStageId;
+                return (
+                  <button
+                    key={stage.stage_id}
+                    className={`px-3 py-2 rounded-lg border text-sm transition-colors ${
+                      isActive
+                        ? "border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300"
+                        : "border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-900"
+                    }`}
+                    onClick={() => setActiveStageId(stage.stage_id)}
+                  >
+                    {stage.stage_order}. {stage.stage_name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-[#111111] rounded-2xl border border-gray-200 dark:border-zinc-700 shadow-soft p-5">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+              <div>
+                <h2 className="font-serif text-lg font-medium text-slate-900 dark:text-white">
+                  {activeStage?.stage_name ?? "Stage"}
+                </h2>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Focus: {activeStage?.focus_area ?? "N/A"}
+                </p>
+              </div>
+              {activeStage && contentItems.length === 0 && (
+                <Button onClick={handleGenerateContent} isLoading={isGeneratingContent}>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Generate Content
+                </Button>
+              )}
+            </div>
+
+            {stageProgress && (
+              <div className="rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900/40 px-4 py-3 text-sm mb-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div>
+                    <div className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      Completion
+                    </div>
+                    <div className="font-semibold text-slate-900 dark:text-white">
+                      {stageProgress.completion_percentage}%
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      Completed
+                    </div>
+                    <div className="font-semibold text-slate-900 dark:text-white">
+                      {stageProgress.completed_items}/{stageProgress.total_content_items}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      Time Spent
+                    </div>
+                    <div className="font-semibold text-slate-900 dark:text-white">
+                      {stageProgress.total_time_spent_minutes}m
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      Remaining
+                    </div>
+                    <div className="font-semibold text-slate-900 dark:text-white">
+                      {stageProgress.estimated_time_remaining}m
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {isLoadingStage ? (
+              <div className="py-10 text-center">
+                <div className="mx-auto h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3" />
+                <p className="text-sm text-gray-500 dark:text-gray-400">Loading stage experience...</p>
+              </div>
+            ) : !activeStage ? (
+              <div className="rounded-xl border border-dashed border-gray-200 dark:border-zinc-700 p-8 text-center">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  This learning path has no stages yet.
+                </p>
+              </div>
+            ) : contentItems.length > 0 ? (
+              <div className="space-y-4">
+                {contentItems.map((content) => {
+                  const contentProgress = content.progress;
+                  const tags = parseTags(content.tags);
+                  const updateKey = `update-${content.content_id}`;
+                  const completeKey = `complete-${content.content_id}`;
+                  const startKey = `start-${content.content_id}`;
+
+                  return (
+                    <article
+                      key={content.content_id}
+                      className="rounded-xl border border-gray-200 dark:border-zinc-700 p-4 bg-white/90 dark:bg-zinc-900/30"
+                    >
+                      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3 mb-3">
+                        <div className="min-w-0">
+                          <h3 className="font-medium text-slate-900 dark:text-white">{content.title}</h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                            {content.description}
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap gap-2 text-[11px]">
+                          <span className="px-2 py-1 rounded-full border border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-gray-300">
+                            {content.content_type}
+                          </span>
+                          <span className="px-2 py-1 rounded-full border border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-gray-300">
+                            {content.difficulty_level}
+                          </span>
+                          {content.estimated_duration !== null && content.estimated_duration !== undefined && (
+                            <span className="px-2 py-1 rounded-full border border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-gray-300 flex items-center gap-1">
+                              <Clock3 className="h-3 w-3" />
+                              {content.estimated_duration}m
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {content.content_text && (
+                        <div className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-[#0f0f0f] px-4 py-3 prose prose-sm dark:prose-invert max-w-none">
+                          <ReactMarkdown>{content.content_text}</ReactMarkdown>
+                        </div>
+                      )}
+
+                      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                        <span>Order #{content.order_index}</span>
+                        <span>·</span>
+                        <span>Added {formatDateTime(content.created_at)}</span>
+                        {content.source_platform && (
+                          <>
+                            <span>·</span>
+                            <span>Source: {content.source_platform}</span>
+                          </>
+                        )}
+                      </div>
+
+                      {content.url && (
+                        <a
+                          href={content.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-block mt-2 text-sm text-blue-600 dark:text-blue-300 hover:underline"
+                        >
+                          Open resource
+                        </a>
+                      )}
+
+                      {tags.length > 0 && (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {tags.map((tag) => (
+                            <span
+                              key={`${content.content_id}-${tag}`}
+                              className="text-[11px] px-2 py-1 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-900/40"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="mt-4 rounded-lg border border-gray-200 dark:border-zinc-700 px-3 py-2 text-xs text-gray-600 dark:text-gray-300">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="font-medium">{progressLabel(contentProgress)}</span>
+                          {contentProgress && (
+                            <span>{contentProgress.time_spent_minutes} minutes tracked</span>
+                          )}
+                        </div>
+                        {contentProgress?.is_completed && (
+                          <div className="mt-1 text-green-700 dark:text-green-300 flex items-center gap-1">
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            Completed {formatDateTime(contentProgress.completed_at)}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {!contentProgress && (
+                          <Button
+                            size="sm"
+                            onClick={() => void handleStartProgress(content.content_id)}
+                            isLoading={activeContentActionKey === startKey}
+                          >
+                            Start Tracking
+                          </Button>
+                        )}
+
+                        {contentProgress && !contentProgress.is_completed && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => void handleUpdateProgress(content.content_id, contentProgress)}
+                              isLoading={activeContentActionKey === updateKey}
+                            >
+                              Update (+25%, +10m)
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => void handleCompleteContent(content.content_id)}
+                              isLoading={activeContentActionKey === completeKey}
+                            >
+                              Mark Complete
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-dashed border-gray-200 dark:border-zinc-700 p-8 text-center">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                  No content has been generated for this stage yet.
+                </p>
+                <Button onClick={handleGenerateContent} isLoading={isGeneratingContent}>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Generate Stage Content
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-[#111111] rounded-2xl border border-gray-200 dark:border-zinc-700 shadow-soft flex flex-col min-h-[620px] max-h-[calc(100vh-160px)]">
+          <div className="px-4 py-3 border-b border-gray-200 dark:border-zinc-700 flex items-center gap-2">
+            <div className="h-8 w-8 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 flex items-center justify-center">
+              <MessageSquare className="h-4 w-4" />
+            </div>
+            <div>
+              <div className="text-sm font-medium text-slate-900 dark:text-white">Mentor Chat</div>
+              <div className="text-[11px] text-gray-500 dark:text-gray-400">
+                {chatSession ? `Session #${chatSession.chat_id}` : "Loading session..."}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {messages.length === 0 ? (
+              <div className="h-full flex items-center justify-center text-sm text-gray-500 dark:text-gray-400 text-center">
+                Start the conversation for this stage to get mentor guidance.
+              </div>
+            ) : (
+              messages.map((message) => {
+                const isUser = message.sender.toLowerCase() === "user";
+                return (
+                  <div
+                    key={message.message_id}
+                    className={`flex ${isUser ? "justify-end" : "justify-start"}`}
+                  >
+                    <div
+                      className={`max-w-[88%] rounded-2xl px-3 py-2 text-sm ${
+                        isUser
+                          ? "bg-blue-600 text-white rounded-br-none"
+                          : "bg-gray-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-200 rounded-bl-none"
+                      }`}
+                    >
+                      {isUser ? (
+                        message.message_text
+                      ) : (
+                        <div className="prose prose-sm dark:prose-invert max-w-none">
+                          <ReactMarkdown>{message.message_text}</ReactMarkdown>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+            {isSendingMessage && (
+              <div className="text-xs text-gray-500 dark:text-gray-400">Mentor is responding...</div>
+            )}
+            <div ref={chatBottomRef} />
+          </div>
+
+          <div className="p-4 border-t border-gray-200 dark:border-zinc-700">
+            <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+              <input
+                value={chatInput}
+                onChange={(event) => setChatInput(event.target.value)}
+                placeholder="Ask about this stage..."
+                className="flex-1 h-10 px-3 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                disabled={!chatSession || isSendingMessage}
+              />
+              <Button
+                type="submit"
+                size="sm"
+                disabled={!chatSession || !chatInput.trim()}
+                isLoading={isSendingMessage}
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 };

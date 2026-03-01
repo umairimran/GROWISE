@@ -4,3 +4,7 @@ export { parseFastApiError } from "./errors";
 export { authService } from "./services/auth";
 export { tracksService } from "./services/tracks";
 export { assessmentService } from "./services/assessment";
+export { progressService } from "./services/progress";
+export { learningService } from "./services/learning";
+export { contentService } from "./services/content";
+export { chatService } from "./services/chat";
