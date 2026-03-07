@@ -238,9 +238,26 @@ class AssessmentResultResponse(BaseModel):
     ai_reasoning: str
     # Populated after complete_assessment auto-generates the learning path
     learning_path_id: Optional[int] = None
+    # AI-generated comprehensive report (for content generation)
+    comprehensive_report: Optional[dict] = None
 
     class Config:
         from_attributes = True
+
+    @validator("comprehensive_report", pre=True, always=True)
+    @classmethod
+    def parse_comprehensive_report(cls, v):
+        import json
+        if v is None:
+            return None
+        if isinstance(v, dict):
+            return v
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except (ValueError, TypeError):
+                return None
+        return None
 
 
 class AssessmentDimensionBase(BaseModel):
@@ -509,4 +526,44 @@ class EvaluationResultResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# ============================================================================
+# Path Completion Report Schemas
+# ============================================================================
+
+class PathCompletionReportResponse(BaseModel):
+    report_id: int
+    path_id: int
+    user_id: int
+    learning_summary: str
+    full_context: dict
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class PathCompletionReportCreateResponse(BaseModel):
+    report_id: int
+    path_id: int
+    learning_summary: str
+    created_at: datetime
+
+
+class ImprovementAnalysisDialogueItem(BaseModel):
+    speaker: str
+    message_text: str
+    sequence_no: int
+
+
+class ImprovementAnalysisResponse(BaseModel):
+    path_id: int
+    track_name: Optional[str] = None
+    before: dict
+    after: Optional[dict] = None
+    improvement_summary: Optional[str] = None
+    improvement_percentage: Optional[float] = None
+    final_feedback: Optional[str] = None
+    dialogues: Optional[List[ImprovementAnalysisDialogueItem]] = None
 

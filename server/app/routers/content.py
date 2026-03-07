@@ -1,16 +1,99 @@
 """
 Content router - handles learning content and user progress
 """
+import logging
+from typing import Any, Dict, List
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List
 
-from app.database import get_db
 from app import models, schemas
 from app.auth_middleware import get_current_user
-from app.services.ai_service import ai_service
+from app.database import get_db
+
+log = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/content", tags=["Learning Content"])
+
+
+def _map_source_type_to_content_type(source_type: str) -> str:
+    """Map content_search source_type to stage_content content_type."""
+    st = (source_type or "article").strip().lower()
+    mapping = {
+        "article": "article",
+        "tutorial": "tutorial",
+        "documentation": "documentation",
+        "blog": "article",
+        "video": "video",
+    }
+    return mapping.get(st, "article")
+
+
+def _normalize_difficulty(level: str) -> str:
+    """Ensure difficulty is one of beginner, intermediate, advanced."""
+    if not level:
+        return "intermediate"
+    level = str(level).strip().lower()
+    if level in ("beginner", "intermediate", "advanced"):
+        return level
+    if level in ("junior", "entry", "starter"):
+        return "beginner"
+    if level in ("senior", "expert", "pro"):
+        return "advanced"
+    return "intermediate"
+
+
+def _content_search_to_stage_items(
+    search_result: Dict[str, Any],
+    difficulty_level: str,
+    track_name: str,
+    stage_name: str,
+    content_count: int,
+) -> List[Dict[str, Any]]:
+    """
+    Map content_search_service output to stage_content format for DB storage.
+    """
+    difficulty_level = _normalize_difficulty(difficulty_level)
+    content_list = search_result.get("content") or []
+    items: List[Dict[str, Any]] = []
+    for i, item in enumerate(content_list):
+        if i >= content_count:
+            break
+        title = (item.get("title") or "Resource").strip()[:500]
+        url = (item.get("url") or "").strip()
+        if not url or not url.startswith("http"):
+            url = None
+        summary = (item.get("summary") or "").strip()[:1000]
+        key_points = item.get("key_points") or []
+        source_type = item.get("source_type") or "article"
+        content_type = _map_source_type_to_content_type(source_type)
+        content_text = None
+        if key_points:
+            content_text = "\n".join(f"- {p}" for p in key_points if p)[:5000]
+        elif summary:
+            content_text = summary
+        description = summary or f"Learn about {stage_name}"
+        if len(description) > 1000:
+            description = description[:997] + "..."
+        duration = 20
+        if content_type == "video":
+            duration = 30
+        elif content_type == "documentation":
+            duration = 25
+        elif content_type == "tutorial":
+            duration = 25
+        items.append({
+            "content_type": content_type,
+            "title": title,
+            "description": description,
+            "url": url,
+            "content_text": content_text,
+            "difficulty_level": difficulty_level,
+            "estimated_duration": duration,
+            "source_platform": source_type.replace("_", " ").title()[:100],
+            "tags": f"{track_name}, {stage_name}, {difficulty_level}",
+        })
+    return items
 
 
 # ============================================================================
@@ -75,14 +158,37 @@ async def generate_content_for_stage(
         models.Track.track_id == session.track_id
     ).first()
     
-    # Generate content using AI
-    content_items = await ai_service.generate_stage_content(
-        stage_name=stage.stage_name,
-        focus_area=stage.focus_area,
-        difficulty_level=result.detected_level,
-        track_name=track.track_name,
-        content_count=request.content_count
-    )
+    # Generate content using content_search_service (Google Search agent)
+    stage_input = {
+        "stage_id": request.stage_id,
+        "stage_name": stage.stage_name,
+        "focus_area": stage.focus_area,
+        "difficulty_level": result.detected_level,
+        "track_name": track.track_name,
+    }
+    try:
+        from app.ai_services.content_search_service import search_content
+
+        search_result = await search_content(stage_input)
+        content_items = _content_search_to_stage_items(
+            search_result=search_result,
+            difficulty_level=result.detected_level,
+            track_name=track.track_name,
+            stage_name=stage.stage_name,
+            content_count=request.content_count or 8,
+        )
+    except Exception as exc:
+        log.error("Content search failed: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Content generation failed: {exc}",
+        ) from exc
+    
+    if not content_items:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="No content could be generated for this stage. Please try again.",
+        )
     
     # Save content to database
     created_content = []

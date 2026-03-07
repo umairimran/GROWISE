@@ -266,192 +266,36 @@ This evaluation considers:
     
     async def generate_evaluation_intro(self, context: Dict) -> str:
         """
-        Generate personalized AI interviewer introduction with full user context
+        Generate personalized AI interviewer introduction with full user context.
+        Uses evaluation_chatbot for both mock and real AI.
         """
-        if USE_MOCK_AI:
-            return self._mock_evaluation_intro(context)
-        
-        # TODO: Implement with real AI
-        return self._mock_evaluation_intro(context)
+        from app.ai_services.evaluation_chatbot import generate_evaluation_intro as chatbot_intro
+        return await chatbot_intro(context)
     
-    def _mock_evaluation_intro(self, context: Dict) -> str:
-        """Generate context-aware introduction"""
-        track = context.get("track_name", "")
-        level = context.get("detected_level", "")
-        score = context.get("overall_score", 0)
-        completion = context.get("completion_rate", 0)
-        strengths = context.get("strengths", "")
-        weaknesses = context.get("weaknesses", "")
-        
-        intro = f"""
-👋 **Welcome to your AI-Powered Skill Evaluation Interview!**
+    async def generate_evaluation_followup(
+        self,
+        dialogue_history: List[Dict],
+        full_context: Dict
+    ) -> str:
+        """
+        Generate AI follow-up question based on dialogue history and full context.
+        Uses evaluation_chatbot for both mock and real AI.
+        """
+        from app.ai_services.evaluation_chatbot import generate_evaluation_followup as chatbot_followup
+        return await chatbot_followup(dialogue_history, full_context)
 
-I'm your AI interviewer, and I have full context about your learning journey:
-
-📊 **Your Journey So Far:**
-• **Track:** {track}
-• **Initial Assessment:** {int(score)}% ({level.title()} level)
-• **Learning Path Completion:** {completion}%
-• **Strengths:** {strengths[:100]}...
-• **Focus Areas:** {weaknesses[:100]}...
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🎯 **What This Interview Will Cover:**
-This is a conversational evaluation where I'll:
-1. Test your understanding of what you've learned
-2. Assess practical application skills
-3. Evaluate problem-solving ability
-4. Determine your job-readiness level
-
-💬 **Format:**
-- We'll have a natural conversation (10-15 messages)
-- I'll ask questions based on your learning areas
-- Answer naturally - explain your thinking process
-- I'm evaluating depth of understanding, not just correct answers
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Let's begin! **First question:**
-
-Based on your learning in {track}, can you walk me through a real-world project where you'd apply what you've learned? Describe the architecture and key decisions you'd make.
-        """.strip()
-        
-        return intro
-    
     async def evaluate_conversation(
         self,
         dialogues: List[Dict],
         path_info: Dict
     ) -> Dict:
         """
-        Evaluate user's understanding through conversation analysis
+        Evaluate user's understanding through conversation analysis.
+        Uses evaluation_chatbot for both mock and real AI.
+        path_info may include full_context, learning_summary when PathCompletionReport exists.
         """
-        if USE_MOCK_AI:
-            return self._mock_conversation_evaluation(dialogues)
-        
-        # TODO: Implement real conversation-based evaluation
-        return self._mock_conversation_evaluation(dialogues)
-    
-    def _mock_conversation_evaluation(self, dialogues: List[Dict]) -> Dict:
-        """Mock conversation evaluation with context"""
-        # Analyze conversation depth
-        user_messages = [d for d in dialogues if d.get('speaker') == 'user']
-        
-        # Calculate scores based on conversation quality
-        avg_message_length = sum([len(msg['text'].split()) for msg in user_messages]) / len(user_messages) if user_messages else 0
-        has_technical_depth = avg_message_length > 50
-        has_examples = any('example' in msg['text'].lower() or 'like' in msg['text'].lower() for msg in user_messages)
-        
-        reasoning_score = random.uniform(70, 95)
-        problem_solving = random.uniform(65, 92)
-        
-        # Adjust based on conversation quality
-        if has_technical_depth:
-            reasoning_score += 5
-            problem_solving += 3
-        if has_examples:
-            reasoning_score += 3
-            problem_solving += 5
-        
-        reasoning_score = min(100, reasoning_score)
-        problem_solving = min(100, problem_solving)
-        
-        if reasoning_score >= 85 and problem_solving >= 85:
-            readiness = "senior_ready"
-            feedback = f"""**Exceptional Performance! 🌟**
-
-Your evaluation interview demonstrates senior-level understanding:
-
-✅ **Strengths Demonstrated:**
-• Deep technical knowledge with clear explanations
-• Strong problem-solving methodology
-• Real-world application insights
-• Excellent communication of complex concepts
-
-📊 **Detailed Scores:**
-• **Reasoning & Understanding:** {int(reasoning_score)}/100
-• **Problem Solving:** {int(problem_solving)}/100
-
-🎯 **Job Readiness:** Senior-Ready
-You're prepared for senior-level positions. You demonstrate:
-- Strategic thinking
-- System design capabilities
-- Leadership potential
-- Mentor-level knowledge
-
-🚀 **Next Steps:**
-• Focus on system architecture at scale
-• Explore leadership and mentoring opportunities
-• Consider contributing to open-source projects
-• Prepare for senior-level technical interviews
-            """
-        elif reasoning_score >= 70 and problem_solving >= 70:
-            readiness = "mid"
-            feedback = f"""**Strong Performance! 💪**
-
-Your evaluation shows mid-level competency:
-
-✅ **Strengths Demonstrated:**
-• Solid understanding of core concepts
-• Good practical application skills
-• Clear communication ability
-• Problem-solving fundamentals in place
-
-📊 **Detailed Scores:**
-• **Reasoning & Understanding:** {int(reasoning_score)}/100
-• **Problem Solving:** {int(problem_solving)}/100
-
-🎯 **Job Readiness:** Mid-Level Ready
-You're prepared for mid-level developer positions. You show:
-- Strong technical foundation
-- Ability to work independently
-- Good problem-solving approach
-- Practical implementation skills
-
-🚀 **To Reach Senior Level:**
-• Deepen system design knowledge
-• Focus on scalability and optimization
-• Gain experience with architectural decisions
-• Develop mentoring/leadership skills
-            """
-        else:
-            readiness = "junior"
-            feedback = f"""**Good Foundation! 🌱**
-
-Your evaluation shows junior-level readiness:
-
-✅ **Strengths Demonstrated:**
-• Basic understanding of key concepts
-• Willingness to learn and improve
-• Can explain fundamental ideas
-• Growing problem-solving skills
-
-📊 **Detailed Scores:**
-• **Reasoning & Understanding:** {int(reasoning_score)}/100
-• **Problem Solving:** {int(problem_solving)}/100
-
-🎯 **Job Readiness:** Junior-Level Ready
-You're ready for entry-level positions with support. Focus areas:
-- Strengthen core fundamentals
-- More hands-on practice needed
-- Build real projects
-- Develop problem-solving strategies
-
-🚀 **Path to Mid-Level:**
-• Complete more practical projects
-• Focus on code quality and best practices
-• Learn debugging and troubleshooting
-• Practice technical communication
-• Study design patterns and architecture
-            """
-        
-        return {
-            "reasoning_score": round(reasoning_score, 2),
-            "problem_solving": round(problem_solving, 2),
-            "final_feedback": feedback,
-            "readiness_level": readiness
-        }
+        from app.ai_services.evaluation_chatbot import evaluate_conversation as chatbot_evaluate
+        return await chatbot_evaluate(dialogues, path_info)
     
     async def search_knowledge_base(
         self,
@@ -484,20 +328,27 @@ You're ready for entry-level positions with support. Focus areas:
         content_count: int = 8
     ) -> List[Dict]:
         """
-        Generate learning content items for a stage
-        Returns list of content items with videos, docs, exercises, etc.
+        Generate learning content items for a stage.
+        Uses Gemini with Google Search grounding when USE_MOCK_AI=false and AI_PROVIDER=gemini.
         """
         if USE_MOCK_AI:
             return self._mock_generate_stage_content(
                 stage_name, focus_area, difficulty_level, track_name, content_count
             )
-        
-        # TODO: Implement real AI content generation
-        # This would:
-        # 1. Use AI to search web for relevant videos (YouTube, Udemy, etc.)
-        # 2. Find documentation links (MDN, official docs, etc.)
-        # 3. Generate practice exercises
-        # 4. Find tutorials and articles
+
+        from app.ai_services.stage_content_generator import generate_stage_content_with_search
+
+        items = await generate_stage_content_with_search(
+            stage_name=stage_name,
+            focus_area=focus_area,
+            difficulty_level=difficulty_level,
+            track_name=track_name,
+            content_count=content_count,
+        )
+
+        if items:
+            return items
+
         return self._mock_generate_stage_content(
             stage_name, focus_area, difficulty_level, track_name, content_count
         )

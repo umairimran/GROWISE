@@ -5,6 +5,7 @@ from sqlalchemy import (
     Column, Integer, String, Text, TIMESTAMP, ForeignKey,
     CheckConstraint, UniqueConstraint, DECIMAL, Boolean, text
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
@@ -34,6 +35,7 @@ class User(Base):
     content_progress = relationship("UserContentProgress", back_populates="user", cascade="all, delete-orphan")
     chat_sessions = relationship("ChatSession", back_populates="user", cascade="all, delete-orphan")
     evaluation_sessions = relationship("EvaluationSession", back_populates="user", cascade="all, delete-orphan")
+    path_completion_reports = relationship("PathCompletionReport", back_populates="user", cascade="all, delete-orphan")
 
 
 class UserSession(Base):
@@ -88,7 +90,7 @@ class AssessmentDimension(Base):
 
     dimension_id = Column(Integer, primary_key=True, index=True)
     track_id = Column(Integer, ForeignKey("tracks.track_id", ondelete="CASCADE"), nullable=False)
-    code = Column(String(100), nullable=False)
+    code = Column(String(150), nullable=False)
     name = Column(String(255), nullable=False)
     description = Column(Text, nullable=False)
     weight = Column(DECIMAL(4, 3), nullable=False)
@@ -233,6 +235,8 @@ class AssessmentResult(Base):
     overall_score = Column(DECIMAL(5, 2), nullable=True)
     detected_level = Column(String(20), nullable=False)
     ai_reasoning = Column(Text, nullable=False)
+    # AI-generated comprehensive report (JSON) — used for content generation
+    comprehensive_report = Column(Text, nullable=True)
 
     __table_args__ = (
         CheckConstraint("overall_score >= 0 AND overall_score <= 100", name="check_overall_score_range"),
@@ -270,6 +274,22 @@ class LearningPath(Base):
     result = relationship("AssessmentResult", back_populates="learning_paths")
     stages = relationship("LearningPathStage", back_populates="path", cascade="all, delete-orphan")
     evaluation_sessions = relationship("EvaluationSession", back_populates="path", cascade="all, delete-orphan")
+    completion_report = relationship("PathCompletionReport", back_populates="path", uselist=False, cascade="all, delete-orphan")
+
+
+class PathCompletionReport(Base):
+    __tablename__ = "path_completion_reports"
+
+    report_id = Column(Integer, primary_key=True, index=True)
+    path_id = Column(Integer, ForeignKey("learning_paths.path_id", ondelete="CASCADE"), nullable=False, unique=True)
+    user_id = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
+    learning_summary = Column(Text, nullable=False)
+    full_context = Column(JSONB, nullable=False)
+    created_at = Column(TIMESTAMP, server_default=func.current_timestamp())
+
+    # Relationships
+    path = relationship("LearningPath", back_populates="completion_report", uselist=False)
+    user = relationship("User", back_populates="path_completion_reports")
 
 
 class LearningPathStage(Base):

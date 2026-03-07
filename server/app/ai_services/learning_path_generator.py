@@ -39,7 +39,7 @@ Returns:
 import json
 import os
 import re
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from dotenv import load_dotenv
 
@@ -62,10 +62,11 @@ Level     : {detected_level}
 The candidate answered {question_count} questions. Here is the detailed breakdown:
 
 {qa_block}
+{focus_areas_hint_block}
 
 ===== YOUR TASK =====
 1. Analyze the answers and identify the candidate's SPECIFIC weaknesses and gaps.
-2. Group related weaknesses into 3 to 5 focused learning stages.
+2. Create exactly 5 focused learning stages (no more, no fewer).
 3. Order stages from most critical gap to least critical (stage_order 1 = highest priority).
 4. Each stage must:
    - Have a clear, concise stage_name (e.g. "Scalability Fundamentals", "Error Handling Mastery")
@@ -81,7 +82,7 @@ The candidate answered {question_count} questions. Here is the detailed breakdow
 - stage_order must start at 1 and increment by 1.
 - stage_name must be under 60 characters.
 - focus_area must be 2-4 sentences, specific and actionable.
-- Minimum 3 stages, maximum 5 stages.
+- Exactly 5 stages (always return 5).
 
 ===== REQUIRED OUTPUT FORMAT =====
 {{
@@ -123,13 +124,28 @@ def _build_qa_block(questions_and_answers: List[Dict]) -> str:
 # ---------------------------------------------------------------------------
 
 
+def _build_focus_areas_hint(focus_areas: Optional[List[str]]) -> str:
+    """Build prompt block when comprehensive report provides focus areas."""
+    if not focus_areas:
+        return ""
+    areas = ", ".join(focus_areas)
+    return f"""
+===== PREFERRED FOCUS AREAS (from comprehensive assessment report) =====
+Use these as the primary focus for your stages. Align stage names and focus_area with:
+{areas}
+"""
+
+
 async def generate_learning_path_stages(
     track_name: str,
     detected_level: str,
     questions_and_answers: List[Dict],
+    focus_areas_hint: Optional[List[str]] = None,
 ) -> List[Dict]:
     """
     Generate personalized learning path stages from assessment Q&A context.
+
+    When focus_areas_hint is provided (from comprehensive report), stages align with those areas.
 
     Mock mode  : Returns plausible stages derived from weak criteria scores
                  without any API call.
@@ -140,9 +156,9 @@ async def generate_learning_path_stages(
         return _fallback_stages(track_name, detected_level)
 
     if USE_MOCK_AI:
-        return _mock_stages(track_name, detected_level, questions_and_answers)
+        return _mock_stages(track_name, detected_level, questions_and_answers, focus_areas_hint)
 
-    return await _ai_stages(track_name, detected_level, questions_and_answers)
+    return await _ai_stages(track_name, detected_level, questions_and_answers, focus_areas_hint)
 
 
 # ---------------------------------------------------------------------------
@@ -154,19 +170,22 @@ async def _ai_stages(
     track_name: str,
     detected_level: str,
     questions_and_answers: List[Dict],
+    focus_areas_hint: Optional[List[str]] = None,
 ) -> List[Dict]:
     from app.ai_services.ai_provider import get_provider
 
     provider = get_provider()
     if not provider.is_configured():
-        return _mock_stages(track_name, detected_level, questions_and_answers)
+        return _mock_stages(track_name, detected_level, questions_and_answers, focus_areas_hint)
 
     qa_block = _build_qa_block(questions_and_answers)
+    focus_areas_hint_block = _build_focus_areas_hint(focus_areas_hint)
     prompt = _PROMPT_TEMPLATE.format(
         track_name=track_name,
         detected_level=detected_level,
         question_count=len(questions_and_answers),
         qa_block=qa_block,
+        focus_areas_hint_block=focus_areas_hint_block,
     )
     messages = [
         {
@@ -186,7 +205,7 @@ async def _ai_stages(
         return _validate_stages(result.get("stages", []))
 
     except Exception:
-        return _mock_stages(track_name, detected_level, questions_and_answers)
+        return _mock_stages(track_name, detected_level, questions_and_answers, focus_areas_hint)
 
 
 # ---------------------------------------------------------------------------
@@ -210,11 +229,35 @@ def _mock_stages(
     track_name: str,
     detected_level: str,
     questions_and_answers: List[Dict],
+    focus_areas_hint: Optional[List[str]] = None,
 ) -> List[Dict]:
     """
     Derive stages from actual weak criteria scores across all answers.
-    Groups weak criteria into 3-5 coherent stages.
+    When focus_areas_hint is provided, use those as stage names (from comprehensive report).
     """
+    # If comprehensive report provided focus areas, use them directly (pad to 5 if needed)
+    if focus_areas_hint and len(focus_areas_hint) >= 3:
+        fallback = _fallback_stages(track_name, detected_level)
+        stages = [
+            {
+                "stage_name": name[:60],
+                "stage_order": i + 1,
+                "focus_area": f"Focus on {name} based on your assessment gaps. Complete this stage to strengthen your skills in this area.",
+            }
+            for i, name in enumerate(focus_areas_hint[:5])
+        ]
+        # Pad to exactly 5 stages using fallback if needed
+        while len(stages) < 5:
+            idx = len(stages)
+            stages.append({
+                "stage_name": fallback[idx]["stage_name"],
+                "stage_order": idx + 1,
+                "focus_area": fallback[idx]["focus_area"],
+            })
+        for i, s in enumerate(stages, start=1):
+            s["stage_order"] = i
+        return stages[:5]
+
     # Aggregate criteria scores across all Q&A
     criteria_totals: Dict[str, List[float]] = {}
     for qa in questions_and_answers:
@@ -321,49 +364,53 @@ def _mock_stages(
                 used_topics.add(group["stage_name"])
                 order += 1
 
-    # If we ended up with fewer than 3 stages, add a general one
-    if len(stages) < 3:
+    # Pad to exactly 5 stages using fallback if needed
+    fallback = _fallback_stages(track_name, detected_level)
+    while len(stages) < 5:
+        idx = len(stages)
         stages.append({
-            "stage_name": f"Advanced {track_name} Mastery",
+            "stage_name": fallback[idx]["stage_name"],
             "stage_order": order,
-            "focus_area": (
-                f"This stage consolidates remaining gaps in your {track_name} knowledge. "
-                "You will work on advanced topics specific to this track. "
-                "Focus on integrating all skills learned in previous stages into complete solutions. "
-                "After this stage, you should be able to confidently tackle senior-level challenges."
-            ),
+            "focus_area": fallback[idx]["focus_area"],
         })
+        order += 1
 
     # Ensure stage orders are sequential
     for i, stage in enumerate(stages, start=1):
         stage["stage_order"] = i
 
-    return stages[:5]  # Max 5 stages
+    return stages[:5]  # Exactly 5 stages
 
 
 def _fallback_stages(track_name: str, detected_level: str) -> List[Dict]:
-    """Minimal fallback when no Q&A data is available."""
+    """Fallback when no Q&A data is available. Always returns exactly 5 stages."""
     mapping = {
         "beginner": [
             ("Foundations of " + track_name, "Build fundamental knowledge and core concepts for " + track_name + "."),
             ("Core Skills Development", "Develop essential skills through hands-on practice and guided exercises."),
             ("Applied Projects", "Apply learned skills to real-world mini-projects to reinforce understanding."),
+            ("Intermediate Concepts", "Deepen understanding of key patterns and best practices in " + track_name + "."),
+            ("Advanced Integration", "Integrate all skills into complete, production-ready solutions."),
         ],
         "intermediate": [
             ("Advanced Concepts", "Deepen understanding of advanced topics and patterns in " + track_name + "."),
             ("Real-world Application", "Apply skills to production-level scenarios and industry best practices."),
             ("Complex Problem Solving", "Tackle complex, multi-step problems that require integrated thinking."),
+            ("System Design Fundamentals", "Design scalable, maintainable systems with clear architecture."),
+            ("Technical Leadership", "Develop ownership, mentoring, and decision-making skills."),
         ],
         "advanced": [
             ("Expert Patterns & Architecture", "Master advanced patterns, architecture decisions, and trade-off reasoning."),
             ("System Design & Scalability", "Design scalable, fault-tolerant systems for production environments."),
             ("Technical Leadership", "Develop leadership skills: mentoring, decision-making, and ownership."),
+            ("Cross-cutting Concerns", "Master observability, security, and performance optimization."),
+            ("Industry Best Practices", "Apply and evangelize best practices across teams and projects."),
         ],
     }
     level_stages = mapping.get(detected_level, mapping["intermediate"])
     return [
         {"stage_name": name, "stage_order": i + 1, "focus_area": focus}
-        for i, (name, focus) in enumerate(level_stages)
+        for i, (name, focus) in enumerate(level_stages[:5])
     ]
 
 
@@ -392,5 +439,16 @@ def _validate_stages(stages: List[Dict]) -> List[Dict]:
     if not valid:
         return _fallback_stages("the track", "intermediate")
 
-    # Enforce min 3 / max 5
-    return valid[:5]
+    # Pad to exactly 5 stages if we have fewer
+    result = valid[:5]
+    if len(result) < 5:
+        fallback = _fallback_stages("the track", "intermediate")
+        for i in range(len(result), 5):
+            result.append({
+                "stage_name": fallback[i]["stage_name"],
+                "stage_order": i + 1,
+                "focus_area": fallback[i]["focus_area"],
+            })
+        for i, s in enumerate(result, start=1):
+            s["stage_order"] = i
+    return result

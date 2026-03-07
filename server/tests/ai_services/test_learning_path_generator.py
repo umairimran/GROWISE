@@ -80,9 +80,9 @@ def test_mock_stages_returns_list() -> None:
     assert isinstance(stages, list)
 
 
-def test_mock_stages_returns_at_least_3() -> None:
+def test_mock_stages_returns_exactly_5() -> None:
     stages = _mock_stages("Full Stack", "intermediate", _make_ten_qa())
-    assert len(stages) >= 3
+    assert len(stages) == 5
 
 
 def test_mock_stages_returns_at_most_5() -> None:
@@ -119,22 +119,23 @@ def test_mock_stages_orders_are_sequential() -> None:
 
 
 def test_mock_stages_with_empty_criteria_scores() -> None:
+    """Empty criteria falls back to level-based stages (5 stages)."""
     """Should not crash when criteria_scores is empty."""
     qa = [{"question_text": "?", "user_answer": "ans", "dimension": "X",
             "criteria_scores": {}, "final_score": 0.5, "ai_explanation": ""}]
     stages = _mock_stages("Track", "intermediate", qa)
-    assert len(stages) >= 3
+    assert len(stages) == 5
 
 
 def test_mock_stages_single_qa_item() -> None:
     stages = _mock_stages("Track", "beginner", [_make_qa()])
-    assert len(stages) >= 3
+    assert len(stages) == 5
 
 
 def test_mock_stages_all_strong_scores_still_returns_stages() -> None:
-    """Even if all criteria are strong, we still return stages (can't have 0)."""
+    """Even if all criteria are strong, we still return 5 stages (padded from fallback)."""
     stages = _mock_stages("Track", "advanced", _make_ten_qa(strong=True))
-    assert len(stages) >= 3
+    assert len(stages) == 5
 
 
 def test_mock_stages_weak_scalability_creates_systems_thinking_stage() -> None:
@@ -175,7 +176,7 @@ def test_validate_stages_passes_valid_list() -> None:
         {"stage_name": "Stage Three", "stage_order": 3, "focus_area": "Focus on Z."},
     ]
     result = _validate_stages(valid)
-    assert len(result) == 3
+    assert len(result) == 5
     assert result[0]["stage_name"] == "Stage One"
 
 
@@ -228,7 +229,7 @@ def test_validate_stages_caps_at_5() -> None:
 
 def test_validate_stages_returns_fallback_on_empty_input() -> None:
     result = _validate_stages([])
-    assert len(result) >= 3
+    assert len(result) == 5
 
 
 # ===========================================================================
@@ -236,10 +237,10 @@ def test_validate_stages_returns_fallback_on_empty_input() -> None:
 # ===========================================================================
 
 
-def test_fallback_stages_returns_3_for_all_levels() -> None:
+def test_fallback_stages_returns_5_for_all_levels() -> None:
     for level in ("beginner", "intermediate", "advanced"):
         result = _fallback_stages("Test Track", level)
-        assert len(result) == 3
+        assert len(result) == 5
 
 
 def test_fallback_stages_stage_order_sequential() -> None:
@@ -269,9 +270,9 @@ def test_generate_stages_returns_list() -> None:
     assert isinstance(result, list)
 
 
-def test_generate_stages_at_least_3() -> None:
+def test_generate_stages_returns_exactly_5() -> None:
     result = run(generate_learning_path_stages("Backend", "beginner", _make_ten_qa()))
-    assert len(result) >= 3
+    assert len(result) == 5
 
 
 def test_generate_stages_at_most_5() -> None:
@@ -295,12 +296,12 @@ def test_generate_stages_orders_sequential() -> None:
 
 def test_generate_stages_empty_qa_uses_fallback() -> None:
     result = run(generate_learning_path_stages("Track", "beginner", []))
-    assert len(result) >= 3
+    assert len(result) == 5
 
 
 def test_generate_stages_single_qa_does_not_crash() -> None:
     result = run(generate_learning_path_stages("Track", "intermediate", [_make_qa()]))
-    assert len(result) >= 3
+    assert len(result) == 5
 
 
 def test_generate_stages_stable_across_multiple_calls() -> None:
@@ -421,7 +422,7 @@ def test_complete_assessment_returns_learning_path_id() -> None:
 
 
 def test_get_session_learning_path_returns_stages() -> None:
-    """GET /sessions/{id}/learning-path returns path with >= 3 stages."""
+    """GET /sessions/{id}/learning-path returns path with 5 stages."""
     with httpx.Client(base_url=BASE_URL, timeout=60.0) as client:
         admin_token = _admin_token(client)
         admin_headers = {"Authorization": f"Bearer {admin_token}"}
@@ -443,7 +444,7 @@ def test_get_session_learning_path_returns_stages() -> None:
         assert "path_id" in path
         assert "stages" in path
         assert isinstance(path["stages"], list)
-        assert len(path["stages"]) >= 3
+        assert len(path["stages"]) == 5
 
 
 def test_get_session_learning_path_stages_have_required_fields() -> None:

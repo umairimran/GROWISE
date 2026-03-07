@@ -9,7 +9,8 @@ Configuration (in .env):
     AI_PROVIDER=openai          # "openai" (default) or "gemini"
     OPENAI_API_KEY=sk-...       # required when AI_PROVIDER=openai
     OPENAI_MODEL=gpt-4o-mini    # optional, default gpt-4o-mini
-    GEMINI_API_KEY=AIza...      # required when AI_PROVIDER=gemini
+    GEMINI_API_KEY=AIza...      # single key when AI_PROVIDER=gemini
+    GEMINI_API_KEYS=key1,key2,key3,key4,key5  # OR multiple keys (round-robin, reduces 429)
     GEMINI_MODEL=gemini-1.5-flash  # optional, default gemini-1.5-flash
 
 Usage:
@@ -53,6 +54,7 @@ class BaseAIProvider(ABC):
         messages: List[Dict],
         temperature: float = 0.7,
         timeout: float = 45.0,
+        use_google_search: bool = False,
     ) -> str:
         """
         Send a list of chat messages to the AI and return the plain-text reply.
@@ -95,6 +97,7 @@ class OpenAIProvider(BaseAIProvider):
         messages: List[Dict],
         temperature: float = 0.7,
         timeout: float = 45.0,
+        use_google_search: bool = False,
     ) -> str:
         if not self.api_key:
             raise RuntimeError(
@@ -127,9 +130,28 @@ class OpenAIProvider(BaseAIProvider):
 # ---------------------------------------------------------------------------
 
 
+def _parse_gemini_keys() -> List[str]:
+    """
+    Parse Gemini API keys from env.
+    Supports:
+      - GEMINI_API_KEYS=key1,key2,key3,...  (comma-separated, for rotation)
+      - GEMINI_API_KEY=key                  (single key, fallback)
+    """
+    keys_str = os.getenv("GEMINI_API_KEYS", "").strip()
+    if keys_str:
+        keys = [k.strip() for k in keys_str.split(",") if k.strip()]
+        if keys:
+            return keys
+    single = os.getenv("GEMINI_API_KEY", "").strip()
+    return [single] if single else []
+
+
 class GeminiProvider(BaseAIProvider):
     """
     Calls the Google Gemini generateContent API.
+
+    Supports multiple API keys via GEMINI_API_KEYS=key1,key2,... for round-robin
+    rotation to reduce 429 rate-limit errors.
 
     Converts OpenAI-style messages to Gemini's `contents` format:
       - "system" role  → prepended to the first user turn as plain text
@@ -138,18 +160,26 @@ class GeminiProvider(BaseAIProvider):
     """
 
     def __init__(self) -> None:
-        self.api_key: str = os.getenv("GEMINI_API_KEY", "")
+        self._api_keys: List[str] = _parse_gemini_keys()
+        self._key_index: int = 0
         self.model: str = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
 
-    @property
-    def base_url(self) -> str:
+    def _next_key(self) -> str:
+        """Round-robin: return next key for load balancing across keys."""
+        if not self._api_keys:
+            return ""
+        key = self._api_keys[self._key_index % len(self._api_keys)]
+        self._key_index += 1
+        return key
+
+    def _base_url_for_key(self, api_key: str) -> str:
         return (
             f"https://generativelanguage.googleapis.com/v1beta/models/"
-            f"{self.model}:generateContent?key={self.api_key}"
+            f"{self.model}:generateContent?key={api_key}"
         )
 
     def is_configured(self) -> bool:
-        return bool(self.api_key)
+        return bool(self._api_keys)
 
     def _convert_messages(self, messages: List[Dict]) -> List[Dict]:
         """
@@ -191,32 +221,93 @@ class GeminiProvider(BaseAIProvider):
         messages: List[Dict],
         temperature: float = 0.7,
         timeout: float = 45.0,
+        use_google_search: bool = False,
     ) -> str:
-        if not self.api_key:
+        if not self._api_keys:
             raise RuntimeError(
-                "GEMINI_API_KEY is not set. "
-                "Add it to .env or set AI_PROVIDER=gemini and provide the key."
+                "GEMINI_API_KEY or GEMINI_API_KEYS is not set. "
+                "Add it to .env or set AI_PROVIDER=gemini and provide the key(s)."
             )
 
         contents = self._convert_messages(messages)
-        payload = {
+        payload: Dict = {
             "contents": contents,
             "generationConfig": {
                 "temperature": temperature,
             },
         }
+        if use_google_search:
+            payload["tools"] = [{"google_search": {}}]
 
-        async with httpx.AsyncClient(timeout=timeout) as client:
-            response = await client.post(
-                self.base_url,
-                headers={"Content-Type": "application/json"},
-                json=payload,
-            )
-            response.raise_for_status()
+        last_error: Optional[Exception] = None
+        keys_to_try = len(self._api_keys)
 
-        data = response.json()
-        # Gemini response: data["candidates"][0]["content"]["parts"][0]["text"]
-        return data["candidates"][0]["content"]["parts"][0]["text"]
+        for _ in range(keys_to_try):
+            api_key = self._next_key()
+            url = self._base_url_for_key(api_key)
+
+            try:
+                async with httpx.AsyncClient(timeout=timeout) as client:
+                    response = await client.post(
+                        url,
+                        headers={"Content-Type": "application/json"},
+                        json=payload,
+                    )
+                    response.raise_for_status()
+
+                data = response.json()
+                candidates = data.get("candidates") or []
+                if not candidates:
+                    prompt_fb = data.get("promptFeedback", {})
+                    raise ValueError(
+                        f"No candidates in Gemini response. promptFeedback={prompt_fb}"
+                    )
+                c0 = candidates[0]
+                content = c0.get("content")
+                if not content:
+                    finish = c0.get("finishReason", "unknown")
+                    raise ValueError(
+                        f"No content in Gemini response (finishReason={finish})"
+                    )
+                parts = content.get("parts")
+                if not parts:
+                    raise ValueError("No parts in Gemini response")
+                # Collect text from all parts (some may be functionCall, skip those)
+                text_parts = []
+                for p in parts:
+                    if "text" in p and p["text"]:
+                        text_parts.append(p["text"])
+                text = "".join(text_parts).strip()
+                if not text:
+                    raise ValueError("No text in Gemini response parts")
+                return text
+
+            except httpx.HTTPStatusError as e:
+                last_error = e
+                if e.response.status_code == 429:
+                    continue
+                raise
+            except Exception as e:
+                last_error = e
+                raise
+
+        if last_error:
+            raise last_error
+        raise RuntimeError("No Gemini API key succeeded.")
+
+    async def chat_complete_with_google_search(
+        self,
+        messages: List[Dict],
+        temperature: float = 0.5,
+        timeout: float = 90.0,
+    ) -> str:
+        """Call Gemini with Google Search grounding for real-time web content."""
+        return await self.chat_complete(
+            messages=messages,
+            temperature=temperature,
+            timeout=timeout,
+            use_google_search=True,
+        )
 
 
 # ---------------------------------------------------------------------------

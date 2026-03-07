@@ -5,6 +5,7 @@
 -- ============================================================================
 
 -- Drop tables if they exist (in reverse dependency order)
+DROP TABLE IF EXISTS path_completion_reports CASCADE;
 DROP TABLE IF EXISTS evaluation_results CASCADE;
 DROP TABLE IF EXISTS evaluation_dialogues CASCADE;
 DROP TABLE IF EXISTS evaluation_sessions CASCADE;
@@ -93,7 +94,7 @@ CREATE TABLE tracks (
 CREATE TABLE assessment_dimensions (
     dimension_id SERIAL PRIMARY KEY,
     track_id INTEGER NOT NULL REFERENCES tracks(track_id) ON DELETE CASCADE,
-    code VARCHAR(100) NOT NULL,
+    code VARCHAR(150) NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
     weight DECIMAL(4,3) NOT NULL CHECK (weight >= 0 AND weight <= 1),
@@ -187,7 +188,8 @@ CREATE TABLE assessment_results (
     session_id INTEGER UNIQUE NOT NULL REFERENCES assessment_sessions(session_id) ON DELETE CASCADE,
     overall_score DECIMAL(5,2) CHECK (overall_score >= 0 AND overall_score <= 100),
     detected_level VARCHAR(20) NOT NULL CHECK (detected_level IN ('beginner', 'intermediate', 'advanced')),
-    ai_reasoning TEXT NOT NULL
+    ai_reasoning TEXT NOT NULL,
+    comprehensive_report TEXT
 );
 
 CREATE INDEX idx_assessment_results_session ON assessment_results(session_id);
@@ -350,6 +352,22 @@ CREATE TABLE evaluation_results (
 
 CREATE INDEX idx_evaluation_results_evaluation ON evaluation_results(evaluation_id);
 CREATE INDEX idx_evaluation_results_readiness ON evaluation_results(readiness_level);
+
+-- ============================================================================
+-- PATH COMPLETION REPORTS (Learning summary + full context for evaluation)
+-- ============================================================================
+
+CREATE TABLE path_completion_reports (
+    report_id SERIAL PRIMARY KEY,
+    path_id INTEGER NOT NULL UNIQUE REFERENCES learning_paths(path_id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    learning_summary TEXT NOT NULL,
+    full_context JSONB NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_path_completion_reports_path ON path_completion_reports(path_id);
+CREATE INDEX idx_path_completion_reports_user ON path_completion_reports(user_id);
 
 -- ============================================================================
 -- SAMPLE DATA (Optional — uncomment to seed initial tracks)

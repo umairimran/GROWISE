@@ -30,6 +30,16 @@ _PATCHES = [
     ALTER TABLE assessment_responses
         ADD COLUMN IF NOT EXISTS criteria_scores TEXT;
     """,
+    # Expand assessment_dimensions.code if it's too short for AI-generated codes
+    """
+    ALTER TABLE assessment_dimensions
+        ALTER COLUMN code TYPE VARCHAR(150);
+    """,
+    # Add comprehensive_report column to assessment_results (stores AI-generated JSON report)
+    """
+    ALTER TABLE assessment_results
+        ADD COLUMN IF NOT EXISTS comprehensive_report TEXT;
+    """,
     # Create assessment_dimension_results table if it doesn't exist yet
     """
     CREATE TABLE IF NOT EXISTS assessment_dimension_results (
@@ -44,6 +54,23 @@ _PATCHES = [
         questions_evaluated  INTEGER NOT NULL DEFAULT 0,
         UNIQUE(session_id, dimension_id)
     );
+    """,
+    # Path completion reports: learning summary + full context for evaluation
+    """
+    CREATE TABLE IF NOT EXISTS path_completion_reports (
+        report_id SERIAL PRIMARY KEY,
+        path_id INTEGER NOT NULL UNIQUE REFERENCES learning_paths(path_id) ON DELETE CASCADE,
+        user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+        learning_summary TEXT NOT NULL,
+        full_context JSONB NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """,
+    """
+    CREATE INDEX IF NOT EXISTS idx_path_completion_reports_path ON path_completion_reports(path_id);
+    """,
+    """
+    CREATE INDEX IF NOT EXISTS idx_path_completion_reports_user ON path_completion_reports(user_id);
     """,
 ]
 

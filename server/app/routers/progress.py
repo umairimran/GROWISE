@@ -4,12 +4,13 @@ Progress & Dashboard router - Complete progress tracking and analytics
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from datetime import datetime, timedelta
 
 from app.database import get_db
 from app import models, schemas
 from app.auth_middleware import get_current_user
+from app.ai_services.path_completion_report_module import generate_path_completion_report
 
 router = APIRouter(prefix="/api/progress", tags=["Progress & Dashboard"])
 
@@ -71,16 +72,21 @@ def _calculate_improvement(history: List) -> dict:
     """Calculate improvement metrics"""
     if len(history) < 2:
         return None
-    
-    first_score = history[0]['score']
-    latest_score = history[-1]['score']
-    improvement_percentage = ((latest_score - first_score) / first_score) * 100
-    
+
+    first_score = history[0]["score"]
+    latest_score = history[-1]["score"]
+
+    # Avoid division by zero when first_score is 0
+    if first_score is None or first_score == 0:
+        improvement_percentage = 100.0 if latest_score and latest_score > 0 else 0.0
+    else:
+        improvement_percentage = ((latest_score - first_score) / first_score) * 100
+
     return {
         "first_attempt_score": first_score,
         "latest_attempt_score": latest_score,
         "improvement_percentage": round(improvement_percentage, 2),
-        "level_progression": f"{history[0]['detected_level']} → {history[-1]['detected_level']}"
+        "level_progression": f"{history[0]['detected_level']} → {history[-1]['detected_level']}",
     }
 
 
@@ -241,6 +247,162 @@ def get_learning_path_progress(
         "total_time_spent_hours": round(total_time / 60, 2),
         "stages_progress": stages_progress
     }
+
+
+# ============================================================================
+# Path Completion Report
+# ============================================================================
+
+@router.post("/path/{path_id}/complete-report", response_model=schemas.PathCompletionReportCreateResponse, status_code=status.HTTP_201_CREATED)
+async def create_path_completion_report(
+    path_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """
+    Generate and store path completion report when path is 100% complete.
+    Idempotent: returns existing report if already created.
+    Uses path_completion_report_module for all logic.
+    """
+    try:
+        result = await generate_path_completion_report(
+            db=db,
+            path_id=path_id,
+            user_id=current_user.user_id,
+        )
+    except ValueError as e:
+        if "not found" in str(e).lower():
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    return schemas.PathCompletionReportCreateResponse(
+        report_id=result.report_id,
+        path_id=result.path_id,
+        learning_summary=result.learning_summary,
+        created_at=result.created_at,
+    )
+
+
+@router.get("/path/{path_id}/report", response_model=schemas.PathCompletionReportResponse)
+def get_path_completion_report(
+    path_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """Retrieve path completion report for a path."""
+    path = db.query(models.LearningPath).filter(
+        models.LearningPath.path_id == path_id,
+        models.LearningPath.user_id == current_user.user_id
+    ).first()
+
+    if not path:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Learning path not found")
+
+    report = db.query(models.PathCompletionReport).filter(
+        models.PathCompletionReport.path_id == path_id
+    ).first()
+
+    if not report:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Path completion report not found")
+
+    return report
+
+
+@router.get("/path/{path_id}/improvement-analysis", response_model=schemas.ImprovementAnalysisResponse)
+def get_improvement_analysis(
+    path_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """Compare before (assessment) vs after (evaluation) for a path. Includes full dialogue and final feedback."""
+    path = db.query(models.LearningPath).filter(
+        models.LearningPath.path_id == path_id,
+        models.LearningPath.user_id == current_user.user_id
+    ).first()
+
+    if not path:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Learning path not found")
+
+    result = db.query(models.AssessmentResult).filter(
+        models.AssessmentResult.result_id == path.result_id
+    ).first()
+
+    if not result:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assessment result not found")
+
+    # Get track name
+    assessment_session = db.query(models.AssessmentSession).filter(
+        models.AssessmentSession.session_id == result.session_id
+    ).first()
+    track = None
+    track_name = None
+    if assessment_session:
+        track = db.query(models.Track).filter(
+            models.Track.track_id == assessment_session.track_id
+        ).first()
+        track_name = track.track_name if track else None
+
+    before = {
+        "score": float(result.overall_score) if result.overall_score else 0,
+        "level": result.detected_level,
+    }
+
+    # Get latest evaluation for this path
+    eval_session = db.query(models.EvaluationSession).filter(
+        models.EvaluationSession.path_id == path_id,
+        models.EvaluationSession.user_id == current_user.user_id,
+        models.EvaluationSession.status == "completed"
+    ).order_by(models.EvaluationSession.completed_at.desc()).first()
+
+    after = None
+    improvement_summary = None
+    improvement_percentage = None
+    final_feedback = None
+    dialogues = None
+
+    if eval_session:
+        eval_result = db.query(models.EvaluationResult).filter(
+            models.EvaluationResult.evaluation_id == eval_session.evaluation_id
+        ).first()
+        if eval_result:
+            after = {
+                "reasoning_score": float(eval_result.reasoning_score) if eval_result.reasoning_score else 0,
+                "problem_solving": float(eval_result.problem_solving) if eval_result.problem_solving else 0,
+                "readiness_level": eval_result.readiness_level,
+            }
+            final_feedback = eval_result.final_feedback
+            before_score = before["score"]
+            after_score = after["reasoning_score"]
+            if before_score is not None and after_score is not None and before_score > 0:
+                improvement_percentage = round(((after_score - before_score) / before_score) * 100, 2)
+            improvement_summary = (
+                f"You improved from {before['score']:.1f}% (initial assessment, {before['level']}) "
+                f"to {after['reasoning_score']:.1f}% reasoning score (readiness: {after['readiness_level']})."
+            )
+
+        # Load full dialogue for the evaluation
+        dialogue_rows = db.query(models.EvaluationDialogue).filter(
+            models.EvaluationDialogue.evaluation_id == eval_session.evaluation_id
+        ).order_by(models.EvaluationDialogue.sequence_no.asc()).all()
+        dialogues = [
+            schemas.ImprovementAnalysisDialogueItem(
+                speaker=d.speaker,
+                message_text=d.message_text,
+                sequence_no=d.sequence_no,
+            )
+            for d in dialogue_rows
+        ]
+
+    return schemas.ImprovementAnalysisResponse(
+        path_id=path_id,
+        track_name=track_name,
+        before=before,
+        after=after,
+        improvement_summary=improvement_summary,
+        improvement_percentage=improvement_percentage,
+        final_feedback=final_feedback,
+        dialogues=dialogues,
+    )
 
 
 # ============================================================================
