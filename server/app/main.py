@@ -72,6 +72,23 @@ _PATCHES = [
     """
     CREATE INDEX IF NOT EXISTS idx_path_completion_reports_user ON path_completion_reports(user_id);
     """,
+    # Progress analysis reports: structured JSON (dashboard + story) per path
+    """
+    CREATE TABLE IF NOT EXISTS progress_analysis_reports (
+        report_id SERIAL PRIMARY KEY,
+        path_id INTEGER NOT NULL UNIQUE REFERENCES learning_paths(path_id) ON DELETE CASCADE,
+        user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+        evaluation_id INTEGER REFERENCES evaluation_sessions(evaluation_id) ON DELETE SET NULL,
+        structured_report JSONB NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """,
+    """
+    CREATE INDEX IF NOT EXISTS idx_progress_analysis_reports_path ON progress_analysis_reports(path_id);
+    """,
+    """
+    CREATE INDEX IF NOT EXISTS idx_progress_analysis_reports_user ON progress_analysis_reports(user_id);
+    """,
 ]
 
 

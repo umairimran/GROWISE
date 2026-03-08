@@ -70,15 +70,17 @@ def _build_qa_block(questions_and_answers: List[Dict]) -> str:
     return "\n".join(lines)
 
 
-_PROMPT_TEMPLATE = """You are an expert technical assessor and learning designer. Your task is to produce a COMPREHENSIVE assessment report based on the full Q&A data below.
+_PROMPT_TEMPLATE = """You are an expert technical assessor and learning designer. Your task is to produce a DEEP, COMPREHENSIVE assessment report based on the full Q&A data below.
 
 This report will be used to:
-1. Show the candidate a clear picture of their performance
+1. Show the candidate a clear, in-depth picture of their performance
 2. Generate personalized learning content (stages, materials, exercises)
 
 ===== CONTEXT =====
 Track: {track_name}
 Total questions: {question_count}
+Overall score: {overall_score}%
+Detected level: {detected_level}
 
 ===== FULL ASSESSMENT DATA =====
 Every question, the candidate's answer, per-criterion scores, and evaluator notes:
@@ -86,64 +88,83 @@ Every question, the candidate's answer, per-criterion scores, and evaluator note
 {qa_block}
 
 ===== YOUR TASK =====
-Analyze ALL the data above and produce a comprehensive report. Be specific: reference actual questions, answers, and scores. Do not genericize.
+Perform an IN-DEPTH analysis of ALL the data above. Go beyond surface-level observations.
 
-1. **Executive Summary** (2-4 sentences): Overall assessment, key takeaway, readiness level.
-2. **Strengths**: Areas where the candidate performed well. For each: area name, specific evidence from their answers, which questions showed this.
-3. **Weaknesses**: Gaps and areas to improve. For each: area name, what was missing or incorrect, which questions revealed it, priority (high/medium/low), and a concrete recommendation.
-4. **Dimension Breakdown**: For each dimension that had questions: dimension name, average performance, brief analysis, specific gaps if any.
-5. **Learning Priorities**: Ordered list of 3-5 topics/skills to focus on first, with brief rationale.
-6. **Content Generation Context**: Structured hints for downstream content generation:
-   - key_topics: list of specific topics to create content for
-   - recommended_difficulty: beginner/intermediate/advanced
-   - gap_severity: mild/moderate/significant (how big are the gaps)
-   - focus_areas_for_stages: list of 3-5 focus area names for learning stages
+**Analysis depth requirements:**
+- Identify PATTERNS across answers (e.g., "candidate consistently demonstrates X in questions 2, 5, 8")
+- Cross-reference dimensions: note correlations (e.g., "strong in problem-solving but weak in scalability suggests theoretical grasp without production experience")
+- Synthesize insights: what does the COMBINED picture reveal about the candidate's thinking style, depth, and readiness?
+- Be specific: cite question numbers, quote or paraphrase key parts of answers, reference exact criterion scores
+
+1. **Executive Summary** (3-5 sentences): Rich summary covering: overall verdict, standout strengths, critical gaps, readiness for {track_name}, and one key recommendation. Make it actionable and memorable.
+
+2. **Overall Assessment** (3-4 paragraphs): Deep analysis including:
+   - Synthesis of performance across all dimensions
+   - Pattern analysis: what themes recur? (e.g., strong communication, weak on edge cases)
+   - Readiness assessment: what would they excel at today vs. what needs work?
+   - Honest, constructive verdict with nuance
+
+3. **Strengths**: For each strength: area name, SPECIFIC evidence (quote or paraphrase from answers), question indices, and why this matters for {track_name}.
+
+4. **Weaknesses**: For each: area name, what was missing/incorrect (with evidence), question indices, priority (high/medium/low), concrete recommendation, and estimated effort to improve.
+
+5. **Dimension Breakdown**: For each dimension: name, score, detailed analysis (what went well, what didn't, patterns), specific gaps with evidence.
+
+6. **Learning Priorities**: Ordered list of 3-5 topics with: topic, rationale (why first), suggested approach, and how it connects to the weaknesses.
+
+7. **Content Generation Context**: Structured hints for downstream content generation.
 
 ===== RULES =====
 - Base everything on the actual data. Do not invent strengths or weaknesses.
 - Be specific: cite question numbers, quote or paraphrase the candidate's answers.
+- Provide DEPTH: synthesize, pattern-match, and draw conclusions across the full assessment.
 - The report must be actionable for content generation.
 - Return ONLY valid JSON — no markdown fences, no extra text.
 
 ===== REQUIRED OUTPUT FORMAT =====
 {{
-  "executive_summary": "<2-4 sentences>",
-  "overall_assessment": "<2-3 paragraphs: detailed analysis>",
+  "executive_summary": "<3-5 sentences: rich summary with verdict, strengths, gaps, readiness, key recommendation>",
+  "overall_assessment": "<3-4 paragraphs: synthesis, pattern analysis, readiness, nuanced verdict>",
   "strengths": [
     {{
       "area": "<string>",
-      "evidence": "<specific evidence from answers>",
-      "question_indices": [1, 3, 5]
+      "evidence": "<specific evidence, quote or paraphrase from answers>",
+      "question_indices": [1, 3, 5],
+      "significance": "<why this matters for the track>"
     }}
   ],
   "weaknesses": [
     {{
       "area": "<string>",
-      "evidence": "<what was missing or incorrect>",
+      "evidence": "<what was missing or incorrect, with evidence>",
       "question_indices": [2, 4],
       "priority": "high|medium|low",
-      "recommendation": "<concrete next step>"
+      "recommendation": "<concrete next step>",
+      "effort_to_improve": "<brief note on estimated effort>"
     }}
   ],
   "dimension_breakdown": [
     {{
       "dimension": "<string>",
       "score": <float 0-1>,
-      "analysis": "<brief analysis>",
-      "gaps": ["<gap1>", "<gap2>"]
+      "analysis": "<detailed: what went well, what didn't, patterns>",
+      "gaps": ["<gap1 with evidence>", "<gap2>"]
     }}
   ],
   "learning_priorities": [
     {{
       "topic": "<string>",
-      "rationale": "<why this first>"
+      "rationale": "<why this first>",
+      "suggested_approach": "<how to learn it>",
+      "connects_to_weaknesses": ["<weakness area>"]
     }}
   ],
   "content_generation_context": {{
     "key_topics": ["<topic1>", "<topic2>"],
     "recommended_difficulty": "beginner|intermediate|advanced",
     "gap_severity": "mild|moderate|significant",
-    "focus_areas_for_stages": ["<area1>", "<area2>", "<area3>"]
+    "focus_areas_for_stages": ["<area1>", "<area2>", "<area3>"],
+    "pattern_insights": ["<insight1>", "<insight2>"]
   }}
 }}
 """
@@ -186,6 +207,8 @@ async def _ai_report(
     prompt = _PROMPT_TEMPLATE.format(
         track_name=track_name,
         question_count=len(questions_and_answers),
+        overall_score=overall_score,
+        detected_level=detected_level,
         qa_block=qa_block,
     )
     messages = [

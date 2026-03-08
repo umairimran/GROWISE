@@ -22,7 +22,7 @@ USE_MOCK_AI: bool = os.getenv("USE_MOCK_AI", "true").lower() == "true"
 
 
 def _build_context_block(full_context: Dict[str, Any]) -> str:
-    """Serialize full_context for AI prompt."""
+    """Serialize full_context for AI prompt. Rich detail for context-aware, scenario-based questions."""
     if not full_context:
         return "No detailed context available."
 
@@ -34,38 +34,63 @@ def _build_context_block(full_context: Dict[str, Any]) -> str:
 
     assessment = full_context.get("assessment") or {}
     if assessment:
-        parts.append("\n--- ASSESSMENT (Initial) ---")
+        parts.append("\n--- INITIAL ASSESSMENT ---")
         parts.append(f"Overall score: {assessment.get('overall_score', 'N/A')}%")
         parts.append(f"Detected level: {assessment.get('detected_level', 'N/A')}")
         qa = assessment.get("questions_and_answers") or []
-        for i, item in enumerate(qa[:8], 1):
-            q = item.get("question_text", "")[:200]
-            a = (item.get("user_answer", "") or "")[:150]
+        weak_areas = []
+        strong_areas = []
+        for i, item in enumerate(qa[:10], 1):
+            q = item.get("question_text", "")
+            a = (item.get("user_answer", "") or "")
             score = item.get("score", 0)
             dim = item.get("dimension", "")
-            parts.append(f"  Q{i}: {q}...")
-            parts.append(f"  User answer: {a}...")
-            parts.append(f"  Score: {score} | Dimension: {dim}")
+            expl = (item.get("ai_explanation") or "").strip()
+            parts.append(f"\n  Q{i} [{dim}]: {q}")
+            parts.append(f"  Their answer: {a}")
+            parts.append(f"  Score: {score:.2f}/1.0")
+            if expl:
+                parts.append(f"  Evaluator note: {expl}")
+            if score < 0.6:
+                weak_areas.append({"q": q[:120], "dim": dim, "expl": expl})
+            elif score >= 0.75:
+                strong_areas.append({"q": q[:80], "dim": dim})
+
+        if weak_areas:
+            parts.append("\n--- WEAK AREAS (probe these with scenario questions) ---")
+            for w in weak_areas[:5]:
+                parts.append(f"  • {w['q']}... [Dimension: {w['dim']}]")
+                if w["expl"]:
+                    parts.append(f"    Gap: {w['expl'][:150]}")
+
+        if strong_areas:
+            parts.append("\n--- STRONG AREAS (avoid re-testing; go deeper if needed) ---")
+            for s in strong_areas[:3]:
+                parts.append(f"  • {s['q']}... [{s['dim']}]")
 
     stages = full_context.get("stages") or []
     if stages:
-        parts.append("\n--- STAGES FOLLOWED ---")
+        parts.append("\n--- LEARNING STAGES COMPLETED ---")
         for s in stages:
             name = s.get("stage_name", "")
-            focus = (s.get("focus_area", "") or "")[:200]
+            focus = (s.get("focus_area", "") or "")
             consumed = s.get("content_consumed") or []
-            parts.append(f"  Stage: {name}")
-            parts.append(f"  Focus: {focus}...")
-            parts.append(f"  Content completed: {len(consumed)} items")
+            parts.append(f"  Stage: {name} | Focus: {focus}")
+            for c in consumed[:5]:
+                title = (c.get("title", "") or "")
+                desc = (c.get("description", "") or "")[:80]
+                parts.append(f"    - {title}" + (f" ({desc}...)" if desc else ""))
 
     content_consumed = full_context.get("content_consumed") or []
     if content_consumed:
-        parts.append("\n--- CONTENT CONSUMED ---")
-        for c in content_consumed[:12]:
-            title = (c.get("title", "") or "")[:100]
+        parts.append("\n--- EXACT CONTENT THEY STUDIED (use for scenario questions) ---")
+        for c in content_consumed[:15]:
+            title = (c.get("title", "") or "")
+            desc = (c.get("description", "") or "")[:100]
             stage = c.get("stage_name", "")
             parts.append(f"  - [{stage}] {title}")
-
+            if desc:
+                parts.append(f"    {desc}")
     return "\n".join(parts) if parts else "No context."
 
 
@@ -80,31 +105,43 @@ def _build_dialogue_block(dialogue_history: List[Dict]) -> str:
     return "\n\n".join(lines) if lines else "No dialogue yet."
 
 
+def _count_exchanges(dialogue_history: List[Dict]) -> int:
+    """Count back-and-forth exchanges (pairs of interviewer + candidate)."""
+    ai_count = sum(1 for d in dialogue_history if d.get("speaker") == "ai")
+    user_count = sum(1 for d in dialogue_history if d.get("speaker") == "user")
+    return min(ai_count, user_count)
+
+
 # ---------------------------------------------------------------------------
 # Intro
 # ---------------------------------------------------------------------------
 
-_INTRO_SYSTEM = """You are an expert technical interviewer conducting a skill evaluation.
-You have FULL CONTEXT about the candidate:
-- Their chosen track and initial assessment (questions they answered, scores, weak areas)
-- The learning stages they completed
-- The exact content (articles, tutorials, docs) they consumed
+_INTRO_SYSTEM = """You are a senior engineer conducting a real technical interview. You are HUMAN: warm but professional, curious, not robotic.
 
-Your role: Ask probing questions to assess depth of understanding, not just recall.
-Be conversational. Reference their learning journey. Act like a senior engineer in an interview.
-Reply in plain text. No markdown, no JSON."""
+You have complete context: their track, every assessment question they answered (with scores and evaluator notes), their weak areas, the exact content they studied (titles, descriptions), and learning stages.
 
-_INTRO_USER_TEMPLATE = """=== CANDIDATE CONTEXT ===
+CRITICAL RULES:
+- Sound like a real person. Vary sentence length. Use natural transitions. No bullet points or lists in your speech.
+- NEVER ask generic questions like "Tell me about X" or "How would you apply your learning?"
+- Ask ONE concrete, scenario-based question. Example: "Imagine you're building [specific thing from their track] and [specific problem]. Walk me through how you'd approach it."
+- Reference something specific from their context: a weak area, a content title they studied, or a dimension they struggled in.
+- This is a proper interview: 12–18 exchanges. Take your time. One question per message.
+- No markdown, no JSON, no emojis. Plain conversational text."""
+
+_INTRO_USER_TEMPLATE = """=== FULL CANDIDATE CONTEXT (use this to craft your first question) ===
 {context_block}
 
 === YOUR TASK ===
-Write a welcoming opening message (2-4 short paragraphs) that:
-1. Introduces yourself as the AI interviewer
-2. Summarizes what you know about their journey (track, initial level, what they learned)
-3. Explains the interview format (conversational, 10-15 exchanges)
-4. Asks the FIRST question - something that tests practical application of what they learned
+Write a short, human opening (2–3 paragraphs) that:
+1. Greets them naturally and briefly mentions you've reviewed their assessment and learning path.
+2. Sets the tone: this is a conversation, not a quiz. You'll ask scenario-based questions. Expect 12–18 back-and-forth exchanges.
+3. Asks your FIRST question — a concrete scenario. It MUST:
+   - Be specific to their track and to content they actually studied (use titles from CONTENT CONSUMED)
+   - Pose a realistic situation: "Imagine you're...", "Suppose a client asks you to...", "You're debugging X when Y happens..."
+   - Target a weak area from their assessment if possible, or test practical application of something they learned
+   - Be ONE question, not multiple. Let them answer fully before you follow up.
 
-Be specific. Reference their track and weak areas from the assessment. Then ask one clear question to start."""
+Do NOT be generic. Do NOT sound like a chatbot. Write as a real interviewer would speak."""
 
 
 async def generate_evaluation_intro(context: Dict[str, Any]) -> str:
@@ -140,54 +177,68 @@ async def generate_evaluation_intro(context: Dict[str, Any]) -> str:
 
 
 def _mock_intro(context: Dict) -> str:
-    track = context.get("track_name", "")
-    level = context.get("detected_level", "")
+    track = context.get("track_name", "") or "your track"
+    level = context.get("detected_level", "intermediate")
     score = context.get("overall_score", 0)
     completion = context.get("completion_rate", 0)
-    learning_summary = context.get("learning_summary", "")
+    full_ctx = context.get("full_context") or {}
+    assessment = full_ctx.get("assessment") or {}
+    qa = assessment.get("questions_and_answers") or []
+    content = full_ctx.get("content_consumed") or []
+    weak = [x for x in qa if x.get("score", 1) < 0.6]
+    content_titles = [c.get("title", "") for c in content[:3] if c.get("title")]
 
-    block = ""
-    if learning_summary:
-        block = f"\n\n📚 **What You Learned:**\n{learning_summary[:400]}...\n\n"
+    first_content = content_titles[0] if content_titles else "the material"
+    weak_dim = weak[0].get("dimension", "practical application") if weak else "practical application"
 
-    return f"""👋 **Welcome to your AI-Powered Skill Evaluation Interview!**
+    return f"""Hi. I've gone through your assessment and learning path — {int(score)}% on the initial assessment, {level} level, and you've completed about {completion}% of the path. I've got a good sense of what you've been working on.
 
-I'm your AI interviewer. I have full context about your journey:
+This will be a conversation, not a quiz. I'll ask scenario-based questions. Expect maybe 12 to 18 back-and-forth exchanges. Take your time with your answers.
 
-📊 **Your Journey:**
-• **Track:** {track}
-• **Initial Assessment:** {int(score)}% ({level.title()} level)
-• **Path Completion:** {completion}%
-{block}
-🎯 **Format:** We'll have a natural conversation (10-15 messages). I'll ask questions based on your learning. Answer naturally.
-
-**First question:** Based on your learning in {track}, describe a real-world project where you'd apply what you've learned. What key decisions would you make?""".strip()
+First question: Imagine you're working on a {track} project and you need to apply what you learned from {first_content}. A teammate pushes back on your approach and says it won't scale. Walk me through how you'd respond — what would you ask them, and how would you adjust your design?""".strip()
 
 
 # ---------------------------------------------------------------------------
 # Follow-up
 # ---------------------------------------------------------------------------
 
-_FOLLOWUP_SYSTEM = """You are an expert technical interviewer. You have FULL CONTEXT about the candidate:
-- Their track, initial assessment (questions, answers, scores, weak areas)
-- Stages they completed and content they consumed
+_FOLLOWUP_SYSTEM = """You are a senior engineer in a real technical interview. Be HUMAN: natural, attentive, occasionally use brief acknowledgments ("Interesting.", "Got it.") before your next question.
 
-Your role: Ask follow-up questions to assess depth. Reference their answers. Probe for understanding.
-If you have enough information (8+ exchanges, substantive answers), say you have enough to evaluate.
-Reply in plain text only. No markdown."""
+You have full context: their track, assessment (questions, scores, weak areas), the exact content they studied, and the full dialogue so far.
+
+CRITICAL RULES:
+- Sound like a real person. No robotic phrasing. No "Thank you for your response. Can you please..."
+- NEVER ask generic questions. Every question must be a CONCRETE SCENARIO tied to their track, their answer, or content they studied.
+- Reference what they just said. Build on it. "You mentioned X — what happens when Y?" or "In that scenario, how would you handle [edge case]?"
+- One question per message. Let them answer fully. Proper interview pacing.
+- Interview length: 12–18 exchanges. Only wrap up when you have 12+ substantive exchanges AND they've given enough depth.
+- When wrapping up: sound human. "I think I have a good picture. Let me put together my feedback." Not robotic.
+- No markdown. Plain text only."""
 
 _FOLLOWUP_USER_TEMPLATE = """=== CANDIDATE CONTEXT ===
 {context_block}
 
-=== DIALOGUE SO FAR ===
+=== CONVERSATION SO FAR ===
 {dialogue_block}
 
-=== YOUR TASK ===
-The candidate just responded. Either:
-A) Ask a follow-up question that probes deeper (reference their answer or a weak area from assessment), OR
-B) If you have enough to evaluate (8+ exchanges, good depth), say: "Thank you for your detailed responses. I have enough information to evaluate your skills now."
+=== EXCHANGE COUNT ===
+{exchange_count} back-and-forth exchanges so far. (Aim for 12–18 before wrapping up.)
 
-Reply with ONLY your next message (one paragraph or question)."""
+=== YOUR TASK ===
+The candidate just responded.
+
+If fewer than 12 exchanges OR their answers lack depth:
+  - Ask ONE follow-up question. It MUST:
+    * Reference something specific they said (quote or paraphrase)
+    * Be a concrete scenario: "So if that fails, what would you do?", "Imagine the client pushes back on X — how do you respond?", "Walk me through how you'd debug that."
+    * Target a weak area from their assessment, or probe deeper into what they just said
+  - Sound natural. Brief acknowledgment of their answer, then the question.
+  - Do NOT ask generic questions like "Can you elaborate?" or "What challenges might you face?"
+
+If 12+ exchanges AND they've given substantive, detailed answers:
+  - Wrap up naturally. "I've got a clear picture. Let me put together my evaluation." or similar. Human, not robotic.
+
+Reply with ONLY your next message (one short paragraph)."""
 
 
 async def generate_evaluation_followup(
@@ -206,9 +257,11 @@ async def generate_evaluation_followup(
 
     context_block = _build_context_block(full_context)
     dialogue_block = _build_dialogue_block(dialogue_history)
+    exchange_count = _count_exchanges(dialogue_history)
     prompt = _FOLLOWUP_USER_TEMPLATE.format(
         context_block=context_block,
         dialogue_block=dialogue_block,
+        exchange_count=exchange_count,
     )
     messages = [
         {"role": "system", "content": _FOLLOWUP_SYSTEM},
@@ -223,12 +276,21 @@ async def generate_evaluation_followup(
 
 
 def _mock_followup(dialogue_history: List[Dict]) -> str:
-    if len(dialogue_history) < 10:
+    user_msgs = [d for d in dialogue_history if d.get("speaker") == "user"]
+    ai_msgs = [d for d in dialogue_history if d.get("speaker") == "ai"]
+    exchanges = min(len(user_msgs), len(ai_msgs))
+
+    if exchanges >= 6:
+        return "I've got a clear picture. Let me put together my evaluation."
+    if user_msgs:
         return (
-            "Thank you for your response. Can you describe how you would apply your learning "
-            "in a practical scenario? What challenges might you face?"
+            "Got it. Imagine that approach fails in production and you're debugging at 2am. "
+            "What's your first step — what would you check, and what would you log?"
         )
-    return "Thank you for your detailed responses. I have enough information to evaluate your skills now."
+    return (
+        "Interesting. So in that scenario, what's the first thing that could go wrong? "
+        "And how would you handle it?"
+    )
 
 
 # ---------------------------------------------------------------------------

@@ -240,6 +240,8 @@ class AssessmentResultResponse(BaseModel):
     learning_path_id: Optional[int] = None
     # AI-generated comprehensive report (for content generation)
     comprehensive_report: Optional[dict] = None
+    # Evaluated responses (scores populated after batch evaluation at completion)
+    evaluated_responses: Optional[List[AssessmentResponseResponse]] = None
 
     class Config:
         from_attributes = True
@@ -557,6 +559,24 @@ class ImprovementAnalysisDialogueItem(BaseModel):
     sequence_no: int
 
 
+class ImprovementAnalysisBeforeContextItem(BaseModel):
+    """Single Q&A from initial assessment (before the platform)."""
+    question_text: str
+    user_answer: str
+    score: Optional[float] = None
+    dimension: Optional[str] = None
+    ai_explanation: Optional[str] = None
+
+
+class ImprovementAnalysisAfterContext(BaseModel):
+    """After state: path completion + evaluation."""
+    stages_summary: Optional[List[dict]] = None
+    content_summary: Optional[str] = None
+    learning_summary: Optional[str] = None
+    evaluation_scores: Optional[dict] = None
+    readiness_level: Optional[str] = None
+
+
 class ImprovementAnalysisResponse(BaseModel):
     path_id: int
     track_name: Optional[str] = None
@@ -566,4 +586,10 @@ class ImprovementAnalysisResponse(BaseModel):
     improvement_percentage: Optional[float] = None
     final_feedback: Optional[str] = None
     dialogues: Optional[List[ImprovementAnalysisDialogueItem]] = None
+    # Rich before/after context for display and AI
+    before_context: Optional[List[ImprovementAnalysisBeforeContextItem]] = None
+    after_context: Optional[ImprovementAnalysisAfterContext] = None
+    detailed_analysis: Optional[str] = None
+    # Structured report (dashboard metrics + story) — saved in progress_analysis_reports
+    structured_report: Optional[dict] = None
 

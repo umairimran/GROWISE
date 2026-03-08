@@ -33,6 +33,7 @@ class User(Base):
     skill_profile = relationship("SkillProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
     learning_paths = relationship("LearningPath", back_populates="user", cascade="all, delete-orphan")
     content_progress = relationship("UserContentProgress", back_populates="user", cascade="all, delete-orphan")
+    progress_analysis_reports = relationship("ProgressAnalysisReport", back_populates="user", cascade="all, delete-orphan")
     chat_sessions = relationship("ChatSession", back_populates="user", cascade="all, delete-orphan")
     evaluation_sessions = relationship("EvaluationSession", back_populates="user", cascade="all, delete-orphan")
     path_completion_reports = relationship("PathCompletionReport", back_populates="user", cascade="all, delete-orphan")
@@ -275,6 +276,7 @@ class LearningPath(Base):
     stages = relationship("LearningPathStage", back_populates="path", cascade="all, delete-orphan")
     evaluation_sessions = relationship("EvaluationSession", back_populates="path", cascade="all, delete-orphan")
     completion_report = relationship("PathCompletionReport", back_populates="path", uselist=False, cascade="all, delete-orphan")
+    progress_analysis_report = relationship("ProgressAnalysisReport", back_populates="path", uselist=False, cascade="all, delete-orphan")
 
 
 class PathCompletionReport(Base):
@@ -290,6 +292,22 @@ class PathCompletionReport(Base):
     # Relationships
     path = relationship("LearningPath", back_populates="completion_report", uselist=False)
     user = relationship("User", back_populates="path_completion_reports")
+
+
+class ProgressAnalysisReport(Base):
+    """Stored structured report (dashboard metrics + story) for a path's before/after progress."""
+    __tablename__ = "progress_analysis_reports"
+
+    report_id = Column(Integer, primary_key=True, index=True)
+    path_id = Column(Integer, ForeignKey("learning_paths.path_id", ondelete="CASCADE"), nullable=False, unique=True)
+    user_id = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
+    evaluation_id = Column(Integer, ForeignKey("evaluation_sessions.evaluation_id", ondelete="SET NULL"), nullable=True)
+    structured_report = Column(JSONB, nullable=False)
+    created_at = Column(TIMESTAMP, server_default=func.current_timestamp())
+
+    # Relationships
+    path = relationship("LearningPath", back_populates="progress_analysis_report", uselist=False)
+    user = relationship("User", back_populates="progress_analysis_reports")
 
 
 class LearningPathStage(Base):

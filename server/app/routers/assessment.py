@@ -19,7 +19,7 @@ from app.ai_services.assessment_dimensions_generator import (
     _make_code as make_dimension_code,
 )
 from app.ai_services.assessment_question_generator import generate_assessment_questions
-from app.ai_services.answer_evaluator import evaluate_answer as evaluate_answer_ai
+from app.ai_services.answer_evaluator import evaluate_answers_batch
 from app.ai_services.learning_path_generator import generate_learning_path_stages
 from app.ai_services.comprehensive_assessment_report import generate_comprehensive_report
 
@@ -281,53 +281,29 @@ async def submit_answer(
             detail="Question not part of this assessment"
         )
     
-    # Get question with its dimension and track
+    # Get question with its dimension and track (for validation only)
     question = (
         db.query(models.AssessmentQuestionPool)
         .filter(models.AssessmentQuestionPool.question_id == answer_data.question_id)
         .first()
     )
 
-    track = db.query(models.Track).filter(
-        models.Track.track_id == question.track_id
-    ).first()
-
-    # Resolve dimension context (may be NULL if question has no dimension)
-    dimension = None
-    if question.dimension_id:
-        dimension = db.query(models.AssessmentDimension).filter(
-            models.AssessmentDimension.dimension_id == question.dimension_id
-        ).first()
-
     # ------------------------------------------------------------------
-    # Call the new multi-criteria evaluator with full context
+    # Store answer WITHOUT AI evaluation — batch evaluation happens on complete
+    # This reduces API cost from N calls (one per question) to 1 call at completion.
     # ------------------------------------------------------------------
-    ai_evaluation = await evaluate_answer_ai(
-        user_answer=answer_data.user_answer,
-        question_text=question.question_text,
-        track_name=track.track_name if track else "Unknown Track",
-        dimension_name=dimension.name if dimension else "General",
-        dimension_description=dimension.description if dimension else "",
-        dimension_weight=float(dimension.weight) if dimension else 1.0,
-        question_type=question.question_type,
-    )
-
-    # Persist response — criteria_scores stored as a JSON string
     response = models.AssessmentResponse(
         session_id=session_id,
         question_id=answer_data.question_id,
         user_answer=answer_data.user_answer,
-        ai_score=ai_evaluation["final_score"],
-        ai_explanation=ai_evaluation["explanation"],
-        criteria_scores=json.dumps(ai_evaluation["criteria_scores"]),
+        ai_score=None,
+        ai_explanation="",
+        criteria_scores=None,
     )
 
     db.add(response)
     db.commit()
     db.refresh(response)
-
-    # Deserialise criteria_scores for the response body
-    response.criteria_scores = json.dumps(ai_evaluation["criteria_scores"])
     return response
 
 
@@ -366,14 +342,57 @@ async def complete_assessment(
     # Get all responses for this session
     responses = db.query(models.AssessmentResponse).filter(
         models.AssessmentResponse.session_id == session_id
-    ).all()
-    
+    ).order_by(models.AssessmentResponse.response_id).all()
+
+
     if not responses:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No answers submitted yet"
         )
-    
+
+    # ------------------------------------------------------------------
+    # Batch evaluate ALL answers in ONE API call (reduces cost from N to 1)
+    # ------------------------------------------------------------------
+    qa_for_batch = []
+    valid_indices = []
+    for i, resp in enumerate(responses):
+        q = db.query(models.AssessmentQuestionPool).filter(
+            models.AssessmentQuestionPool.question_id == resp.question_id
+        ).first()
+        if not q:
+            continue
+        dim = None
+        if q.dimension_id:
+            dim = db.query(models.AssessmentDimension).filter(
+                models.AssessmentDimension.dimension_id == q.dimension_id
+            ).first()
+        qa_for_batch.append({
+            "question_text": q.question_text,
+            "user_answer": resp.user_answer,
+            "dimension_name": dim.name if dim else "General",
+            "dimension_description": dim.description if dim else "",
+            "dimension_weight": float(dim.weight) if dim else 1.0,
+            "question_type": q.question_type,
+        })
+        valid_indices.append(i)
+
+    evaluations = await evaluate_answers_batch(
+        track_name=track.track_name if track else "General Track",
+        track_description=(track.description or "") if track else "",
+        questions_and_answers=qa_for_batch,
+    )
+
+    # Persist evaluations back to AssessmentResponse (same DB structure)
+    for idx, ev in zip(valid_indices, evaluations):
+        resp = responses[idx]
+        resp.ai_score = ev["final_score"]
+        resp.ai_explanation = ev.get("explanation", "") or ""
+        resp.criteria_scores = json.dumps(ev.get("criteria_scores", {}))
+    db.commit()
+    for r in responses:
+        db.refresh(r)
+
     # ------------------------------------------------------------------
     # Aggregate per-dimension scores
     # ------------------------------------------------------------------
@@ -574,7 +593,15 @@ async def complete_assessment(
         # Don't fail the whole request — path can be generated later
         db.rollback()
 
-    return result
+    # Build response with evaluated_responses so client has per-question scores
+    response_data = schemas.AssessmentResultResponse.model_validate(result)
+    return response_data.model_copy(
+        update={
+            "evaluated_responses": [
+                schemas.AssessmentResponseResponse.model_validate(r) for r in responses
+            ]
+        }
+    )
 
 
 @router.get("/sessions/{session_id}/result", response_model=schemas.AssessmentResultResponse)
@@ -615,7 +642,14 @@ def get_assessment_result(
     if lp:
         result.learning_path_id = lp.path_id
 
-    return result
+    # Attach evaluated_responses so client has per-question scores
+    responses = db.query(models.AssessmentResponse).filter(
+        models.AssessmentResponse.session_id == session_id
+    ).order_by(models.AssessmentResponse.response_id).all()
+    response_data = schemas.AssessmentResultResponse.model_validate(result)
+    return response_data.model_copy(
+        update={"evaluated_responses": [schemas.AssessmentResponseResponse.model_validate(r) for r in responses]}
+    )
 
 
 @router.post("/sessions/{session_id}/regenerate-path", response_model=schemas.LearningPathResponse)

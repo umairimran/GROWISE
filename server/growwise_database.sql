@@ -5,6 +5,7 @@
 -- ============================================================================
 
 -- Drop tables if they exist (in reverse dependency order)
+DROP TABLE IF EXISTS progress_analysis_reports CASCADE;
 DROP TABLE IF EXISTS path_completion_reports CASCADE;
 DROP TABLE IF EXISTS evaluation_results CASCADE;
 DROP TABLE IF EXISTS evaluation_dialogues CASCADE;
@@ -368,6 +369,23 @@ CREATE TABLE path_completion_reports (
 
 CREATE INDEX idx_path_completion_reports_path ON path_completion_reports(path_id);
 CREATE INDEX idx_path_completion_reports_user ON path_completion_reports(user_id);
+
+-- ============================================================================
+-- PROGRESS ANALYSIS REPORTS (Structured JSON dashboard + story per path)
+-- ============================================================================
+
+DROP TABLE IF EXISTS progress_analysis_reports CASCADE;
+CREATE TABLE progress_analysis_reports (
+    report_id SERIAL PRIMARY KEY,
+    path_id INTEGER NOT NULL UNIQUE REFERENCES learning_paths(path_id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    evaluation_id INTEGER REFERENCES evaluation_sessions(evaluation_id) ON DELETE SET NULL,
+    structured_report JSONB NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_progress_analysis_reports_path ON progress_analysis_reports(path_id);
+CREATE INDEX idx_progress_analysis_reports_user ON progress_analysis_reports(user_id);
 
 -- ============================================================================
 -- SAMPLE DATA (Optional — uncomment to seed initial tracks)
