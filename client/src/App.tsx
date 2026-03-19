@@ -21,6 +21,8 @@ import { Assessment } from "./pages/Assessment";
 import { Dashboard } from "./pages/Dashboard";
 import { Course } from "./pages/Course";
 import { Validator } from "./pages/Validator";
+import { ImprovementAnalysis } from "./pages/ImprovementAnalysis";
+import { EvaluationReport } from "./pages/EvaluationReport";
 import { ForgotPassword } from "./pages/ForgotPassword";
 import { ResetPassword } from "./pages/ResetPassword";
 import { AccountSecurity } from "./pages/AccountSecurity";
@@ -111,6 +113,7 @@ const RoutedAppContent: FC<RoutedAppContentProps> = ({
               onLoginClick={() => navigate("/login")}
               user={user}
               onDashboardClick={() => navigate("/dashboard")}
+              onChooseTrackClick={() => navigate("/skills")}
               onBlogClick={() => navigate("/blog")}
               onDemoClick={() => navigate("/skills")}
             />
@@ -125,7 +128,7 @@ const RoutedAppContent: FC<RoutedAppContentProps> = ({
               <Login
                 onLogin={(loggedInUser) => {
                   onLoginSuccess(loggedInUser);
-                  navigate("/dashboard", { replace: true });
+                  navigate("/", { replace: true });
                 }}
                 onBack={() => navigate("/")}
                 onGoToSignup={() => navigate("/signup")}
@@ -139,7 +142,7 @@ const RoutedAppContent: FC<RoutedAppContentProps> = ({
               <Signup
                 onSignupSuccess={(newUser) => {
                   onSignupSuccess(newUser);
-                  navigate("/dashboard", { replace: true });
+                  navigate("/", { replace: true });
                 }}
                 onBack={() => navigate("/")}
                 onGoToLogin={() => navigate("/login")}
@@ -186,13 +189,26 @@ const RoutedAppContent: FC<RoutedAppContentProps> = ({
                 <Dashboard
                   user={user}
                   result={assessmentResult}
-                  onOpenLearningPath={() => navigate("/course")}
+                  onOpenLearningPath={(pathId, topic) => {
+                    if (pathId) {
+                      const params = new URLSearchParams();
+                      params.set("pathId", String(pathId));
+                      if (topic) {
+                        params.set("track", topic);
+                      }
+                      navigate(`/course?${params.toString()}`);
+                    } else {
+                      navigate("/course");
+                    }
+                  }}
                   onStartAssessment={() => navigate("/skills")}
                 />
               }
             />
             <Route path="/course" element={<Course onStartAssessment={() => navigate("/skills")} />} />
             <Route path="/validator" element={<Validator />} />
+            <Route path="/evaluation/:evaluationId" element={<EvaluationReport />} />
+            <Route path="/improvement/:pathId" element={<ImprovementAnalysis />} />
             <Route path="/account" element={<AccountSecurity />} />
           </Route>
         </Route>

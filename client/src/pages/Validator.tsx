@@ -1,14 +1,18 @@
-﻿import { FC, useCallback, useEffect, useMemo, useState } from "react";
+import { FC, useCallback, useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import {
   AlertTriangle,
+  Bot,
   CheckCircle,
   Clock3,
   MessageSquare,
   Play,
   RefreshCw,
   Send,
-  Terminal,
+  Sparkles,
+  TrendingUp,
+  User,
 } from "lucide-react";
 import { parseDecimal } from "../api/adapters/numeric";
 import { ApiHttpError } from "../api/http";
@@ -20,6 +24,7 @@ import {
 } from "../api/services/evaluation";
 import { progressService, type ProgressEvaluationHistory } from "../api/services/progress";
 import { Button } from "../components/Button";
+import { useTheme } from "../providers/ThemeProvider";
 
 const MIN_DIALOGUES_TO_COMPLETE = 3;
 
@@ -62,7 +67,23 @@ const sortDialogues = (dialogues: EvaluationDialogueResponse[]): EvaluationDialo
   [...dialogues].sort((left, right) => left.sequence_no - right.sequence_no);
 
 export const Validator: FC = () => {
-  const [pathIdInput, setPathIdInput] = useState("");
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { theme } = useTheme();
+  const systemPrefersDark =
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const isDark = theme === "dark" || (theme === "system" && systemPrefersDark);
+
+  const queryPathId = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    const raw = params.get("pathId");
+    const parsed = raw ? Number(raw) : NaN;
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  }, [location.search]);
+
+  const [pathIdInput, setPathIdInput] = useState(() => (queryPathId ? String(queryPathId) : ""));
   const [draftResponse, setDraftResponse] = useState("");
 
   const [mySessions, setMySessions] = useState<EvaluationSessionResponse[]>([]);
@@ -142,11 +163,28 @@ export const Validator: FC = () => {
           return;
         }
 
+        let initialSession =
+          (queryPathId && sessions.find((session) => (session as any).path_id === queryPathId)) || null;
+
         const inProgressSession = sessions.find((session) => session.status !== "completed");
-        const initialSession = inProgressSession ?? sessions[0];
+        if (!initialSession) {
+          initialSession = inProgressSession ?? sessions[0] ?? null;
+        }
+
+        // If we came from a specific path and there is no session yet, auto-create one.
+        if (!initialSession && queryPathId) {
+          const created = await evaluationService.createSession(queryPathId);
+          const sessionsAfter = await loadMySessions();
+          initialSession =
+            sessionsAfter.find((s) => s.evaluation_id === created.evaluation_id) ?? created;
+        }
 
         if (initialSession) {
           await loadSession(initialSession.evaluation_id, initialSession);
+        } else {
+          setActiveSession(null);
+          setDialogues([]);
+          setResult(null);
         }
       } catch (error) {
         if (!isMounted) {
@@ -165,7 +203,7 @@ export const Validator: FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [loadEvaluationHistory, loadMySessions, loadSession]);
+  }, [loadEvaluationHistory, loadMySessions, loadSession, queryPathId]);
 
   const handleRetryWorkspaceLoad = useCallback(async () => {
     setStatusMessage("Refreshing evaluation workspace...");
@@ -306,15 +344,29 @@ export const Validator: FC = () => {
       return [];
     }
 
-    return [...evaluationHistory.history].reverse().slice(0, 4);
+    return [...evaluationHistory.history].reverse().slice(0, 10);
   }, [evaluationHistory]);
+
+  const readinessColor = (level: string) => {
+    if (!level) return "text-gray-500 dark:text-gray-400";
+    const l = level.toLowerCase();
+    if (l === "senior_ready") return "text-emerald-600 dark:text-emerald-400";
+    if (l === "mid") return "text-blue-600 dark:text-blue-400";
+    return "text-amber-600 dark:text-amber-400";
+  };
 
   if (isBootstrapping) {
     return (
-      <div className="h-[calc(100vh-140px)] flex items-center justify-center">
+      <div className="h-[calc(100vh-140px)] flex items-center justify-center bg-gradient-to-b from-transparent via-background to-background">
         <div className="text-center">
-          <div className="animate-spin h-8 w-8 border-4 border-accent border-t-transparent rounded-full mx-auto mb-4" />
-          <p className="text-gray-500">Loading evaluation workspace...</p>
+          <div className="relative inline-block">
+            <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center animate-pulse shadow-lg shadow-blue-500/25">
+              <Sparkles className="h-7 w-7 text-white" />
+            </div>
+            <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 blur-xl animate-pulse" />
+          </div>
+          <p className="mt-6 text-gray-500 dark:text-gray-400 font-medium">Loading evaluation workspace...</p>
+          <p className="mt-1 text-sm text-gray-400 dark:text-gray-500">Preparing your AI interview experience</p>
         </div>
       </div>
     );
@@ -322,152 +374,253 @@ export const Validator: FC = () => {
 
   return (
     <div className="h-auto lg:h-[calc(100vh-140px)] flex flex-col gap-6 pb-20 lg:pb-0">
-      <header className="flex flex-col sm:flex-row justify-between items-start gap-4">
-        <div>
-          <h1 className="font-serif text-2xl font-bold text-contrast">Real-World Validator</h1>
-          <p className="text-gray-500">Backend evaluation workflow with persisted interview sessions.</p>
-        </div>
-        <div className="flex items-center gap-3 text-sm text-gray-500">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              void handleRetryWorkspaceLoad();
-            }}
-            disabled={Boolean(statusMessage)}
-          >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
-          <Clock3 className="h-4 w-4" />
-          <span>
-            {activeSession
-              ? `Session #${activeSession.evaluation_id} (${activeSession.status})`
-              : "No active session"}
-          </span>
+      {/* Header */}
+      <header className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-50 via-white to-blue-50/50 dark:from-zinc-900 dark:via-zinc-900 dark:to-indigo-950/30 border border-gray-200/80 dark:border-zinc-700/80 p-6 shadow-sm">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-blue-400/10 to-transparent dark:from-indigo-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="relative flex flex-col sm:flex-row justify-between items-start gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200/50 dark:border-blue-800/50">
+                <Bot className="h-3 w-3" />
+                AI Interview
+              </span>
+              {activeSession && (
+                <span
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    activeSession.status === "completed"
+                      ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300"
+                      : "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300"
+                  }`}
+                >
+                  {activeSession.status}
+                </span>
+              )}
+            </div>
+            <h1 className="font-serif text-2xl sm:text-3xl font-bold text-contrast tracking-tight">
+              Skill Evaluation
+            </h1>
+            <p className="mt-1 text-gray-500 dark:text-gray-400 text-sm">
+              AI interviewer with full context — your track, assessment, and learning journey.
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => void handleRetryWorkspaceLoad()}
+              disabled={Boolean(statusMessage)}
+              className="shrink-0"
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${statusMessage ? "animate-spin" : ""}`} />
+              Refresh
+            </Button>
+            <div className="hidden sm:flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+              <Clock3 className="h-4 w-4" />
+              <span>
+                {activeSession
+                  ? `Session #${activeSession.evaluation_id}`
+                  : "No active session"}
+              </span>
+            </div>
+          </div>
         </div>
       </header>
 
+      {/* Error */}
       {errorMessage && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 flex items-center gap-3">
+        <div className="rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 px-4 py-3 text-sm text-red-700 dark:text-red-300 flex items-center gap-3 shadow-sm">
+          <AlertTriangle className="h-5 w-5 shrink-0" />
           <span className="flex-1">{errorMessage}</span>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => {
-              void handleRetryWorkspaceLoad();
-            }}
-          >
+          <Button size="sm" variant="ghost" onClick={() => void handleRetryWorkspaceLoad()}>
             Retry
           </Button>
         </div>
       )}
 
+      {/* Status */}
       {statusMessage && (
-        <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700 flex items-center gap-2">
-          <RefreshCw className="h-4 w-4 animate-spin" />
+        <div className="rounded-xl border border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-950/30 px-4 py-3 text-sm text-blue-700 dark:text-blue-300 flex items-center gap-2">
+          <RefreshCw className="h-4 w-4 animate-spin shrink-0" />
           <span>{statusMessage}</span>
         </div>
       )}
 
       <div className="flex-1 grid grid-cols-1 xl:grid-cols-3 gap-6 min-h-0">
+        {/* Main chat area */}
         <div className="xl:col-span-2 flex flex-col gap-4 min-h-0">
-          <div className="bg-gray-900 text-gray-200 p-6 rounded-xl border border-gray-700 shadow-soft">
-            <div className="flex items-center gap-2 mb-2 text-yellow-500 text-xs font-mono uppercase tracking-widest">
-              <Terminal className="h-3 w-3" />
-              <span>AI Interview Dialogue</span>
-            </div>
-            {activeSession ? (
-              <p className="font-mono text-sm leading-relaxed text-white">
-                Path #{activeSession.path_id} | Started {formatDateTime(activeSession.started_at)}
-              </p>
-            ) : (
-              <p className="font-mono text-sm leading-relaxed text-white">
-                Start a session by entering a learning path ID.
-              </p>
-            )}
-          </div>
-
-          <div className="flex-1 bg-surface rounded-xl border border-border shadow-soft flex flex-col min-h-0 overflow-hidden">
-            <div className="bg-gray-50 px-6 py-4 border-b border-border font-medium text-gray-700 flex items-center justify-between">
-              <span className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4" />
-                Dialogue History
+          <div
+            className={`flex-1 rounded-2xl border shadow-sm flex flex-col min-h-0 overflow-hidden ${
+              isDark
+                ? "bg-zinc-900/50 border-zinc-700/80"
+                : "bg-white border-gray-200/80"
+            }`}
+          >
+            {/* Chat header */}
+            <div
+              className={`px-6 py-4 border-b flex items-center justify-between ${
+                isDark ? "border-zinc-700/80 bg-zinc-900/80" : "border-gray-200/80 bg-gray-50/80"
+              }`}
+            >
+              <span className="flex items-center gap-2 font-medium text-contrast">
+                <MessageSquare className="h-4 w-4 text-blue-500" />
+                Dialogue
               </span>
               {activeSession && (
-                <span className="text-xs text-gray-500">{dialogueCount} messages</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  {dialogueCount} message{dialogueCount !== 1 ? "s" : ""}
+                  {activeSession.path_id && ` · Path #${activeSession.path_id}`}
+                </span>
               )}
             </div>
 
-            <div className="flex-1 p-6 overflow-y-auto space-y-4">
+            {/* Messages — scrollable so input stays visible */}
+            <div className="flex-1 min-h-[200px] max-h-[min(50vh,420px)] p-6 overflow-y-auto space-y-5">
               {!activeSession && (
-                <div className="h-full flex flex-col items-center justify-center text-gray-400 text-sm">
-                  <p>Create or open an evaluation session to begin.</p>
+                <div className="h-full min-h-[280px] flex flex-col items-center justify-center text-center">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center mb-4">
+                    <Bot className="h-8 w-8 text-blue-500" />
+                  </div>
+                  <p className="text-gray-500 dark:text-gray-400 font-medium">No active session</p>
+                  <p className="mt-1 text-sm text-gray-400 dark:text-gray-500 max-w-xs">
+                    Enter a learning path ID and create a session to start your AI interview.
+                  </p>
                 </div>
               )}
 
               {activeSession && dialogues.length === 0 && (
-                <div className="h-full flex flex-col items-center justify-center text-gray-400 text-sm">
-                  <p>No dialogue available yet for this session.</p>
+                <div className="h-full min-h-[280px] flex flex-col items-center justify-center text-center">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center mb-4 animate-pulse">
+                    <Sparkles className="h-8 w-8 text-blue-500" />
+                  </div>
+                  <p className="text-gray-500 dark:text-gray-400 font-medium">Session ready</p>
+                  <p className="mt-1 text-sm text-gray-400 dark:text-gray-500 max-w-xs">
+                    The AI interviewer will send the first message. Check back shortly.
+                  </p>
                 </div>
               )}
 
-              {dialogues.map((dialogue) => {
+              {dialogues.map((dialogue, idx) => {
                 const isUser = dialogue.speaker.toLowerCase() === "user";
                 return (
                   <div
                     key={dialogue.dialogue_id}
-                    className={`max-w-[90%] rounded-lg px-4 py-3 border text-sm ${
-                      isUser
-                        ? "ml-auto bg-blue-50 border-blue-200 text-blue-900"
-                        : "mr-auto bg-gray-50 border-gray-200 text-gray-800"
-                    }`}
+                    className={`flex gap-3 ${isUser ? "flex-row-reverse" : ""}`}
+                    style={{ animationDelay: `${idx * 50}ms` }}
                   >
-                    <div className="text-[11px] uppercase tracking-wide opacity-70 mb-1">
-                      {isUser ? "You" : "AI Interviewer"} - #{dialogue.sequence_no}
+                    <div
+                      className={`shrink-0 w-9 h-9 rounded-xl flex items-center justify-center ${
+                        isUser
+                          ? "bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md shadow-blue-500/25"
+                          : isDark
+                            ? "bg-zinc-700 text-zinc-300"
+                            : "bg-gray-200 text-gray-600"
+                      }`}
+                    >
+                      {isUser ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
                     </div>
-                    <p className="whitespace-pre-wrap leading-relaxed">{dialogue.message_text}</p>
+                    <div
+                      className={`max-w-[85%] rounded-2xl px-4 py-3 ${
+                        isUser
+                          ? "bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md shadow-blue-500/20"
+                          : isDark
+                            ? "bg-zinc-800/80 border border-zinc-700/60 text-zinc-100"
+                            : "bg-gray-100 border border-gray-200/80 text-gray-900"
+                      }`}
+                    >
+                      <div
+                        className={`text-[11px] font-medium uppercase tracking-wider mb-1.5 ${
+                          isUser ? "text-blue-100" : "text-gray-500 dark:text-gray-400"
+                        }`}
+                      >
+                        {isUser ? "You" : "AI Interviewer"}
+                      </div>
+                      <div
+                        className={`text-sm leading-relaxed prose prose-sm max-w-none ${
+                          isUser
+                            ? "text-white [&_*]:text-white"
+                            : "text-gray-800 dark:text-gray-200"
+                        }`}
+                      >
+                        {isUser ? (
+                          <p className="whitespace-pre-wrap m-0">{dialogue.message_text}</p>
+                        ) : (
+                          <ReactMarkdown
+                            components={{
+                              p: ({ children }) => <p className="m-0 mb-2 last:mb-0">{children}</p>,
+                              strong: ({ children }) => (
+                                <strong className="font-semibold text-inherit">{children}</strong>
+                              ),
+                            }}
+                          >
+                            {dialogue.message_text}
+                          </ReactMarkdown>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 );
               })}
             </div>
 
-            <div className="border-t border-border p-4 space-y-3 bg-white">
+            {/* Input area — always visible at bottom */}
+            <div
+              className={`flex-shrink-0 border-t p-4 ${
+                isDark ? "border-zinc-700/80 bg-zinc-900/50" : "border-gray-200/80 bg-gray-50/50"
+              }`}
+            >
+              <label htmlFor="validator-reply" className="block text-sm font-medium text-contrast mb-2">
+                Your answer
+              </label>
               <textarea
+                id="validator-reply"
                 value={draftResponse}
-                onChange={(event) => setDraftResponse(event.target.value)}
+                onChange={(e) => setDraftResponse(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    if (canRespond) {
+                      void handleSendResponse();
+                    }
+                  }
+                }}
                 placeholder={
                   activeSession
                     ? activeSession.status === "completed"
                       ? "This evaluation is completed. Start a new session to continue."
-                      : "Submit your response to the AI interviewer..."
+                      : "Type your response to the AI interviewer..."
                     : "Create or open a session first."
                 }
                 disabled={!canRespond}
-                className="w-full min-h-[92px] p-3 font-mono text-sm bg-white border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none disabled:bg-gray-50 disabled:text-gray-400"
+                className={`w-full min-h-[100px] p-4 text-sm rounded-xl resize-none transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 ${
+                  isDark
+                    ? "bg-zinc-800 border border-zinc-600 text-zinc-100 placeholder-zinc-500"
+                    : "bg-white border border-gray-200 text-gray-900 placeholder-gray-400"
+                }`}
               />
-              <div className="flex flex-wrap items-center gap-3 justify-between">
-                <div className="text-xs text-gray-500">
+              <div className="flex flex-wrap items-center gap-3 justify-between mt-3">
+                <div className="text-xs text-gray-500 dark:text-gray-400">
                   {activeSession && activeSession.status !== "completed" ? (
                     remainingDialogues > 0 ? (
                       <span>
-                        {remainingDialogues} more message{remainingDialogues === 1 ? "" : "s"} required before
-                        completion.
+                        {remainingDialogues} more message{remainingDialogues === 1 ? "" : "s"} before completion
                       </span>
                     ) : (
-                      <span>Minimum dialogue threshold reached. You can complete this evaluation.</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                        Ready to complete evaluation
+                      </span>
                     )
                   ) : (
-                    <span>Responses are saved to backend session state.</span>
+                    <span>Responses are saved to your session</span>
                   )}
                 </div>
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
+                    size="sm"
                     onClick={() => setDraftResponse("")}
                     disabled={!canRespond || draftResponse.length === 0}
                   >
-                    Reset
+                    Clear
                   </Button>
                   <Button
                     onClick={handleSendResponse}
@@ -475,7 +628,7 @@ export const Validator: FC = () => {
                     isLoading={isSending}
                   >
                     <Send className="h-4 w-4 mr-2" />
-                    Send Response
+                    Send
                   </Button>
                 </div>
               </div>
@@ -483,164 +636,278 @@ export const Validator: FC = () => {
           </div>
         </div>
 
+        {/* Sidebar */}
         <div className="flex flex-col gap-4 min-h-0">
-          <div className="bg-surface rounded-xl border border-border shadow-soft p-4 space-y-3">
-            <h2 className="font-semibold text-contrast">Start New Session</h2>
-            <p className="text-xs text-gray-500">
-              Provide a learning path ID. This is intentionally isolated from in-progress Phase 6 learning flow.
+          {/* Start session */}
+          <div
+            className={`rounded-2xl border p-5 shadow-sm ${
+              isDark ? "bg-zinc-900/50 border-zinc-700/80" : "bg-white border-gray-200/80"
+            }`}
+          >
+            <h2 className="font-semibold text-contrast mb-1">Start New Session</h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+              Enter your learning path ID to begin an AI interview.
             </p>
             <input
-              type="number"
-              min={1}
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               value={pathIdInput}
-              onChange={(event) => setPathIdInput(event.target.value)}
-              placeholder="Learning path ID"
-              className="w-full border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={(e) => setPathIdInput(e.target.value.replace(/\D/g, ""))}
+              placeholder="Path ID"
+              className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3 ${
+                isDark
+                  ? "bg-zinc-800 border-zinc-600 text-zinc-100 placeholder-zinc-500"
+                  : "bg-white border-gray-200 text-gray-900 placeholder-gray-400"
+              }`}
             />
             <Button
+              type="button"
               onClick={handleCreateSession}
               isLoading={isCreatingSession}
-              disabled={isCreatingSession || pathIdInput.trim().length === 0}
+              disabled={isCreatingSession || !pathIdInput.trim()}
               className="w-full"
             >
               <Play className="h-4 w-4 mr-2" />
-              Create Evaluation Session
+              Create Session
             </Button>
           </div>
 
-          <div className="bg-surface rounded-xl border border-border shadow-soft p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="font-semibold text-contrast">Evaluation Result</h2>
+          {/* Result */}
+          <div
+            className={`rounded-2xl border p-5 shadow-sm ${
+              isDark ? "bg-zinc-900/50 border-zinc-700/80" : "bg-white border-gray-200/80"
+            }`}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h2 className="font-semibold text-contrast">Evaluation Result</h2>
+                {activeSession && (
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                    {activeSession.status === "completed"
+                      ? `Session #${activeSession.evaluation_id} · Path #${activeSession.path_id ?? "—"}`
+                      : "Complete the interview to see your result"}
+                  </p>
+                )}
+              </div>
               {activeSession?.status === "completed" ? (
-                <CheckCircle className="h-4 w-4 text-green-600" />
+                <CheckCircle className="h-5 w-5 text-emerald-500 shrink-0" />
               ) : (
-                <AlertTriangle className="h-4 w-4 text-amber-600" />
+                <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0" />
               )}
             </div>
 
             {result ? (
               <div className="space-y-3 text-sm">
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-lg border border-border p-2">
-                    <div className="text-xs text-gray-500">Reasoning</div>
-                    <div className="font-semibold text-contrast">{formatScore(result.reasoning_score)}</div>
+                  <div
+                    className={`rounded-xl p-3 ${
+                      isDark ? "bg-zinc-800/80 border border-zinc-700/60" : "bg-gray-50 border border-gray-200/80"
+                    }`}
+                  >
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Reasoning</div>
+                    <div className="font-bold text-contrast text-lg">{formatScore(result.reasoning_score)}</div>
                   </div>
-                  <div className="rounded-lg border border-border p-2">
-                    <div className="text-xs text-gray-500">Problem Solving</div>
-                    <div className="font-semibold text-contrast">{formatScore(result.problem_solving)}</div>
+                  <div
+                    className={`rounded-xl p-3 ${
+                      isDark ? "bg-zinc-800/80 border border-zinc-700/60" : "bg-gray-50 border border-gray-200/80"
+                    }`}
+                  >
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Problem Solving</div>
+                    <div className="font-bold text-contrast text-lg">{formatScore(result.problem_solving)}</div>
                   </div>
                 </div>
-                <div className="rounded-lg border border-border p-2">
-                  <div className="text-xs text-gray-500">Readiness</div>
-                  <div className="font-semibold text-contrast uppercase">{result.readiness_level}</div>
+                <div
+                  className={`rounded-xl p-3 ${
+                    isDark ? "bg-zinc-800/80 border border-zinc-700/60" : "bg-gray-50 border border-gray-200/80"
+                  }`}
+                >
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Readiness</div>
+                  <div className={`font-bold uppercase ${readinessColor(result.readiness_level)}`}>
+                    {result.readiness_level.replace(/_/g, " ")}
+                  </div>
                 </div>
-                <div className="prose prose-sm max-w-none text-gray-700">
+                <div
+                  className={`prose prose-sm max-w-none rounded-xl p-3 ${
+                    isDark ? "bg-zinc-800/50 text-zinc-300" : "text-gray-700"
+                  }`}
+                >
                   <ReactMarkdown>{result.final_feedback}</ReactMarkdown>
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-gray-500">No result yet. Complete the current session to generate one.</p>
+              <div className="space-y-2 py-2">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {activeSession?.status === "in_progress"
+                    ? "Complete the interview and click &quot;Complete Evaluation&quot; to see your result."
+                    : "Select a completed session from &quot;My Sessions&quot; or &quot;Progress&quot; below to view your past evaluation results."}
+                </p>
+              </div>
             )}
 
             <Button
               onClick={handleCompleteEvaluation}
               isLoading={isCompleting}
               disabled={!canComplete}
-              className="w-full"
+              className="w-full mt-3"
             >
               Complete Evaluation
             </Button>
+            {result && activeSession && (
+              <div className="flex flex-col gap-2 mt-3">
+                <Button
+                  variant="secondary"
+                  onClick={() => navigate(`/evaluation/${activeSession.evaluation_id}`)}
+                  className="w-full"
+                >
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  View Full Report
+                </Button>
+                {activeSession.path_id && (
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate(`/improvement/${activeSession.path_id}`)}
+                    className="w-full"
+                  >
+                    <TrendingUp className="h-4 w-4 mr-2" />
+                    View Progress Analysis
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
 
-          <div className="bg-surface rounded-xl border border-border shadow-soft p-4 flex-1 min-h-0 overflow-hidden">
-            <h2 className="font-semibold text-contrast mb-3">My Evaluation Sessions</h2>
-            <div className="space-y-2 overflow-y-auto max-h-44 pr-1">
+          {/* Sessions list */}
+          <div
+            className={`rounded-2xl border p-5 flex-1 min-h-0 overflow-hidden flex flex-col ${
+              isDark ? "bg-zinc-900/50 border-zinc-700/80" : "bg-white border-gray-200/80"
+            }`}
+          >
+            <h2 className="font-semibold text-contrast mb-1">My Sessions</h2>
+            <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-3">Click a completed session to view result</p>
+            <div className="space-y-2 overflow-y-auto flex-1 min-h-0 pr-1">
               {sessionsPreview.length === 0 ? (
-                <p className="text-sm text-gray-500">No sessions yet.</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">No sessions yet.</p>
               ) : (
                 sessionsPreview.map((session) => (
                   <button
                     key={session.evaluation_id}
-                    onClick={() => {
-                      void loadSession(session.evaluation_id, session);
-                    }}
-                    className={`w-full text-left rounded-lg border px-3 py-2 text-sm transition-colors ${
+                    onClick={() => void loadSession(session.evaluation_id, session)}
+                    className={`w-full text-left rounded-xl px-3 py-2.5 text-sm transition-all ${
                       activeSession?.evaluation_id === session.evaluation_id
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-border hover:bg-gray-50"
+                        ? "bg-blue-500/15 dark:bg-blue-500/20 border border-blue-500/40 text-blue-700 dark:text-blue-300"
+                        : isDark
+                          ? "border border-zinc-700/60 hover:bg-zinc-800/60 hover:border-zinc-600"
+                          : "border border-gray-200 hover:bg-gray-50 hover:border-gray-300"
                     }`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-medium">#{session.evaluation_id}</span>
                       <span
-                        className={`text-xs uppercase ${
-                          session.status === "completed" ? "text-green-600" : "text-blue-600"
+                        className={`text-xs font-medium uppercase ${
+                          session.status === "completed"
+                            ? "text-emerald-600 dark:text-emerald-400"
+                            : "text-blue-600 dark:text-blue-400"
                         }`}
                       >
                         {session.status}
                       </span>
                     </div>
-                    <div className="text-xs text-gray-500 mt-1">Path #{session.path_id}</div>
-                    <div className="text-xs text-gray-500">{formatDateTime(session.started_at)}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      Path #{session.path_id} · {formatDateTime(session.started_at)}
+                    </div>
                   </button>
                 ))
               )}
             </div>
           </div>
 
-          <div className="bg-surface rounded-xl border border-border shadow-soft p-4 flex-1 min-h-0 overflow-hidden">
-            <h2 className="font-semibold text-contrast mb-3">Evaluation History</h2>
+          {/* History */}
+          <div
+            className={`rounded-2xl border p-5 flex-1 min-h-0 overflow-hidden flex flex-col ${
+              isDark ? "bg-zinc-900/50 border-zinc-700/80" : "bg-white border-gray-200/80"
+            }`}
+          >
+            <h2 className="font-semibold text-contrast mb-3 flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-blue-500" />
+              Progress
+            </h2>
             {!evaluationHistory ? (
               <div className="space-y-3">
-                <p className="text-sm text-gray-500">History unavailable.</p>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    void handleRetryWorkspaceLoad();
-                  }}
-                >
-                  Retry History Load
+                <p className="text-sm text-gray-500 dark:text-gray-400">History unavailable.</p>
+                <Button size="sm" variant="outline" onClick={() => void handleRetryWorkspaceLoad()}>
+                  Retry
                 </Button>
               </div>
             ) : (
-              <div className="space-y-3 text-sm">
-                <div className="rounded-lg border border-border p-2">
-                  <div className="text-xs text-gray-500">Total Completed Evaluations</div>
-                  <div className="text-lg font-semibold text-contrast">{evaluationHistory.totalEvaluations}</div>
+              <div className="space-y-3 text-sm flex-1 min-h-0 overflow-y-auto">
+                <div
+                  className={`rounded-xl p-3 ${
+                    isDark ? "bg-zinc-800/80 border border-zinc-700/60" : "bg-gray-50 border border-gray-200/80"
+                  }`}
+                >
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Completed</div>
+                  <div className="text-xl font-bold text-contrast">{evaluationHistory.totalEvaluations}</div>
                 </div>
 
                 {evaluationHistory.progression && (
-                  <div className="rounded-lg border border-border p-2 space-y-1">
-                    <div className="text-xs text-gray-500">Progression</div>
-                    <div className="text-xs text-gray-700">
+                  <div
+                    className={`rounded-xl p-3 space-y-1 ${
+                      isDark ? "bg-emerald-950/30 border border-emerald-800/40" : "bg-emerald-50 border border-emerald-200/80"
+                    }`}
+                  >
+                    <div className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">Improvement</div>
+                    <div className="text-xs text-emerald-600 dark:text-emerald-300">
                       Reasoning +{formatScore(evaluationHistory.progression.improvement.reasoningImprovement)}
                     </div>
-                    <div className="text-xs text-gray-700">
+                    <div className="text-xs text-emerald-600 dark:text-emerald-300">
                       Problem Solving +
                       {formatScore(evaluationHistory.progression.improvement.problemSolvingImprovement)}
                     </div>
-                    <div className="text-xs text-gray-700">
-                      {evaluationHistory.progression.improvement.readinessProgression ?? ""}
-                    </div>
+                    {evaluationHistory.progression.improvement.readinessProgression && (
+                      <div className="text-xs text-emerald-600 dark:text-emerald-300">
+                        {evaluationHistory.progression.improvement.readinessProgression}
+                      </div>
+                    )}
                   </div>
                 )}
 
-                <div className="space-y-2 overflow-y-auto max-h-44 pr-1">
+                <div className="space-y-2">
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                    Click a past evaluation to view full result →
+                  </p>
                   {historyPreview.length === 0 ? (
-                    <p className="text-sm text-gray-500">No completed evaluations yet.</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">No completed evaluations yet.</p>
                   ) : (
                     historyPreview.map((item) => (
-                      <div key={item.evaluationId} className="rounded-lg border border-border px-3 py-2">
+                      <button
+                        key={item.evaluationId}
+                        type="button"
+                        onClick={() => void loadSession(item.evaluationId)}
+                        className={`w-full text-left rounded-xl px-3 py-2.5 transition-colors ${
+                          activeSession?.evaluation_id === item.evaluationId
+                            ? "bg-blue-500/15 dark:bg-blue-500/20 border border-blue-500/40"
+                            : isDark
+                              ? "bg-zinc-800/60 border border-zinc-700/60 hover:bg-zinc-800/80 hover:border-zinc-600"
+                              : "bg-gray-50 border border-gray-200/80 hover:bg-gray-100 hover:border-gray-300"
+                        }`}
+                      >
                         <div className="flex items-center justify-between">
                           <span className="font-medium">#{item.evaluationId}</span>
-                          <span className="text-xs text-gray-500 uppercase">{item.readinessLevel ?? "-"}</span>
+                          <span className={`text-xs font-medium uppercase ${readinessColor(item.readinessLevel ?? "")}`}>
+                            {item.readinessLevel ?? "-"}
+                          </span>
                         </div>
-                        <div className="text-xs text-gray-500">{item.trackName || "Unknown track"}</div>
-                        <div className="text-xs text-gray-600 mt-1">
-                          Reasoning {formatScore(item.reasoningScore)} | Problem Solving {formatScore(item.problemSolvingScore)}
+                        <div className="text-xs text-gray-500 dark:text-gray-400">{item.trackName || "Unknown"}</div>
+                        <div className="text-xs text-gray-600 dark:text-gray-300 mt-1">
+                          R {formatScore(item.reasoningScore)} · PS {formatScore(item.problemSolvingScore)}
                         </div>
-                      </div>
+                        {item.finalFeedback && (
+                          <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1.5 line-clamp-2">
+                            {item.finalFeedback}
+                          </p>
+                        )}
+                      </button>
                     ))
                   )}
                 </div>
@@ -652,4 +919,3 @@ export const Validator: FC = () => {
     </div>
   );
 };
-

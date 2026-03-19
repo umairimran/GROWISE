@@ -1495,6 +1495,10 @@ export interface components {
             ai_reasoning: string;
             /** Learning Path Id */
             learning_path_id?: number | null;
+            /** Comprehensive Report */
+            comprehensive_report?: Record<string, unknown> | null;
+            /** Evaluated Responses */
+            evaluated_responses?: components["schemas"]["AssessmentResponseResponse"][] | null;
         };
         /** AssessmentSessionCreate */
         AssessmentSessionCreate: {

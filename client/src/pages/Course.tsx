@@ -1,20 +1,25 @@
 import { FC, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import {
   AlertCircle,
   BookOpen,
   CheckCircle2,
   Clock3,
+  FileText,
   MessageSquare,
   RefreshCw,
   Send,
   Sparkles,
+  TrendingUp,
+  X,
 } from "lucide-react";
 import type { components } from "../api/generated/openapi";
 import { ApiHttpError } from "../api/http";
 import { chatService } from "../api/services/chat";
 import { contentService } from "../api/services/content";
 import { learningService } from "../api/services/learning";
+import { progressService, type PathCompletionReport } from "../api/services/progress";
 import { Button } from "../components/Button";
 
 type LearningPathResponse = components["schemas"]["LearningPathResponse"];
@@ -87,6 +92,8 @@ const progressLabel = (progress: UserContentProgressResponse | null | undefined)
 };
 
 export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [path, setPath] = useState<LearningPathResponse | null>(null);
   const [stages, setStages] = useState<LearningPathStageResponse[]>([]);
   const [activeStageId, setActiveStageId] = useState<number | null>(null);
@@ -104,33 +111,81 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
   const [activeContentActionKey, setActiveContentActionKey] = useState<string | null>(null);
   const [isNoPath, setIsNoPath] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [pathProgress, setPathProgress] = useState<{
+    overallCompletionPercentage: number;
+    totalContentItems: number;
+    completedItems: number;
+  } | null>(null);
+  const [pathReport, setPathReport] = useState<PathCompletionReport | null>(null);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
-  const chatBottomRef = useRef<HTMLDivElement | null>(null);
+  const chatMessagesContainerRef = useRef<HTMLDivElement | null>(null);
   const activeStage = useMemo(
     () => stages.find((stage) => stage.stage_id === activeStageId) ?? null,
     [activeStageId, stages],
   );
 
-  const scrollChatToBottom = () => {
-    chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  const { targetPathId, targetTrackName } = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    const rawId = params.get("pathId");
+    const parsed = rawId ? Number(rawId) : NaN;
+    const pathId = Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+    const track = params.get("track");
+    return {
+      targetPathId: pathId,
+      targetTrackName: track && track.trim().length > 0 ? track : null,
+    };
+  }, [location.search]);
+
+  const scrollChatToBottom = useCallback(() => {
+    const el = chatMessagesContainerRef.current;
+    if (el) {
+      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    }
+  }, []);
 
   useEffect(() => {
     scrollChatToBottom();
-  }, [messages]);
+  }, [messages, scrollChatToBottom]);
+
+  const loadPathProgress = useCallback(async (pathId: number) => {
+    try {
+      const progress = await progressService.getLearningPathProgress(pathId);
+      setPathProgress({
+        overallCompletionPercentage: progress.overallCompletionPercentage,
+        totalContentItems: progress.totalContentItems,
+        completedItems: progress.completedItems,
+      });
+    } catch {
+      setPathProgress(null);
+    }
+  }, []);
 
   const loadLearningPath = useCallback(async () => {
     setIsLoadingPath(true);
     setErrorMessage(null);
 
     try {
-      const currentPath = await learningService.getMyCurrentPath();
+      let currentPath: LearningPathResponse | null = null;
+
+      if (targetPathId) {
+        // Try to find the requested path in the user's paths
+        const myPaths = await learningService.getMyPaths();
+        currentPath = myPaths.find((p) => p.path_id === targetPathId) ?? null;
+      }
+
+      if (!currentPath) {
+        currentPath = await learningService.getMyCurrentPath();
+      }
+
       const loadedStages = await learningService.getPathStages(currentPath.path_id);
       const orderedStages = [...loadedStages].sort(byStageOrder);
 
       setPath(currentPath);
       setStages(orderedStages);
       setIsNoPath(false);
+      await loadPathProgress(currentPath.path_id);
 
       setActiveStageId((currentStageId) => {
         if (currentStageId && orderedStages.some((stage) => stage.stage_id === currentStageId)) {
@@ -144,6 +199,7 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
         setPath(null);
         setStages([]);
         setActiveStageId(null);
+        setPathProgress(null);
         setIsNoPath(true);
         return;
       }
@@ -152,7 +208,7 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
     } finally {
       setIsLoadingPath(false);
     }
-  }, []);
+  }, [loadPathProgress, targetPathId]);
 
   const loadStageExperience = useCallback(
     async (stageId: number) => {
@@ -223,8 +279,13 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
     setErrorMessage(null);
 
     try {
+      const currentScrollY = window.scrollY;
       await action();
       await loadStageExperience(activeStageId);
+      if (path?.path_id) {
+        await loadPathProgress(path.path_id);
+      }
+      window.scrollTo({ top: currentScrollY });
     } catch (error) {
       setErrorMessage(toErrorMessage(error, "Content action failed."));
     } finally {
@@ -282,6 +343,27 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
       await contentService.completeContent(contentId);
     });
   };
+
+  const handleGenerateOrViewReport = async () => {
+    if (!path?.path_id) return;
+    setIsGeneratingReport(true);
+    setErrorMessage(null);
+    try {
+      await progressService.createPathCompletionReport(path.path_id);
+      const report = await progressService.getPathCompletionReport(path.path_id);
+      setPathReport(report);
+      setIsReportModalOpen(true);
+    } catch (error) {
+      setErrorMessage(toErrorMessage(error, "Could not generate or load path completion report."));
+    } finally {
+      setIsGeneratingReport(false);
+    }
+  };
+
+  const isPathComplete =
+    pathProgress &&
+    pathProgress.totalContentItems > 0 &&
+    pathProgress.completedItems >= pathProgress.totalContentItems;
 
   const handleSendMessage = async (event: FormEvent) => {
     event.preventDefault();
@@ -341,7 +423,16 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
             Learning Path
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Path #{path?.path_id ?? "N/A"} · {stages.length} stages
+            {targetTrackName ? (
+              <>
+                Track: <span className="font-medium text-contrast">{targetTrackName}</span> · Path #
+                {path?.path_id ?? "N/A"} · {stages.length} stages
+              </>
+            ) : (
+              <>
+                Path #{path?.path_id ?? "N/A"} · {stages.length} stages
+              </>
+            )}
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={() => void loadLearningPath()}>
@@ -357,6 +448,72 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
           <Button size="sm" variant="ghost" onClick={() => void loadLearningPath()}>
             Retry
           </Button>
+        </div>
+      )}
+
+      {isPathComplete && path && (
+        <div className="rounded-xl border border-green-200 dark:border-green-900/40 bg-green-50 dark:bg-green-950/30 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex items-center gap-2 text-green-800 dark:text-green-200">
+            <CheckCircle2 className="h-5 w-5 flex-shrink-0" />
+            <span className="text-sm font-medium">
+              You have completed all {pathProgress?.totalContentItems} content items across all stages!
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={() => void handleGenerateOrViewReport()} isLoading={isGeneratingReport}>
+              <FileText className="h-4 w-4 mr-2" />
+              {isGeneratingReport ? "Loading..." : "View Learning Report"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => navigate(`/improvement/${path.path_id}`)}
+              className="border-green-300 dark:border-green-700 text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/30"
+            >
+              <TrendingUp className="h-4 w-4 mr-2" />
+              View Progress Analysis
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => navigate(`/validator?pathId=${path.path_id}`)}
+            >
+              Start AI Evaluation
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {isReportModalOpen && pathReport && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          onClick={() => setIsReportModalOpen(false)}
+        >
+          <div
+            className="bg-white dark:bg-[#111111] rounded-2xl border border-gray-200 dark:border-zinc-700 shadow-xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-zinc-700">
+              <h2 className="font-serif text-lg font-semibold text-slate-900 dark:text-white">
+                Path Completion Report
+              </h2>
+              <button
+                type="button"
+                onClick={() => setIsReportModalOpen(false)}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-500 dark:text-gray-400"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+              <div className="prose prose-sm dark:prose-invert max-w-none">
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                  Learning Summary
+                </h3>
+                <div className="mt-2 text-slate-700 dark:text-gray-300 whitespace-pre-wrap">
+                  {pathReport.learningSummary}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -492,7 +649,7 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
                       </div>
 
                       {content.content_text && (
-                        <div className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-[#0f0f0f] px-4 py-3 prose prose-sm dark:prose-invert max-w-none">
+                        <div className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900 px-4 py-3 prose prose-sm text-gray-800 dark:text-gray-100 dark:prose-invert max-w-none">
                           <ReactMarkdown>{content.content_text}</ReactMarkdown>
                         </div>
                       )}
@@ -611,7 +768,10 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          <div
+            ref={chatMessagesContainerRef}
+            className="flex-1 overflow-y-auto p-4 space-y-3"
+          >
             {messages.length === 0 ? (
               <div className="h-full flex items-center justify-center text-sm text-gray-500 dark:text-gray-400 text-center">
                 Start the conversation for this stage to get mentor guidance.
@@ -646,7 +806,6 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
             {isSendingMessage && (
               <div className="text-xs text-gray-500 dark:text-gray-400">Mentor is responding...</div>
             )}
-            <div ref={chatBottomRef} />
           </div>
 
           <div className="p-4 border-t border-gray-200 dark:border-zinc-700">

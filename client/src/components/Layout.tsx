@@ -64,8 +64,8 @@ export const Layout: FC<LayoutProps> = ({ children, isSidebarOpen, onSidebarClos
         </div>
       </aside>
 
-      <main className="flex-1 lg:ml-64 p-4 lg:p-8 w-full overflow-x-hidden">
-        <div className="max-w-6xl mx-auto h-full">{children}</div>
+      <main className="flex-1 lg:ml-64 p-4 lg:p-6 w-full overflow-x-hidden min-w-0">
+        <div className="max-w-6xl mx-auto">{children}</div>
       </main>
     </div>
   );

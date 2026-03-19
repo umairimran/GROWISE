@@ -181,7 +181,8 @@ async def startup_event():
     finally:
         db.close()
 
-    log.info("🚀  Live  →  http://localhost:8000/docs")
+    port = os.getenv("PORT", "8001")
+    log.info("🚀  Live  →  http://localhost:%s/docs", port)
     log.info("━" * 50)
 
 
@@ -220,4 +221,5 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+    port = int(os.getenv("PORT", "8001"))
+    uvicorn.run("app.main:app", host="0.0.0.0", port=port, reload=True)

@@ -81,7 +81,7 @@ export const Signup: FC<SignupProps> = ({ onSignupSuccess, onBack, onGoToLogin }
 
   if (successMsg) {
     return (
-      <div className="min-h-screen relative flex items-center justify-center p-4 bg-[#0A0A0A] font-sans overflow-hidden">
+      <div className="min-h-screen relative flex items-center justify-center p-4 bg-background font-sans overflow-hidden">
         {theme === "dark" && (
           <div className="absolute inset-0 z-0">
             <Beams
@@ -96,11 +96,11 @@ export const Signup: FC<SignupProps> = ({ onSignupSuccess, onBack, onGoToLogin }
             />
           </div>
         )}
-        <div className="w-full max-w-md bg-neutral-900 border border-green-900/50 shadow-xl rounded-2xl p-10 text-center animate-fade-in-up">
+        <div className="w-full max-w-md bg-surface border border-green-900/40 shadow-xl rounded-2xl p-10 text-center animate-fade-in-up">
           <div className="mx-auto w-16 h-16 bg-green-900/20 rounded-full flex items-center justify-center mb-6 text-green-500">
             <CheckCircle className="w-8 h-8" />
           </div>
-          <h2 className="font-serif text-2xl font-bold text-white mb-4">Account created</h2>
+          <h2 className="font-serif text-2xl font-bold text-contrast mb-4">Account created</h2>
           <p className="text-gray-400 mb-8 leading-relaxed">
             {successMsg} <strong>{email}</strong>.
           </p>
@@ -113,7 +113,7 @@ export const Signup: FC<SignupProps> = ({ onSignupSuccess, onBack, onGoToLogin }
   }
 
   return (
-    <div className="min-h-screen w-full bg-[#0A0A0A] relative flex items-center justify-center p-4 overflow-hidden font-sans">
+    <div className="min-h-screen w-full bg-background relative flex items-center justify-center p-4 overflow-hidden font-sans">
       {theme === "dark" && (
         <div className="absolute inset-0 z-0">
           <Beams
@@ -147,16 +147,16 @@ export const Signup: FC<SignupProps> = ({ onSignupSuccess, onBack, onGoToLogin }
       <div className="absolute top-6 left-6 z-20">
         <button
           onClick={onBack}
-          className="flex items-center text-gray-400 hover:text-white transition-colors group text-sm font-medium"
+          className="flex items-center text-gray-500 dark:text-gray-400 hover:text-contrast transition-colors group text-sm font-medium"
         >
           <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" />
           Back
         </button>
       </div>
 
-      <div className="w-full max-w-md bg-black/40 backdrop-blur-md border border-white/10 shadow-2xl rounded-2xl p-8 sm:p-10 relative z-10 animate-fade-in-up">
+      <div className="w-full max-w-md bg-surface/80 dark:bg-black/40 backdrop-blur-md border border-border shadow-2xl rounded-2xl p-8 sm:p-10 relative z-10 animate-fade-in-up">
         <div className="text-center mb-8">
-          <h1 className="font-serif text-3xl font-bold text-white tracking-tight mb-2">Join Grow Wise</h1>
+          <h1 className="font-serif text-3xl font-bold text-contrast tracking-tight mb-2">Join Grow Wise</h1>
           <p className="text-gray-400">Start bridging your knowledge gaps today.</p>
         </div>
 

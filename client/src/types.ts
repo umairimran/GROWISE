@@ -20,6 +20,40 @@ export interface Question {
   explanation?: string; // For immediate feedback
 }
 
+/** AI-generated comprehensive report (from assessment complete) */
+export interface ComprehensiveReport {
+  executive_summary: string;
+  overall_assessment: string;
+  strengths: Array<{
+    area: string;
+    evidence: string;
+    question_indices?: number[];
+  }>;
+  weaknesses: Array<{
+    area: string;
+    evidence: string;
+    question_indices?: number[];
+    priority: "high" | "medium" | "low";
+    recommendation: string;
+  }>;
+  dimension_breakdown?: Array<{
+    dimension: string;
+    score: number;
+    analysis: string;
+    gaps: string[];
+  }>;
+  learning_priorities?: Array<{
+    topic: string;
+    rationale: string;
+  }>;
+  content_generation_context?: {
+    key_topics: string[];
+    recommended_difficulty: string;
+    gap_severity: string;
+    focus_areas_for_stages: string[];
+  };
+}
+
 export interface AssessmentResult {
   topic: string;
   score: number;
@@ -31,6 +65,8 @@ export interface AssessmentResult {
   learningPathId?: number | null;
   detectedLevel?: string;
   aiReasoning?: string;
+  /** Full AI-generated report (for detailed display & content generation) */
+  comprehensiveReport?: ComprehensiveReport | null;
 }
 
 export interface CourseModule {

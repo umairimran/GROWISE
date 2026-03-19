@@ -1,18 +1,31 @@
 import {
+  adaptImprovementAnalysis,
+  adaptLearningPathProgress,
+  adaptPathCompletionReport,
+  adaptPathCompletionReportCreate,
   adaptProgressAssessmentComparison,
   adaptProgressAssessmentHistory,
   adaptProgressDashboardSummary,
   adaptProgressEvaluationHistory,
   adaptProgressTimelineAnalytics,
+  type ImprovementAnalysis,
+  type LearningPathProgress,
+  type PathCompletionReport,
+  type PathCompletionReportCreate,
   type ProgressAssessmentComparison,
   type ProgressAssessmentHistory,
   type ProgressDashboardSummary,
   type ProgressEvaluationHistory,
   type ProgressTimelineAnalytics,
 } from "../adapters/progress";
-import { apiClient } from "./client";
+import { apiClient, rawHttpClient } from "./client";
 
 export type {
+  ImprovementAnalysis,
+  ImprovementAnalysisDialogueItem,
+  LearningPathProgress,
+  PathCompletionReport,
+  PathCompletionReportCreate,
   ProgressAssessmentComparison,
   ProgressAssessmentHistory,
   ProgressAssessmentHistoryImprovement,
@@ -85,5 +98,46 @@ export const progressService = {
     });
 
     return adaptProgressEvaluationHistory(response);
+  },
+
+  async getLearningPathProgress(pathId: number): Promise<LearningPathProgress> {
+    const response = await apiClient.call({
+      path: "/api/progress/learning-path/{path_id}",
+      method: "get",
+      pathParams: { path_id: pathId },
+      auth: "required",
+    });
+
+    return adaptLearningPathProgress(response);
+  },
+
+  async createPathCompletionReport(pathId: number): Promise<PathCompletionReportCreate> {
+    const response = await rawHttpClient.request<unknown>({
+      path: `/api/progress/path/${pathId}/complete-report`,
+      method: "POST",
+      auth: "required",
+    });
+
+    return adaptPathCompletionReportCreate(response);
+  },
+
+  async getPathCompletionReport(pathId: number): Promise<PathCompletionReport> {
+    const response = await rawHttpClient.request<unknown>({
+      path: `/api/progress/path/${pathId}/report`,
+      method: "GET",
+      auth: "required",
+    });
+
+    return adaptPathCompletionReport(response);
+  },
+
+  async getImprovementAnalysis(pathId: number): Promise<ImprovementAnalysis> {
+    const response = await rawHttpClient.request<unknown>({
+      path: `/api/progress/path/${pathId}/improvement-analysis`,
+      method: "GET",
+      auth: "required",
+    });
+
+    return adaptImprovementAnalysis(response);
   },
 };

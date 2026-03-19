@@ -2,6 +2,7 @@
 Content router - handles learning content and user progress
 """
 import logging
+import json
 from typing import Any, Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -157,6 +158,69 @@ async def generate_content_for_stage(
     track = db.query(models.Track).filter(
         models.Track.track_id == session.track_id
     ).first()
+
+    # Build a concise learner profile context from the assessment report (profile-focused content).
+    # This does NOT change any DB schema or request payload — it only enriches the generation prompt.
+    report: Dict[str, Any] = {}
+    try:
+        if result and getattr(result, "comprehensive_report", None):
+            raw = result.comprehensive_report
+            report = json.loads(raw) if isinstance(raw, str) else (raw or {})
+    except Exception:
+        report = {}
+
+    executive_summary = (report.get("executive_summary") or "").strip()
+    learning_priorities = report.get("learning_priorities") if isinstance(report.get("learning_priorities"), list) else []
+    weaknesses = report.get("weaknesses") if isinstance(report.get("weaknesses"), list) else []
+    strengths = report.get("strengths") if isinstance(report.get("strengths"), list) else []
+    content_ctx = report.get("content_generation_context") if isinstance(report.get("content_generation_context"), dict) else {}
+
+    top_weaknesses = []
+    for w in weaknesses[:4]:
+        if not isinstance(w, dict):
+            continue
+        area = str(w.get("area") or "").strip()
+        rec = str(w.get("recommendation") or "").strip()
+        pr = str(w.get("priority") or "").strip().lower()
+        if area:
+            top_weaknesses.append(f"- {area}{f' (priority: {pr})' if pr else ''}{f': {rec}' if rec else ''}")
+
+    top_strengths = []
+    for s in strengths[:3]:
+        if not isinstance(s, dict):
+            continue
+        area = str(s.get("area") or "").strip()
+        if area:
+            top_strengths.append(f"- {area}")
+
+    key_topics = content_ctx.get("key_topics") if isinstance(content_ctx.get("key_topics"), list) else []
+    focus_areas_hint = content_ctx.get("focus_areas_for_stages") if isinstance(content_ctx.get("focus_areas_for_stages"), list) else []
+    gap_severity = str(content_ctx.get("gap_severity") or "").strip().lower()
+
+    profile_context_lines: List[str] = []
+    if executive_summary:
+        profile_context_lines.append(f"Executive summary: {executive_summary}")
+    if gap_severity:
+        profile_context_lines.append(f"Gap severity: {gap_severity}")
+    if key_topics:
+        profile_context_lines.append(f"Key topics to focus: {', '.join(str(t) for t in key_topics[:8] if t)}")
+    if focus_areas_hint:
+        profile_context_lines.append(
+            f"Suggested focus areas for stages: {', '.join(str(a) for a in focus_areas_hint[:8] if a)}"
+        )
+    if top_strengths:
+        profile_context_lines.append("Strengths:\n" + "\n".join(top_strengths))
+    if top_weaknesses:
+        profile_context_lines.append("Weaknesses (prioritise resources to fix these):\n" + "\n".join(top_weaknesses))
+    if learning_priorities:
+        topics = []
+        for p in learning_priorities[:5]:
+            if isinstance(p, dict) and p.get("topic"):
+                topics.append(str(p["topic"]).strip())
+        if topics:
+            profile_context_lines.append("Learning priorities:\n- " + "\n- ".join(topics))
+
+    learner_profile_context = "\n".join(profile_context_lines).strip() or None
     
     # Generate content using content_search_service (Google Search agent)
     stage_input = {
@@ -165,6 +229,7 @@ async def generate_content_for_stage(
         "focus_area": stage.focus_area,
         "difficulty_level": result.detected_level,
         "track_name": track.track_name,
+        "learner_profile_context": learner_profile_context,
     }
     try:
         from app.ai_services.content_search_service import search_content

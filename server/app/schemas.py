@@ -437,7 +437,7 @@ class KnowledgeBaseCreate(BaseModel):
     track_id: int
     content: str
     source: str
-    embedding_vector: str
+    embedding_vector: str = "placeholder"  # Optional; DB-based RAG uses content directly
 
 
 class KnowledgeBaseResponse(BaseModel):

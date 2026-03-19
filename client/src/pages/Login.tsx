@@ -74,7 +74,7 @@ export const Login: FC<LoginProps> = ({ onLogin, onBack, onGoToSignup, onGoToFor
   return (
     <div
       className={`min-h-screen w-full relative flex items-center justify-center p-6 overflow-hidden font-sans ${
-        isDark ? "bg-[#0A0A0A] text-white" : "bg-white text-gray-900"
+        isDark ? "bg-background text-contrast" : "bg-background text-contrast"
       }`}
     >
       {isDark && (
@@ -113,11 +113,11 @@ export const Login: FC<LoginProps> = ({ onLogin, onBack, onGoToSignup, onGoToFor
 
       <div
         className={`w-full max-w-md backdrop-blur-xl shadow-2xl rounded-2xl p-8 sm:p-10 relative z-10 animate-fade-in-up border ${
-          isDark ? "bg-black/40 border-white/10" : "bg-white/80 border-white/80 shadow-blue-500/10"
+          isDark ? "bg-black/40 border-white/10" : "bg-surface/80 border-border shadow-blue-500/10"
         }`}
       >
         <div className="text-center mb-8">
-          <h1 className={`font-serif text-3xl font-bold tracking-tight mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>
+          <h1 className={`font-serif text-3xl font-bold tracking-tight mb-2 ${isDark ? "text-white" : "text-contrast"}`}>
             Welcome Back
           </h1>
           <p className={isDark ? "text-gray-400" : "text-gray-600"}>Mastery awaits. Log in to continue.</p>

@@ -14,10 +14,6 @@ from app.database import get_db
 from app import models, schemas
 from app.auth_middleware import get_current_user, get_admin_user
 from app.services.ai_service import ai_service
-from app.ai_services.assessment_dimensions_generator import (
-    generate_assessment_dimensions,
-    _make_code as make_dimension_code,
-)
 from app.ai_services.assessment_question_generator import generate_assessment_questions
 from app.ai_services.answer_evaluator import evaluate_answers_batch
 from app.ai_services.learning_path_generator import generate_learning_path_stages
@@ -104,54 +100,10 @@ async def create_assessment_session(
     db.refresh(new_session)
 
     # ------------------------------------------------------------------
-    # Fetch this track's assessment dimensions (or generate on-the-fly if missing)
-    # ------------------------------------------------------------------
-    dimensions_rows = (
-        db.query(models.AssessmentDimension)
-        .filter(models.AssessmentDimension.track_id == session_data.track_id)
-        .all()
-    )
-
-    if not dimensions_rows:
-        # Track has no dimensions yet — generate and store them now
-        # (e.g. track was created before dimension generator, or background task failed)
-        generated = await generate_assessment_dimensions(track.track_name)
-        for dim in generated:
-            code = (dim.get("code") or make_dimension_code(dim["name"]))[:150]
-            db.add(
-                models.AssessmentDimension(
-                    track_id=session_data.track_id,
-                    code=code,
-                    name=dim["name"],
-                    description=dim["description"],
-                    weight=dim["weight"],
-                )
-            )
-        db.commit()
-        dimensions_rows = (
-            db.query(models.AssessmentDimension)
-            .filter(models.AssessmentDimension.track_id == session_data.track_id)
-            .all()
-        )
-
-    # Build dimension dicts and a code→id lookup for storing FK
-    dimensions = [
-        {
-            "code": d.code,
-            "name": d.name,
-            "description": d.description,
-            "weight": float(d.weight),
-        }
-        for d in dimensions_rows
-    ]
-    dim_code_to_id = {d.code: d.dimension_id for d in dimensions_rows}
-
-    # ------------------------------------------------------------------
-    # Generate 10 dimension-aware questions (always use proper generator now)
+    # Generate 10 questions (single prompt, track-only input)
     # ------------------------------------------------------------------
     ai_questions = await generate_assessment_questions(
         track_name=track.track_name,
-        dimensions=dimensions,
         count=10,
     )
 
@@ -159,11 +111,9 @@ async def create_assessment_session(
     # Store questions in the pool and link them to this session
     # ------------------------------------------------------------------
     for q_data in ai_questions:
-        dimension_id = dim_code_to_id.get(q_data.get("dimension_code"))
-
         question = models.AssessmentQuestionPool(
             track_id=session_data.track_id,
-            dimension_id=dimension_id,
+            dimension_id=None,
             question_text=q_data["question_text"],
             question_type=q_data["question_type"],
             difficulty=q_data["difficulty"],

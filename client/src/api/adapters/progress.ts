@@ -417,3 +417,261 @@ export const adaptProgressAssessmentComparison = (payload: unknown): ProgressAss
     },
   };
 };
+
+// ============================================================================
+// Path Completion Report
+// ============================================================================
+
+export interface PathCompletionReportCreate {
+  reportId: number;
+  pathId: number;
+  learningSummary: string;
+  createdAt: string | null;
+}
+
+export interface PathCompletionReport {
+  reportId: number;
+  pathId: number;
+  userId: number;
+  learningSummary: string;
+  fullContext: Record<string, unknown>;
+  createdAt: string | null;
+}
+
+export interface ImprovementAnalysisDialogueItem {
+  speaker: string;
+  messageText: string;
+  sequenceNo: number;
+}
+
+export interface ImprovementAnalysisBeforeContextItem {
+  questionText: string;
+  userAnswer: string;
+  score: number | null;
+  dimension: string | null;
+  aiExplanation: string | null;
+}
+
+export interface ImprovementAnalysisAfterContext {
+  stagesSummary: Array<{ stage_name?: string; focus_area?: string; content_titles?: string[] }> | null;
+  contentSummary: string | null;
+  learningSummary: string | null;
+  evaluationScores: { reasoning_score?: number; problem_solving?: number } | null;
+  readinessLevel: string | null;
+}
+
+export interface DashboardMetric {
+  id: string;
+  label: string;
+  value: number | string;
+  unit: string;
+  type: string;
+  trend: "up" | "down" | "neutral";
+  before_value?: number | null;
+  after_value?: number | null;
+  subtitle?: string | null;
+}
+
+export interface StorySection {
+  id: string;
+  step_number: number;
+  title: string;
+  type: string;
+  content: string;
+}
+
+export interface ChartData {
+  score_progression?: Array<{ label: string; value: number; order: number }>;
+  time_spent_by_stage?: Array<{ stage_name: string; minutes: number; content_count: number }>;
+  dimension_scores?: Array<{ dimension: string; score: number }>;
+  activity_timeline?: Array<{ date: string; event_type: string; label: string }>;
+}
+
+export interface StructuredReport {
+  headline: string;
+  summary: string;
+  ai_summary?: string;
+  current_standing?: string;
+  dashboard_metrics: DashboardMetric[];
+  story_sections: StorySection[];
+  chart_data?: ChartData;
+  track_name?: string | null;
+  content_followed?: string[];
+  stage_names?: string[];
+  before_summary: {
+    overall_score?: number;
+    level?: string;
+    strengths?: string[];
+    gaps?: string[];
+    highlight_quotes?: string[];
+  };
+  after_summary: {
+    reasoning_score?: number;
+    problem_solving_score?: number;
+    readiness_level?: string;
+    improvements?: string[];
+    sustained_gaps?: string[];
+  };
+}
+
+export interface ImprovementAnalysis {
+  pathId: number;
+  trackName: string | null;
+  before: { score: number; level: string };
+  after: { reasoningScore: number; problemSolving: number; readinessLevel: string } | null;
+  improvementSummary: string | null;
+  improvementPercentage: number | null;
+  finalFeedback: string | null;
+  dialogues: ImprovementAnalysisDialogueItem[] | null;
+  beforeContext: ImprovementAnalysisBeforeContextItem[] | null;
+  afterContext: ImprovementAnalysisAfterContext | null;
+  detailedAnalysis: string | null;
+  structuredReport: StructuredReport | null;
+}
+
+export interface LearningPathProgress {
+  pathId: number;
+  createdAt: string | null;
+  overallCompletionPercentage: number;
+  totalContentItems: number;
+  completedItems: number;
+  totalTimeSpentMinutes: number;
+  totalTimeSpentHours: number;
+  stagesProgress: Array<{
+    stageId: number;
+    stageName: string;
+    stageOrder: number;
+    totalContent: number;
+    completedContent: number;
+    completionPercentage: number;
+    timeSpentMinutes: number;
+  }>;
+}
+
+export const adaptPathCompletionReportCreate = (payload: unknown): PathCompletionReportCreate => {
+  const input = toRecord(payload);
+  return {
+    reportId: toNumber(input.report_id),
+    pathId: toNumber(input.path_id),
+    learningSummary: toString(input.learning_summary),
+    createdAt: toNullableString(input.created_at),
+  };
+};
+
+export const adaptPathCompletionReport = (payload: unknown): PathCompletionReport => {
+  const input = toRecord(payload);
+  const fullContext = input.full_context;
+  return {
+    reportId: toNumber(input.report_id),
+    pathId: toNumber(input.path_id),
+    userId: toNumber(input.user_id),
+    learningSummary: toString(input.learning_summary),
+    fullContext:
+      fullContext && typeof fullContext === "object" && !Array.isArray(fullContext)
+        ? (fullContext as Record<string, unknown>)
+        : {},
+    createdAt: toNullableString(input.created_at),
+  };
+};
+
+export const adaptImprovementAnalysis = (payload: unknown): ImprovementAnalysis => {
+  const input = toRecord(payload);
+  const before = toRecord(input.before);
+  const afterRaw = input.after;
+  const after =
+    afterRaw && typeof afterRaw === "object" && !Array.isArray(afterRaw)
+      ? (afterRaw as Record<string, unknown>)
+      : null;
+  const dialoguesRaw = input.dialogues;
+  const dialogues =
+    Array.isArray(dialoguesRaw)
+      ? dialoguesRaw.map((d: unknown) => {
+          const item = toRecord(d);
+          return {
+            speaker: toString(item.speaker),
+            messageText: toString(item.message_text),
+            sequenceNo: toNumber(item.sequence_no),
+          };
+        })
+      : null;
+
+  const beforeContextRaw = input.before_context;
+  const beforeContext = Array.isArray(beforeContextRaw)
+    ? (beforeContextRaw as unknown[]).map((item: unknown) => {
+        const r = toRecord(item);
+        return {
+          questionText: toString(r.question_text),
+          userAnswer: toString(r.user_answer),
+          score: toNullableNumber(r.score),
+          dimension: r.dimension != null ? toString(r.dimension) : null,
+          aiExplanation: r.ai_explanation != null ? toString(r.ai_explanation) : null,
+        };
+      })
+    : null;
+
+  const afterContextRaw = input.after_context;
+  let afterContext: ImprovementAnalysisAfterContext | null = null;
+  if (afterContextRaw && typeof afterContextRaw === "object" && !Array.isArray(afterContextRaw)) {
+    const ac = afterContextRaw as Record<string, unknown>;
+    afterContext = {
+      stagesSummary: Array.isArray(ac.stages_summary) ? ac.stages_summary as ImprovementAnalysisAfterContext["stagesSummary"] : null,
+      contentSummary: ac.content_summary != null ? toString(ac.content_summary) : null,
+      learningSummary: ac.learning_summary != null ? toString(ac.learning_summary) : null,
+      evaluationScores: ac.evaluation_scores && typeof ac.evaluation_scores === "object" ? (ac.evaluation_scores as Record<string, unknown>) as ImprovementAnalysisAfterContext["evaluationScores"] : null,
+      readinessLevel: ac.readiness_level != null ? toString(ac.readiness_level) : null,
+    };
+  }
+
+  return {
+    pathId: toNumber(input.path_id),
+    trackName: toNullableString(input.track_name),
+    before: {
+      score: toNumber(before.score),
+      level: toString(before.level),
+    },
+    after: after
+      ? {
+          reasoningScore: toNumber(after.reasoning_score),
+          problemSolving: toNumber(after.problem_solving),
+          readinessLevel: toString(after.readiness_level),
+        }
+      : null,
+    improvementSummary: toNullableString(input.improvement_summary),
+    improvementPercentage: toNullableNumber(input.improvement_percentage),
+    finalFeedback: toNullableString(input.final_feedback),
+    dialogues,
+    beforeContext,
+    afterContext,
+    detailedAnalysis: input.detailed_analysis != null ? toString(input.detailed_analysis) : null,
+    structuredReport:
+      input.structured_report && typeof input.structured_report === "object" && !Array.isArray(input.structured_report)
+        ? (input.structured_report as unknown as StructuredReport)
+        : null,
+  };
+};
+
+export const adaptLearningPathProgress = (payload: unknown): LearningPathProgress => {
+  const input = toRecord(payload);
+  const stages = toArray(input.stages_progress);
+  return {
+    pathId: toNumber(input.path_id),
+    createdAt: toNullableString(input.created_at),
+    overallCompletionPercentage: toNumber(input.overall_completion_percentage),
+    totalContentItems: toNumber(input.total_content_items),
+    completedItems: toNumber(input.completed_items),
+    totalTimeSpentMinutes: toNumber(input.total_time_spent_minutes),
+    totalTimeSpentHours: toNumber(input.total_time_spent_hours),
+    stagesProgress: stages.map((s) => {
+      const stage = toRecord(s);
+      return {
+        stageId: toNumber(stage.stage_id),
+        stageName: toString(stage.stage_name),
+        stageOrder: toNumber(stage.stage_order),
+        totalContent: toNumber(stage.total_content),
+        completedContent: toNumber(stage.completed_content),
+        completionPercentage: toNumber(stage.completion_percentage),
+        timeSpentMinutes: toNumber(stage.time_spent_minutes),
+      };
+    }),
+  };
+};

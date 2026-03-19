@@ -1,5 +1,5 @@
 import { FC, useCallback, useEffect, useState } from "react";
-import { AlertCircle, ArrowLeft, ArrowRight, RefreshCw, Sparkles } from "lucide-react";
+import { AlertCircle, ArrowLeft, ArrowRight, BookOpen, Loader2, Sparkles } from "lucide-react";
 import { assessmentService } from "../api/services/assessment";
 import { tracksService } from "../api/services/tracks";
 import { ApiHttpError } from "../api/http";
@@ -62,16 +62,19 @@ export const SkillSelection: FC<SkillSelectionProps> = ({ onSelect, onBack }) =>
     setErrorMessage(null);
 
     try {
+      // 1. Store user's track selection
       try {
         await tracksService.select(track.track_id);
       } catch (error) {
-        // Retakes are valid; backend returns 400 when the same track was already selected before.
         if (!(error instanceof ApiHttpError) || error.status !== 400) {
           throw error;
         }
       }
 
+      // 2. Create session — backend generates dimensions-aware questions, stores in DB, returns session
       const session = await assessmentService.createSession(track.track_id);
+
+      // 3. Navigate to assessment — questions are loaded from DB
       onSelect({ sessionId: session.session_id, track });
     } catch (error) {
       setErrorMessage(toErrorMessage(error, "Could not start assessment for this track."));
@@ -80,8 +83,31 @@ export const SkillSelection: FC<SkillSelectionProps> = ({ onSelect, onBack }) =>
     }
   };
 
+  const selectedTrack = startingTrackId ? tracks.find((t) => t.track_id === startingTrackId) : null;
+
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 font-sans pt-20">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 font-sans pt-20 relative">
+      {/* Full-screen loading overlay when generating assessment */}
+      {selectedTrack && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/95 dark:bg-background/98 backdrop-blur-sm animate-fade-in">
+          <div className="flex flex-col items-center max-w-md text-center px-6">
+            <div className="relative mb-8">
+              <div className="absolute inset-0 bg-blue-500/20 rounded-full blur-2xl animate-pulse" />
+              <Loader2 className="h-16 w-16 text-blue-500 animate-spin relative z-10" />
+            </div>
+            <h2 className="font-display text-2xl md:text-3xl font-bold text-contrast mb-3">
+              Generating Your Assessment
+            </h2>
+            <p className="text-gray-500 dark:text-gray-400 mb-2">
+              Preparing personalized questions for <span className="font-semibold text-contrast">{selectedTrack.track_name}</span>
+            </p>
+            <p className="text-sm text-gray-400 dark:text-gray-500">
+              Using dimensions to generate 10 tailored questions. This may take a moment…
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="w-full max-w-5xl">
         <div className="flex justify-between items-center mb-8">
           <button
@@ -92,29 +118,17 @@ export const SkillSelection: FC<SkillSelectionProps> = ({ onSelect, onBack }) =>
             Back to Home
           </button>
 
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => loadTracks(true)}
-            isLoading={isRefreshing}
-            disabled={isLoadingTracks}
-            className="text-sm font-medium"
-          >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh Tracks
-          </Button>
         </div>
 
         <h1 className="font-display text-4xl md:text-5xl font-bold text-contrast mb-4 opacity-0 animate-fade-in-up delay-100">
           Select Your Track
         </h1>
-        <p className="text-xl text-gray-500 mb-10 max-w-3xl opacity-0 animate-fade-in-up delay-200">
-          Tracks are now loaded from the backend. Pick one to create your assessment session and begin the
-          diagnostic flow.
+        <p className="text-lg md:text-xl text-gray-500 dark:text-gray-400 mb-12 max-w-2xl opacity-0 animate-fade-in-up delay-200">
+          Choose a learning track to start your personalized assessment. Our AI will generate questions tailored to your chosen domain.
         </p>
 
         {errorMessage && (
-          <div className="mb-8 rounded-xl border border-red-200 bg-red-50 text-red-700 px-4 py-3 flex items-start gap-3">
+          <div className="mb-8 rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 px-4 py-3 flex items-start gap-3">
             <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
             <span className="text-sm">{errorMessage}</span>
           </div>
@@ -139,26 +153,29 @@ export const SkillSelection: FC<SkillSelectionProps> = ({ onSelect, onBack }) =>
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {tracks.map((track, index) => {
               const isStarting = startingTrackId === track.track_id;
 
               return (
                 <div
                   key={track.track_id}
-                  className="p-6 bg-surface border border-border rounded-xl hover:border-accent hover:shadow-lg hover:shadow-accent/5 transition-all text-left group opacity-0 animate-fade-in-up"
+                  className="relative p-6 md:p-8 bg-surface dark:bg-white/[0.03] border border-border rounded-2xl hover:border-blue-500/40 hover:shadow-xl hover:shadow-blue-500/5 dark:hover:shadow-blue-500/10 transition-all duration-300 text-left group overflow-hidden opacity-0 animate-fade-in-up"
                   style={{ animationDelay: `${(index + 3) * 80}ms` }}
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <h3 className="font-display text-xl font-bold text-contrast mb-2 group-hover:text-accent transition-colors duration-300">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-500 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-l-2xl" />
+                  <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover:bg-blue-500/20 dark:group-hover:bg-blue-500/30 transition-colors">
+                      <BookOpen className="h-6 w-6" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-display text-xl md:text-2xl font-bold text-contrast mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
                         {track.track_name}
                       </h3>
-                      <p className="text-sm text-gray-500 leading-relaxed">{track.description}</p>
+                      <p className="text-sm md:text-base text-gray-500 dark:text-gray-400 leading-relaxed line-clamp-3">
+                        {track.description}
+                      </p>
                     </div>
-                    <span className="text-xs font-semibold text-gray-400 border border-gray-200 rounded-full px-2 py-1">
-                      #{track.track_id}
-                    </span>
                   </div>
 
                   <div className="mt-6 flex justify-end">
@@ -166,7 +183,7 @@ export const SkillSelection: FC<SkillSelectionProps> = ({ onSelect, onBack }) =>
                       onClick={() => handleTrackSelection(track)}
                       isLoading={isStarting}
                       disabled={startingTrackId !== null}
-                      className="group/button"
+                      className="group/button min-w-[180px]"
                     >
                       Start Assessment
                       {!isStarting && (

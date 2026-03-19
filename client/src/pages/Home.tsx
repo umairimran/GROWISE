@@ -9,6 +9,7 @@ interface HomeProps {
   onLoginClick?: () => void;
   user?: User | null;
   onDashboardClick?: () => void;
+  onChooseTrackClick?: () => void;
   onBlogClick?: () => void;
   onLogout?: () => void;
   onDemoClick?: () => void;
@@ -23,7 +24,7 @@ const testimonials = [
   { name: "Priya P.", role: "Data Scientist", quote: "Loved how it adapted to my Python knowledge and focused purely on advanced pandas optimization." }
 ];
 
-export const Home: FC<HomeProps> = ({ onStart, user, onDashboardClick, onBlogClick, onDemoClick }) => {
+export const Home: FC<HomeProps> = ({ onStart, user, onDashboardClick, onChooseTrackClick, onBlogClick, onDemoClick }) => {
 
   return (
     <div className="font-sans overflow-x-hidden pt-16">
@@ -67,18 +68,24 @@ export const Home: FC<HomeProps> = ({ onStart, user, onDashboardClick, onBlogCli
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up delay-400 w-full sm:w-auto px-4">
             {user ? (
-              <Button size="lg" onClick={onDashboardClick} className="w-full sm:w-auto shadow-xl shadow-blue-500/20 hover:shadow-blue-500/30 hover:scale-105 transition-all duration-300 text-lg h-14 px-8">
-                Go to Dashboard <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
+              <>
+                <Button size="lg" onClick={onDashboardClick} className="w-full sm:w-auto shadow-xl shadow-blue-500/20 hover:shadow-blue-500/30 hover:scale-105 transition-all duration-300 text-lg h-14 px-8">
+                  Go to Dashboard <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+                <Button size="lg" variant="secondary" onClick={onChooseTrackClick} className="w-full sm:w-auto h-14 px-8 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 transition-all duration-300">
+                  Choose Track
+                </Button>
+              </>
             ) : (
-              <Button size="lg" onClick={onStart} className="w-full sm:w-auto shadow-xl shadow-blue-500/20 hover:shadow-blue-500/30 hover:scale-105 transition-all duration-300 text-lg h-14 px-8">
-                Take Free Assessment <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
+              <>
+                <Button size="lg" onClick={onStart} className="w-full sm:w-auto shadow-xl shadow-blue-500/20 hover:shadow-blue-500/30 hover:scale-105 transition-all duration-300 text-lg h-14 px-8">
+                  Take Free Assessment <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+                <Button size="lg" variant="secondary" onClick={onDemoClick} className="w-full sm:w-auto h-14 px-8 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 transition-all duration-300">
+                  View Demo
+                </Button>
+              </>
             )}
-
-            <Button size="lg" variant="secondary" onClick={onDemoClick} className="w-full sm:w-auto h-14 px-8 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 transition-all duration-300">
-              View Demo
-            </Button>
           </div>
         </div>
       </section>
@@ -261,22 +268,22 @@ export const Home: FC<HomeProps> = ({ onStart, user, onDashboardClick, onBlogCli
         </div>
 
         {/* Right: Links (30%) */}
-        <div className="md:w-[30%] bg-[#1A1A1A] text-white p-10 md:p-16 flex flex-col justify-between border-l border-gray-800 order-1 md:order-2">
+        <div className="md:w-[30%] bg-surface text-contrast p-10 md:p-16 flex flex-col justify-between border-l border-border order-1 md:order-2">
           <div className="grid grid-cols-2 gap-10">
             <div className="opacity-0 animate-fade-in-up delay-200">
               <h4 className="font-bold mb-6 md:mb-8 text-gray-500 text-xs uppercase tracking-[0.2em]">Platform</h4>
               <ul className="space-y-4 md:space-y-5 text-sm text-gray-300">
-                <li><button className="hover:text-white transition-colors hover:underline decoration-accent underline-offset-4 text-left">Assessment Engine</button></li>
-                <li><button className="hover:text-white transition-colors hover:underline decoration-accent underline-offset-4 text-left">Curriculum AI</button></li>
-                <li><button className="hover:text-white transition-colors hover:underline decoration-accent underline-offset-4 text-left">Enterprise</button></li>
+                <li><button className="hover:text-contrast transition-colors hover:underline decoration-accent underline-offset-4 text-left">Assessment Engine</button></li>
+                <li><button className="hover:text-contrast transition-colors hover:underline decoration-accent underline-offset-4 text-left">Curriculum AI</button></li>
+                <li><button className="hover:text-contrast transition-colors hover:underline decoration-accent underline-offset-4 text-left">Enterprise</button></li>
               </ul>
             </div>
             <div className="opacity-0 animate-fade-in-up delay-300">
               <h4 className="font-bold mb-6 md:mb-8 text-gray-500 text-xs uppercase tracking-[0.2em]">Company</h4>
               <ul className="space-y-4 md:space-y-5 text-sm text-gray-300">
-                <li><button className="hover:text-white transition-colors hover:underline decoration-accent underline-offset-4 text-left">About</button></li>
-                <li><button onClick={onBlogClick} className="hover:text-white transition-colors hover:underline decoration-accent underline-offset-4 text-left">Blog</button></li>
-                <li><button className="hover:text-white transition-colors hover:underline decoration-accent underline-offset-4 text-left">Careers</button></li>
+                <li><button className="hover:text-contrast transition-colors hover:underline decoration-accent underline-offset-4 text-left">About</button></li>
+                <li><button onClick={onBlogClick} className="hover:text-contrast transition-colors hover:underline decoration-accent underline-offset-4 text-left">Blog</button></li>
+                <li><button className="hover:text-contrast transition-colors hover:underline decoration-accent underline-offset-4 text-left">Careers</button></li>
               </ul>
             </div>
           </div>
@@ -284,7 +291,7 @@ export const Home: FC<HomeProps> = ({ onStart, user, onDashboardClick, onBlogCli
           <div className="mt-12 md:mt-16 opacity-0 animate-fade-in-up delay-400">
             <h4 className="font-bold mb-6 text-gray-500 text-xs uppercase tracking-[0.2em]">Stay Updated</h4>
             <div className="flex gap-3">
-              <input type="email" placeholder="email@example.com" className="bg-gray-800 border-none rounded-xl text-sm px-5 py-4 w-full focus:ring-1 focus:ring-accent text-white placeholder-gray-500 transition-all outline-none" />
+              <input type="email" placeholder="email@example.com" className="bg-background border border-border rounded-xl text-sm px-5 py-4 w-full focus:ring-1 focus:ring-accent text-contrast placeholder-gray-500 transition-all outline-none" />
               <button className="bg-accent text-white px-5 py-4 rounded-xl font-medium hover:bg-blue-600 transition-colors transform hover:scale-105 active:scale-95">→</button>
             </div>
             <div className="mt-10 text-xs text-gray-600">

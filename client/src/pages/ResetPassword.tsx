@@ -76,7 +76,7 @@ export const ResetPassword: FC = () => {
   };
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center p-4 bg-[#0A0A0A] font-sans overflow-hidden">
+    <div className="min-h-screen relative flex items-center justify-center p-4 bg-background font-sans overflow-hidden">
       {theme === "dark" && (
         <div className="absolute inset-0 z-0">
           <Beams
@@ -98,17 +98,17 @@ export const ResetPassword: FC = () => {
         <div className="absolute -bottom-32 left-1/3 w-96 h-96 bg-teal-900/30 rounded-full mix-blend-screen filter blur-[80px] animate-blob delay-4000" />
       </div>
 
-      <div className="w-full max-w-md bg-black/45 backdrop-blur-md border border-white/10 shadow-2xl rounded-2xl p-8 sm:p-10 relative z-10 animate-fade-in-up">
+      <div className="w-full max-w-md bg-surface/80 dark:bg-black/45 backdrop-blur-md border border-border shadow-2xl rounded-2xl p-8 sm:p-10 relative z-10 animate-fade-in-up">
         <button
           onClick={() => navigate("/login")}
-          className="flex items-center text-gray-400 hover:text-white transition-colors text-sm font-medium mb-6"
+          className="flex items-center text-gray-500 dark:text-gray-400 hover:text-contrast transition-colors text-sm font-medium mb-6"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to login
         </button>
 
         <div className="mb-6">
-          <h1 className="font-serif text-3xl font-bold text-white tracking-tight mb-2">
+          <h1 className="font-serif text-3xl font-bold text-contrast tracking-tight mb-2">
             Confirm password reset
           </h1>
           <p className="text-gray-400 text-sm">
@@ -131,7 +131,7 @@ export const ResetPassword: FC = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="reset-token" className="block text-sm font-medium text-gray-200 mb-1.5">
+            <label htmlFor="reset-token" className="block text-sm font-medium text-contrast/90 mb-1.5">
               Reset token
             </label>
             <textarea
@@ -139,13 +139,13 @@ export const ResetPassword: FC = () => {
               required
               value={resetToken}
               onChange={(event) => setResetToken(event.target.value)}
-              className="block w-full min-h-[96px] px-3 py-2.5 border border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-neutral-800 text-white placeholder-gray-500 transition-all outline-none"
+              className="block w-full min-h-[96px] px-3 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-surface text-contrast placeholder-gray-500 transition-all outline-none"
               placeholder="Paste reset token"
             />
           </div>
 
           <div>
-            <label htmlFor="new-password" className="block text-sm font-medium text-gray-200 mb-1.5">
+            <label htmlFor="new-password" className="block text-sm font-medium text-contrast/90 mb-1.5">
               New password
             </label>
             <div className="relative">
@@ -159,7 +159,7 @@ export const ResetPassword: FC = () => {
                 required
                 value={newPassword}
                 onChange={(event) => setNewPassword(event.target.value)}
-                className="block w-full pl-10 pr-3 py-2.5 border border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-neutral-800 text-white placeholder-gray-500 transition-all outline-none"
+                className="block w-full pl-10 pr-3 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-surface text-contrast placeholder-gray-500 transition-all outline-none"
               />
             </div>
           </div>
@@ -167,7 +167,7 @@ export const ResetPassword: FC = () => {
           <div>
             <label
               htmlFor="confirm-new-password"
-              className="block text-sm font-medium text-gray-200 mb-1.5"
+              className="block text-sm font-medium text-contrast/90 mb-1.5"
             >
               Confirm new password
             </label>
@@ -178,7 +178,7 @@ export const ResetPassword: FC = () => {
               required
               value={confirmPassword}
               onChange={(event) => setConfirmPassword(event.target.value)}
-              className="block w-full px-3 py-2.5 border border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-neutral-800 text-white placeholder-gray-500 transition-all outline-none"
+              className="block w-full px-3 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-surface text-contrast placeholder-gray-500 transition-all outline-none"
             />
           </div>
 

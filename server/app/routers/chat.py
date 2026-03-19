@@ -1,6 +1,7 @@
 """
 Chat router - handles AI mentor conversations with RAG
 """
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
@@ -11,6 +12,7 @@ from app.auth_middleware import get_current_user, get_admin_user
 from app.services.ai_service import ai_service
 
 router = APIRouter(prefix="/api/chat", tags=["AI Mentor Chat"])
+log = logging.getLogger("growwise")
 
 
 # ============================================================================
@@ -189,20 +191,46 @@ async def send_message(
         models.LearningPathStage.stage_id == session.stage_id
     ).first()
     
-    # Get learning path to determine track
-    path = db.query(models.LearningPath).filter(
-        models.LearningPath.path_id == stage.path_id
-    ).first()
-    
-    assessment_session = db.query(models.AssessmentSession).join(
-        models.AssessmentResult
-    ).filter(
-        models.AssessmentResult.result_id == path.result_id
-    ).first()
-    
-    track = db.query(models.Track).filter(
-        models.Track.track_id == assessment_session.track_id
-    ).first()
+    # Get track: prefer user's most recent track selection (what they chose on skill selection)
+    # Fallback: track from path (stage → path → assessment → track)
+    track = None
+    track_source = "path"
+    latest_selection = (
+        db.query(models.UserTrackSelection)
+        .filter(models.UserTrackSelection.user_id == current_user.user_id)
+        .order_by(models.UserTrackSelection.selected_at.desc())
+        .first()
+    )
+    if latest_selection:
+        track = db.query(models.Track).filter(
+            models.Track.track_id == latest_selection.track_id
+        ).first()
+        if track:
+            track_source = "user_track_selection"
+
+    if not track:
+        path = db.query(models.LearningPath).filter(
+            models.LearningPath.path_id == stage.path_id
+        ).first()
+        if path:
+            assessment_session = (
+                db.query(models.AssessmentSession)
+                .join(models.AssessmentResult)
+                .filter(models.AssessmentResult.result_id == path.result_id)
+                .first()
+            )
+            if assessment_session:
+                track = db.query(models.Track).filter(
+                    models.Track.track_id == assessment_session.track_id
+                ).first()
+
+    if not track:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Could not determine track. Select a track from the assessment first."
+        )
+
+    log.info("Chat RAG: track=%r (from %s)", track.track_name, track_source)
     
     # Get chat history for context
     previous_messages = db.query(models.ChatMessage).filter(
@@ -214,12 +242,12 @@ async def send_message(
         for msg in reversed(previous_messages)
     ]
     
-    # Generate AI mentor response with RAG
+    # Generate AI mentor response via RAG API — category = user's chosen track (from path → assessment → track)
     ai_response_text = await ai_service.get_mentor_response(
         user_message=message_data.message_text,
         stage_context=stage.focus_area,
-        track_name=track.track_name,
-        chat_history=chat_history
+        track_name=track.track_name,  # e.g. "Prompt Engineering", "Large Language Models (LLMs)"
+        chat_history=chat_history,
     )
     
     # Save AI response

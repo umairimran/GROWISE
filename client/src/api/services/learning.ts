@@ -13,6 +13,14 @@ export const learningService = {
     });
   },
 
+  async getMyPaths(): Promise<LearningPathResponse[]> {
+    return apiClient.call({
+      path: "/api/learning/my-paths",
+      method: "get",
+      auth: "required",
+    });
+  },
+
   async getPathStages(pathId: number): Promise<LearningPathStageResponse[]> {
     return apiClient.call({
       path: "/api/learning/paths/{path_id}/stages",

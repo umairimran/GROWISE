@@ -86,11 +86,14 @@
       /* White, but used with opacity in Tailwind */
     }
 
+    html, body {
+      overflow-x: hidden;
+    }
+
     body {
       background-color: rgb(var(--background));
       color: rgb(var(--contrast));
       font-family: 'General Sans', sans-serif;
-      overflow-x: hidden;
       transition: background-color 0.3s ease, color 0.3s ease;
     }
 

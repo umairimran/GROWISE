@@ -247,12 +247,29 @@ This evaluation considers:
         chat_history: List[Dict] = None
     ) -> str:
         """
-        Generate AI mentor response based on user query and context
+        Generate AI mentor response based on user query and context.
+        Uses external RAG API (chat-by-category) when track maps to a supported category.
+        Falls back to mock or LLM when RAG is unavailable.
         """
+        from app.services.rag_client import track_name_to_rag_category, chat_by_category
+        import logging
+        _log = logging.getLogger("growwise")
+
+        category = track_name_to_rag_category(track_name)
+        _log.info("Mentor: track_name=%r -> RAG category=%r (user's chosen track)", track_name, category)
+        if category:
+            answer = await chat_by_category(category=category, query=user_message)
+            if answer:
+                return answer
+            # RAG returned 404 or failed → no documents for this category. Tell user.
+            return (
+                f"No documents have been uploaded for **{category}** in the RAG service yet. "
+                f"Please upload a document for this category, or ask about the stage focus: {stage_context[:150]}..."
+            )
+
         if USE_MOCK_AI:
             return self._mock_mentor_response(user_message, stage_context)
-        
-        # TODO: Implement RAG-based mentor with real AI
+
         return self._mock_mentor_response(user_message, stage_context)
     
     def _mock_mentor_response(self, user_message: str, stage_context: str) -> str:

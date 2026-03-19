@@ -7,7 +7,7 @@ import { assessmentService } from "../api/services/assessment";
 import { tracksService } from "../api/services/tracks";
 import { ApiHttpError } from "../api/http";
 import { Button } from "../components/Button";
-import { AssessmentResult } from "../types";
+import { AssessmentResult, type ComprehensiveReport } from "../types";
 import type { components } from "../api/generated/openapi";
 
 type AssessmentQuestionResponse = components["schemas"]["AssessmentQuestionResponse"];
@@ -98,16 +98,25 @@ const toAssessmentResult = ({
   submittedResponses,
   trackName,
 }: {
-  result: AssessmentResultResponse;
+  result: AssessmentResultResponse & { evaluated_responses?: AssessmentResponseResponse[] | null };
   questions: AssessmentQuestionResponse[];
   submittedResponses: Record<number, AssessmentResponseResponse>;
   trackName: string;
 }): AssessmentResult => {
   const score = Math.round(parseDecimalOr(result.overall_score, 0));
 
+  // Prefer evaluated_responses from complete (batch-evaluated) — has scores; submittedResponses may not
+  const responsesByQuestion =
+    result.evaluated_responses?.length &&
+    result.evaluated_responses.some((r) => r.ai_score != null)
+      ? Object.fromEntries(
+          result.evaluated_responses.map((r) => [r.question_id, r])
+        )
+      : submittedResponses;
+
   const scoredQuestions = questions
     .map((question) => {
-      const response = submittedResponses[question.question_id];
+      const response = responsesByQuestion[question.question_id];
       if (!response) {
         return null;
       }
@@ -132,6 +141,12 @@ const toAssessmentResult = ({
   const fallbackStrength = [`Level: ${result.detected_level}`];
   const fallbackWeakness = ["Review AI reasoning for targeted improvement areas"];
 
+  const apiResult = result as typeof result & { comprehensive_report?: ComprehensiveReport | null };
+  const comprehensiveReport =
+    apiResult.comprehensive_report && typeof apiResult.comprehensive_report === "object"
+      ? apiResult.comprehensive_report
+      : null;
+
   return {
     topic: trackName,
     score,
@@ -143,6 +158,7 @@ const toAssessmentResult = ({
     learningPathId: result.learning_path_id ?? null,
     detectedLevel: result.detected_level,
     aiReasoning: result.ai_reasoning,
+    comprehensiveReport: comprehensiveReport ?? null,
   };
 };
 
@@ -345,9 +361,9 @@ export const Assessment: FC<AssessmentProps> = ({ onComplete, onExit }) => {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[#0A0A0A] text-center p-4">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background text-center p-4">
         <div className="animate-spin h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full mb-6" />
-        <p className="font-display text-2xl md:text-3xl font-bold text-white animate-pulse-slow">
+        <p className="font-display text-2xl md:text-3xl font-bold text-contrast animate-pulse-slow">
           Loading assessment session...
         </p>
         <p className="text-gray-500 mt-2">Fetching your server-generated questions.</p>
@@ -357,7 +373,7 @@ export const Assessment: FC<AssessmentProps> = ({ onComplete, onExit }) => {
 
   if (!currentQuestion) {
     return (
-      <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col items-center justify-center p-6 text-center">
+      <div className="min-h-screen bg-background text-contrast flex flex-col items-center justify-center p-6 text-center">
         <AlertCircle className="h-10 w-10 text-red-400 mb-4" />
         <h2 className="text-2xl font-bold mb-3">Unable to Load Assessment</h2>
         <p className="text-gray-400 mb-6">
@@ -380,7 +396,7 @@ export const Assessment: FC<AssessmentProps> = ({ onComplete, onExit }) => {
   }
 
   return (
-    <div className="relative min-h-screen bg-[#0A0A0A] flex flex-col items-center justify-center p-0 md:p-4 font-sans text-white">
+    <div className="relative min-h-screen bg-background flex flex-col items-center justify-start md:justify-center pt-20 md:pt-0 p-0 md:p-4 font-sans text-contrast overflow-x-hidden overflow-y-auto">
       <div
         className="absolute inset-0 z-0 opacity-10 pointer-events-none"
         style={{
@@ -400,9 +416,9 @@ export const Assessment: FC<AssessmentProps> = ({ onComplete, onExit }) => {
         </button>
       </div>
 
-      <div className="w-full h-full md:h-auto md:max-w-3xl bg-[#111111] md:rounded-2xl shadow-2xl border-0 md:border border-white/5 flex flex-col relative z-10 min-h-screen md:min-h-[500px]">
-        <div className="bg-[#111111] px-6 py-4 border-b border-white/5 flex justify-between items-center sticky top-0 z-30">
-          <div className="flex items-center space-x-3 text-white">
+      <div className="w-full md:max-w-3xl bg-surface md:rounded-2xl shadow-2xl border-0 md:border border-border flex flex-col relative z-10 md:min-h-[500px]">
+        <div className="bg-surface px-6 py-4 border-b border-border flex justify-between items-center sticky top-0 z-30">
+          <div className="flex items-center space-x-3 text-contrast">
             <div className="bg-neutral-800 p-2 rounded-lg text-gray-300">
               <Clock className="h-5 w-5" />
             </div>
@@ -425,7 +441,7 @@ export const Assessment: FC<AssessmentProps> = ({ onComplete, onExit }) => {
           </div>
         </div>
 
-        <div className="p-6 md:p-12 flex-1 flex flex-col pb-32 md:pb-12 overflow-y-auto">
+        <div className="p-6 md:p-12 flex-1 flex flex-col pb-32 md:pb-12">
           <div className="mb-4 flex flex-wrap items-center gap-2 md:gap-3">
             <span
               className={`inline-block px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full border ${difficultyClass(
@@ -461,7 +477,7 @@ export const Assessment: FC<AssessmentProps> = ({ onComplete, onExit }) => {
           )}
 
           <div className="mb-6 md:mb-8">
-            <div className="max-w-none text-white">
+            <div className="max-w-none text-contrast">
               <ReactMarkdown
                 components={{
                   p: ({ node, ...props }) => (
@@ -512,16 +528,16 @@ export const Assessment: FC<AssessmentProps> = ({ onComplete, onExit }) => {
                 ))}
               </div>
             ) : (
-              <div className="space-y-4 animate-fade-in pb-24 md:pb-0">
+              <div className="space-y-4 animate-fade-in pb-20 md:pb-0">
                 <p className="text-sm text-gray-400 mb-2 font-medium">Type your answer:</p>
                 <textarea
-                  className="w-full h-48 p-4 border border-neutral-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none bg-neutral-800 text-white placeholder-gray-500 text-base md:text-lg font-sans transition-all"
+                  className="w-full min-h-[120px] max-h-[280px] p-4 border border-neutral-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-y bg-neutral-800 text-white placeholder-gray-500 text-base md:text-lg font-sans transition-all"
                   placeholder="Write your response..."
                   value={freeTextAnswer}
                   onChange={(event) => setFreeTextAnswer(event.target.value)}
                   disabled={statusMessage !== null || isSubmittingAnswer}
                 />
-                <div className="hidden md:flex justify-end">
+                <div className="flex justify-end md:block">
                   <Button
                     onClick={() => {
                       void submitCurrentAnswer(freeTextAnswer);
@@ -555,9 +571,9 @@ export const Assessment: FC<AssessmentProps> = ({ onComplete, onExit }) => {
 
       {showExitModal && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-[#111111] rounded-2xl p-6 md:p-8 max-w-md w-full shadow-2xl border border-neutral-800">
+          <div className="bg-surface rounded-2xl p-6 md:p-8 max-w-md w-full shadow-2xl border border-border">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="font-display text-xl md:text-2xl font-bold text-white">Quit Assessment?</h3>
+              <h3 className="font-display text-xl md:text-2xl font-bold text-contrast">Quit Assessment?</h3>
               <button onClick={() => setShowExitModal(false)} className="text-gray-500 hover:text-gray-300">
                 <X className="h-6 w-6" />
               </button>

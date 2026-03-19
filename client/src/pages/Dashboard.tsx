@@ -1,4 +1,5 @@
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Area,
   AreaChart,
@@ -13,15 +14,20 @@ import {
   ArrowRight,
   BarChart3,
   Clock3,
+  FileText,
   GitCompareArrows,
   RefreshCw,
   Sparkles,
   TrendingUp,
   X,
+  Compass,
 } from "lucide-react";
 import { ApiHttpError } from "../api/http";
+import { learningService } from "../api/services/learning";
+import { assessmentService } from "../api/services/assessment";
 import {
   progressService,
+  type PathCompletionReport,
   type ProgressAssessmentComparison,
   type ProgressAssessmentHistory,
   type ProgressAssessmentHistoryItem,
@@ -35,7 +41,7 @@ import { AssessmentResult, User } from "../types";
 interface DashboardProps {
   user: User | null;
   result: AssessmentResult | null;
-  onOpenLearningPath: () => void;
+  onOpenLearningPath: (pathId?: number | null, topic?: string | null) => void;
   onStartAssessment: () => void;
 }
 
@@ -173,6 +179,7 @@ export const Dashboard: FC<DashboardProps> = ({
   onOpenLearningPath,
   onStartAssessment,
 }) => {
+  const navigate = useNavigate();
   const { theme } = useTheme();
   const [timelineWindowDays, setTimelineWindowDays] = useState<number>(30);
   const [dashboardData, setDashboardData] = useState<ProgressDashboardSummary | null>(null);
@@ -186,6 +193,12 @@ export const Dashboard: FC<DashboardProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [pathReport, setPathReport] = useState<PathCompletionReport | null>(null);
+  const [pathReportPathId, setPathReportPathId] = useState<number | null>(null);
+  const [fetchedLatestResult, setFetchedLatestResult] = useState<AssessmentResult | null>(null);
+  const [selectedViewSessionId, setSelectedViewSessionId] = useState<number | null>(null);
+  const [viewSessionResult, setViewSessionResult] = useState<AssessmentResult | null>(null);
+  const [isLoadingViewResult, setIsLoadingViewResult] = useState(false);
   const hasLoadedRef = useRef(false);
 
   const systemPrefersDark =
@@ -194,6 +207,29 @@ export const Dashboard: FC<DashboardProps> = ({
     window.matchMedia("(prefers-color-scheme: dark)").matches;
 
   const isDark = theme === "dark" || (theme === "system" && systemPrefersDark);
+
+  const loadPathReport = useCallback(async () => {
+    try {
+      const paths = await learningService.getMyPaths();
+      if (paths.length === 0) return;
+      const latestPath = paths[0];
+      const progress = await progressService.getLearningPathProgress(latestPath.path_id);
+      if (
+        progress.totalContentItems > 0 &&
+        progress.completedItems >= progress.totalContentItems
+      ) {
+        const report = await progressService.getPathCompletionReport(latestPath.path_id);
+        setPathReport(report);
+        setPathReportPathId(latestPath.path_id);
+      } else {
+        setPathReport(null);
+        setPathReportPathId(null);
+      }
+    } catch {
+      setPathReport(null);
+      setPathReportPathId(null);
+    }
+  }, []);
 
   const loadDashboardData = useCallback(async () => {
     const isInitialLoad = !hasLoadedRef.current;
@@ -215,6 +251,56 @@ export const Dashboard: FC<DashboardProps> = ({
       setDashboardData(dashboard);
       setTimelineData(timeline);
       setAssessmentHistory(history);
+      await loadPathReport();
+
+      // If no in-memory result (e.g. after refresh), fetch latest session's full result
+      // so the Assessment Report (comprehensive report) persists on the Overview screen
+      if (!result && history?.history?.length > 0) {
+        const sorted = [...history.history].sort(
+          (a, b) => timeValue(b.attemptDate) - timeValue(a.attemptDate)
+        );
+        const latestSessionId = sorted[0]?.sessionId;
+        if (latestSessionId) {
+          try {
+            setSelectedViewSessionId(latestSessionId);
+            const apiResult = await assessmentService.getSessionResult(latestSessionId);
+            const comprehensiveReport =
+              apiResult.comprehensive_report &&
+              typeof apiResult.comprehensive_report === "object"
+                ? (apiResult.comprehensive_report as AssessmentResult["comprehensiveReport"])
+                : null;
+            const latestResult: AssessmentResult = {
+              topic: sorted[0]?.trackName ?? "Assessment",
+              score: Number(apiResult.overall_score) ?? 0,
+              totalQuestions: 0,
+              strengths: [],
+              weaknesses: [],
+              knowledgeGraph: [],
+              sessionId: latestSessionId,
+              learningPathId: apiResult.learning_path_id ?? null,
+              detectedLevel: apiResult.detected_level ?? undefined,
+              aiReasoning: apiResult.ai_reasoning ?? undefined,
+              comprehensiveReport: comprehensiveReport ?? null,
+            };
+            setFetchedLatestResult(latestResult);
+            setViewSessionResult(latestResult);
+          } catch {
+            setFetchedLatestResult(null);
+            setViewSessionResult(null);
+            setSelectedViewSessionId(null);
+          }
+        } else {
+          setFetchedLatestResult(null);
+          setViewSessionResult(null);
+          setSelectedViewSessionId(null);
+        }
+      } else if (result) {
+        setFetchedLatestResult(null);
+        if (result.sessionId) {
+          setSelectedViewSessionId(result.sessionId);
+          setViewSessionResult(result);
+        }
+      }
     } catch (error) {
       setErrorMessage(toErrorMessage(error, "Failed to load dashboard progress data."));
     } finally {
@@ -224,7 +310,7 @@ export const Dashboard: FC<DashboardProps> = ({
       }
       setIsRefreshing(false);
     }
-  }, [timelineWindowDays]);
+  }, [timelineWindowDays, loadPathReport, result]);
 
   useEffect(() => {
     void loadDashboardData();
@@ -232,6 +318,39 @@ export const Dashboard: FC<DashboardProps> = ({
 
   const timelineChartData = useMemo(() => toTimelineChartData(timelineData), [timelineData]);
   const sortedHistory = useMemo(() => toSortedHistory(assessmentHistory), [assessmentHistory]);
+  const displayResult = viewSessionResult ?? result ?? fetchedLatestResult;
+
+  const fetchSessionForView = useCallback(async (sessionId: number) => {
+    setSelectedViewSessionId(sessionId);
+    setIsLoadingViewResult(true);
+    setViewSessionResult(null);
+    try {
+      const apiResult = await assessmentService.getSessionResult(sessionId);
+      const comprehensiveReport =
+        apiResult.comprehensive_report &&
+        typeof apiResult.comprehensive_report === "object"
+          ? (apiResult.comprehensive_report as AssessmentResult["comprehensiveReport"])
+          : null;
+      const entry = sortedHistory.find((e) => e.sessionId === sessionId);
+      setViewSessionResult({
+        topic: entry?.trackName ?? "Assessment",
+        score: Number(apiResult.overall_score) ?? 0,
+        totalQuestions: 0,
+        strengths: [],
+        weaknesses: [],
+        knowledgeGraph: [],
+        sessionId,
+        learningPathId: apiResult.learning_path_id ?? null,
+        detectedLevel: apiResult.detected_level ?? undefined,
+        aiReasoning: apiResult.ai_reasoning ?? undefined,
+        comprehensiveReport: comprehensiveReport ?? null,
+      });
+    } catch {
+      setViewSessionResult(null);
+    } finally {
+      setIsLoadingViewResult(false);
+    }
+  }, [sortedHistory]);
 
   const welcomeName = user?.name || dashboardData?.user.fullName || "Learner";
   const totalAssessments = dashboardData?.assessments.totalCompleted ?? 0;
@@ -240,8 +359,9 @@ export const Dashboard: FC<DashboardProps> = ({
   const learningHours = dashboardData?.learning.totalTimeHours ?? 0;
 
   const insightMessage = useMemo(() => {
-    if (result?.aiReasoning) {
-      return result.aiReasoning;
+    const r = viewSessionResult ?? result ?? fetchedLatestResult;
+    if (r?.aiReasoning) {
+      return r.aiReasoning;
     }
 
     const weaknesses = dashboardData?.skillProfile?.weaknesses ?? [];
@@ -254,8 +374,12 @@ export const Dashboard: FC<DashboardProps> = ({
       return `Your latest detected level is ${formatLevel(latestLevel)}. Start another assessment to verify improvement.`;
     }
 
+    if (sortedHistory.length > 0) {
+      return "Select an assessment from the left to view its full AI report.";
+    }
+
     return "Complete your first assessment to unlock personalized guidance.";
-  }, [dashboardData?.assessments.latestResult?.level, dashboardData?.skillProfile?.weaknesses, result?.aiReasoning]);
+  }, [dashboardData?.assessments.latestResult?.level, dashboardData?.skillProfile?.weaknesses, result?.aiReasoning, fetchedLatestResult?.aiReasoning, viewSessionResult?.aiReasoning, sortedHistory.length]);
 
   const toggleSessionSelection = (sessionId: number) => {
     setSelectedSessionIds((currentSelection) => {
@@ -293,7 +417,7 @@ export const Dashboard: FC<DashboardProps> = ({
   };
 
   return (
-    <div className="flex flex-col gap-6 pb-10">
+    <div className="flex flex-col gap-4 pb-2 sm:pb-4 overflow-x-hidden">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-serif text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">Dashboard</h1>
@@ -302,7 +426,16 @@ export const Dashboard: FC<DashboardProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={onStartAssessment}
+            className="gap-2"
+          >
+            <Compass className="h-4 w-4" />
+            Choose Track
+          </Button>
           <select
             className="bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-xs font-medium text-gray-600 dark:text-gray-300 rounded-lg py-2 px-3"
             value={timelineWindowDays}
@@ -339,40 +472,40 @@ export const Dashboard: FC<DashboardProps> = ({
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-            <div className="bg-white dark:bg-[#111111] p-5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-soft">
-              <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Assessments</div>
-              <div className="text-3xl font-bold text-slate-900 dark:text-white">{totalAssessments}</div>
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="bg-white dark:bg-[#111111] p-4 sm:p-5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-soft">
+              <div className="text-[10px] sm:text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1 sm:mb-2">Assessments</div>
+              <div className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">{totalAssessments}</div>
               <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">Completed attempts</div>
             </div>
 
-            <div className="bg-white dark:bg-[#111111] p-5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-soft">
-              <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Latest Score</div>
-              <div className="text-3xl font-bold text-slate-900 dark:text-white">{formatScore(latestAssessment?.score)}</div>
+            <div className="bg-white dark:bg-[#111111] p-4 sm:p-5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-soft">
+              <div className="text-[10px] sm:text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1 sm:mb-2">Latest Score</div>
+              <div className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">{formatScore(latestAssessment?.score)}</div>
               <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                 {latestAssessment ? `${formatLevel(latestAssessment.level)} • ${formatDate(latestAssessment.date)}` : "No completed assessment yet"}
               </div>
             </div>
 
-            <div className="bg-white dark:bg-[#111111] p-5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-soft">
-              <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Learning Completion</div>
-              <div className="text-3xl font-bold text-slate-900 dark:text-white">{formatPercent(learningCompletion)}</div>
+            <div className="bg-white dark:bg-[#111111] p-4 sm:p-5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-soft">
+              <div className="text-[10px] sm:text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1 sm:mb-2">Learning Completion</div>
+              <div className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">{formatPercent(learningCompletion)}</div>
               <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                 {dashboardData?.learning.completedItems ?? 0} / {dashboardData?.learning.totalContentItems ?? 0} items
               </div>
             </div>
 
-            <div className="bg-white dark:bg-[#111111] p-5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-soft">
-              <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Learning Time</div>
-              <div className="text-3xl font-bold text-slate-900 dark:text-white">{learningHours.toFixed(1)}h</div>
+            <div className="bg-white dark:bg-[#111111] p-4 sm:p-5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-soft">
+              <div className="text-[10px] sm:text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1 sm:mb-2">Learning Time</div>
+              <div className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">{learningHours.toFixed(1)}h</div>
               <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">Tracked across all paths</div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-[#111111] p-4 lg:p-6 rounded-2xl border border-gray-200 dark:border-white/10 shadow-soft">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+          <div className="bg-white dark:bg-[#111111] p-4 sm:p-5 lg:p-6 rounded-2xl border border-gray-200 dark:border-white/10 shadow-soft">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
               <div>
-                <h2 className="font-serif text-lg font-medium text-slate-900 dark:text-white">Activity Timeline</h2>
+                <h2 className="font-serif text-base sm:text-lg font-medium text-slate-900 dark:text-white">Activity Timeline</h2>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   Source: <code>/api/progress/analytics/timeline</code> ({timelineData?.totalEvents ?? 0} events)
                 </p>
@@ -436,55 +569,112 @@ export const Dashboard: FC<DashboardProps> = ({
             )}
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-[1.8fr,1fr] gap-6">
-            <div className="bg-white dark:bg-[#111111] p-4 lg:p-6 rounded-2xl border border-gray-200 dark:border-white/10 shadow-soft">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+          {pathReport && pathReportPathId && (
+            <div className="rounded-xl border border-green-200 dark:border-green-900/40 bg-green-50 dark:bg-green-950/30 px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <FileText className="h-6 w-6 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
                 <div>
-                  <h2 className="font-serif text-lg font-medium text-slate-900 dark:text-white">Assessment History</h2>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Source: <code>/api/progress/assessments/history</code>
+                  <h3 className="font-medium text-green-900 dark:text-green-100">Path Completion Report</h3>
+                  <p className="text-sm text-green-700 dark:text-green-300 mt-1 line-clamp-2">
+                    {pathReport.learningSummary.slice(0, 180)}
+                    {pathReport.learningSummary.length > 180 ? "…" : ""}
                   </p>
                 </div>
+              </div>
+              <div className="flex flex-wrap gap-2 shrink-0">
                 <Button
                   size="sm"
                   variant="secondary"
-                  onClick={() => void handleOpenComparison()}
-                  disabled={selectedSessionIds.length !== 2}
+                  onClick={() => navigate(`/improvement/${pathReportPathId}`)}
                   className="gap-2"
                 >
-                  <GitCompareArrows className="h-4 w-4" />
-                  Compare Selected
+                  <TrendingUp className="h-4 w-4" />
+                  Progress Analysis
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={onOpenLearningPath}
+                  className="gap-2"
+                >
+                  <FileText className="h-4 w-4" />
+                  View Full Report
                 </Button>
               </div>
+            </div>
+          )}
 
-              {assessmentHistory?.improvement && (
-                <div className="mb-4 rounded-xl border border-blue-200 dark:border-blue-900/40 bg-blue-50 dark:bg-blue-950/30 px-4 py-3">
-                  <div className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-300 font-medium">
-                    <TrendingUp className="h-4 w-4" />
-                    Improvement: {formatPercent(assessmentHistory.improvement.improvementPercentage, 1)} (
-                    {assessmentHistory.improvement.levelProgression})
+          <div className="flex flex-col gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-[1.2fr,1fr] xl:grid-cols-[1.5fr,1fr] gap-4 lg:gap-6">
+              <div className="bg-white dark:bg-[#111111] p-4 sm:p-5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-soft">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-3">
+                  <div>
+                    <h2 className="font-serif text-base sm:text-lg font-medium text-slate-900 dark:text-white">Assessment History</h2>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Source: <code>/api/progress/assessments/history</code>
+                    </p>
                   </div>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => void handleOpenComparison()}
+                    disabled={selectedSessionIds.length !== 2}
+                    className="gap-2"
+                  >
+                    <GitCompareArrows className="h-4 w-4" />
+                    Compare Selected
+                  </Button>
                 </div>
-              )}
 
-              {sortedHistory.length > 0 ? (
-                <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
-                  {sortedHistory.map((entry) => {
-                    const isSelected = selectedSessionIds.includes(entry.sessionId);
+                {assessmentHistory?.improvement && (
+                  <div className="mb-4 rounded-xl border border-blue-200 dark:border-blue-900/40 bg-blue-50 dark:bg-blue-950/30 px-4 py-3">
+                    <div className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-300 font-medium">
+                      <TrendingUp className="h-4 w-4" />
+                      Improvement: {formatPercent(assessmentHistory.improvement.improvementPercentage, 1)} (
+                      {assessmentHistory.improvement.levelProgression})
+                    </div>
+                  </div>
+                )}
+
+                {sortedHistory.length > 0 ? (
+                  <div className="space-y-2 max-h-[260px] sm:max-h-[300px] overflow-y-auto pr-1">
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-2">
+                      Click an assessment to view its AI report →
+                    </p>
+                    {sortedHistory.map((entry) => {
+                    const isCompareSelected = selectedSessionIds.includes(entry.sessionId);
+                    const isViewSelected = selectedViewSessionId === entry.sessionId;
                     return (
-                      <label
+                      <div
                         key={entry.sessionId}
-                        className={`flex items-start gap-3 rounded-xl border p-3 cursor-pointer transition-colors ${
-                          isSelected
-                            ? "border-blue-300 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30"
-                            : "border-gray-200 dark:border-zinc-700 bg-gray-50/60 dark:bg-zinc-900/40 hover:bg-gray-50 dark:hover:bg-zinc-900/60"
+                        className={`flex items-start gap-3 rounded-xl border p-3 transition-all cursor-pointer ${
+                          isViewSelected
+                            ? "border-blue-400 dark:border-blue-500 bg-blue-50 dark:bg-blue-950/50 ring-2 ring-blue-200 dark:ring-blue-800"
+                            : isCompareSelected
+                              ? "border-blue-300 dark:border-blue-800 bg-blue-50/70 dark:bg-blue-950/30"
+                              : "border-gray-200 dark:border-zinc-700 bg-gray-50/60 dark:bg-zinc-900/40 hover:border-gray-300 dark:hover:border-zinc-600 hover:bg-gray-50 dark:hover:bg-zinc-900/60"
                         }`}
+                        onClick={() => fetchSessionForView(entry.sessionId)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            fetchSessionForView(entry.sessionId);
+                          }
+                        }}
+                        aria-pressed={isViewSelected}
                       >
                         <input
                           type="checkbox"
-                          className="mt-1"
-                          checked={isSelected}
-                          onChange={() => toggleSessionSelection(entry.sessionId)}
+                          className="mt-1 shrink-0"
+                          checked={isCompareSelected}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            toggleSessionSelection(entry.sessionId);
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          aria-label={`Select session ${entry.sessionId} for comparison`}
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
@@ -504,7 +694,7 @@ export const Dashboard: FC<DashboardProps> = ({
                             </div>
                           )}
                         </div>
-                      </label>
+                      </div>
                     );
                   })}
                 </div>
@@ -516,30 +706,165 @@ export const Dashboard: FC<DashboardProps> = ({
                   <Button onClick={onStartAssessment}>Start Assessment</Button>
                 </div>
               )}
-            </div>
 
-            <div className="flex flex-col gap-6">
-              <div className="bg-[#1A1A1A] p-6 rounded-2xl text-white shadow-lg border border-gray-800">
-                <h3 className="font-serif text-lg font-medium mb-3 flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-blue-300" />
-                  AI Insight
-                </h3>
-                <p className="text-sm text-gray-300 mb-6 leading-relaxed">{insightMessage}</p>
-                <Button
-                  onClick={onOpenLearningPath}
-                  variant="secondary"
-                  className="w-full justify-between bg-white text-slate-900 hover:bg-gray-100 border-none h-11"
-                >
-                  Continue Learning
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-                <p className="text-[11px] text-gray-400 mt-3">
-                  Opens your latest backend learning path and stage content.
-                </p>
+                {/* Skill breakdown tiles - directly beneath assessment selection */}
+                {displayResult?.comprehensiveReport &&
+                  ((displayResult.comprehensiveReport.strengths?.length ?? 0) > 0 ||
+                    (displayResult.comprehensiveReport.weaknesses?.length ?? 0) > 0) && (
+                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-zinc-700">
+                    <h3 className="text-[11px] sm:text-xs font-semibold text-slate-600 dark:text-gray-400 mb-3 uppercase tracking-wider">
+                      Skill breakdown
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {displayResult.comprehensiveReport.strengths?.map((s, i) => (
+                        <div
+                          key={`s-${i}`}
+                          className="rounded-xl bg-green-900/15 dark:bg-green-900/20 border border-green-700/30 dark:border-green-800/40 p-3"
+                        >
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <span className="font-medium text-green-700 dark:text-green-300 text-xs">{s.area}</span>
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-green-800/40 text-green-300 shrink-0">strength</span>
+                          </div>
+                          <p className="text-gray-600 dark:text-gray-400 text-[11px] whitespace-normal break-words">{s.evidence}</p>
+                        </div>
+                      ))}
+                      {displayResult.comprehensiveReport.weaknesses?.map((w, i) => (
+                        <div
+                          key={`w-${i}`}
+                          className="rounded-xl bg-amber-900/15 dark:bg-amber-900/20 border border-amber-700/30 dark:border-amber-800/40 p-3"
+                        >
+                          <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
+                            <span className="font-medium text-amber-700 dark:text-amber-300 text-xs">{w.area}</span>
+                            <span
+                              className={`text-[9px] px-1.5 py-0.5 rounded-md shrink-0 ${
+                                w.priority === "high"
+                                  ? "bg-red-900/50 text-red-300"
+                                  : w.priority === "medium"
+                                    ? "bg-amber-900/50 text-amber-300"
+                                    : "bg-blue-900/50 text-blue-300"
+                              }`}
+                            >
+                              {w.priority}
+                            </span>
+                          </div>
+                          <p className="text-gray-600 dark:text-gray-400 text-[11px] whitespace-normal break-words mb-1">{w.evidence}</p>
+                          <p className="text-blue-600 dark:text-blue-400 text-[11px] whitespace-normal break-words">→ {w.recommendation}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
-              <div className="bg-white dark:bg-[#111111] p-5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-soft">
-                <h3 className="font-serif text-sm font-bold mb-4 text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              <div className="flex flex-col gap-4">
+              {isLoadingViewResult ? (
+                <div className="bg-surface p-8 rounded-2xl border border-border flex flex-col items-center justify-center min-h-[280px]">
+                  <div className="h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4" />
+                  <p className="text-sm text-gray-400">Loading AI report...</p>
+                </div>
+              ) : displayResult?.comprehensiveReport ? (
+                <div className="space-y-4">
+                  <div className="bg-surface p-4 sm:p-5 rounded-2xl text-contrast shadow-lg border border-border">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                      <h3 className="font-serif text-base sm:text-lg font-medium flex items-center gap-2">
+                        <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-blue-300 shrink-0" />
+                        Assessment Report
+                      </h3>
+                      <div className="flex items-center gap-2 text-xs text-gray-400">
+                        {displayResult.topic && (
+                          <span className="font-medium text-gray-300">{displayResult.topic}</span>
+                        )}
+                        {displayResult.sessionId && (
+                          <span>Session #{displayResult.sessionId}</span>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-300 mb-2 leading-relaxed">
+                      {displayResult.comprehensiveReport.executive_summary}
+                    </p>
+                    {displayResult.comprehensiveReport.overall_assessment && (
+                      <p className="text-sm text-gray-400 mb-3 leading-relaxed">
+                        {displayResult.comprehensiveReport.overall_assessment}
+                      </p>
+                    )}
+
+                    {displayResult.comprehensiveReport.dimension_breakdown?.length ? (
+                      <div className="mb-4">
+                        <h4 className="text-[11px] font-semibold text-blue-400 uppercase tracking-wide mb-2">
+                          Dimension scores
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                          {displayResult.comprehensiveReport.dimension_breakdown.map((d, i) => (
+                            <div
+                              key={i}
+                              className="rounded-lg bg-gray-800/50 border border-gray-700/50 px-2.5 py-1.5 text-xs"
+                            >
+                              <span className="text-gray-300">{d.dimension}</span>
+                              <span className="ml-2 font-medium text-blue-300">{d.score.toFixed(0)}%</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                    {displayResult.comprehensiveReport.learning_priorities?.length > 0 && (
+                      <div className="mb-4">
+                        <h4 className="text-[11px] font-semibold text-blue-400 uppercase tracking-wide mb-2">
+                          Learning Priorities
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                          {displayResult.comprehensiveReport.learning_priorities.map((p, i) => (
+                            <span
+                              key={i}
+                              className="inline-flex items-baseline gap-1.5 rounded-lg bg-blue-900/20 border border-blue-800/40 px-2.5 py-1.5 text-xs"
+                            >
+                              <span className="font-medium text-blue-300">{i + 1}.</span>
+                              <span className="text-gray-300">{p.topic}</span>
+                              <span className="text-gray-500 text-[11px]">— {p.rationale}</span>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    <Button
+                      onClick={() => onOpenLearningPath(displayResult?.learningPathId, displayResult?.topic ?? null)}
+                      variant="secondary"
+                      className="w-full justify-between bg-white text-slate-900 hover:bg-gray-100 border-none h-11 dark:bg-blue-600 dark:text-white dark:hover:bg-blue-500"
+                    >
+                      Continue Learning
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-surface p-4 sm:p-6 rounded-2xl text-contrast shadow-lg border border-border">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                    <h3 className="font-serif text-base sm:text-lg font-medium flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-blue-300 shrink-0" />
+                      AI Insight
+                    </h3>
+                    {displayResult?.topic && displayResult?.sessionId && (
+                      <span className="text-xs text-gray-400">
+                        {displayResult.topic} • Session #{displayResult.sessionId}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-300 mb-4 leading-relaxed">{insightMessage}</p>
+                  <Button
+                    onClick={() => onOpenLearningPath(displayResult?.learningPathId, displayResult?.topic ?? null)}
+                    variant="secondary"
+                    className="w-full justify-between bg-white text-slate-900 hover:bg-gray-100 border-none h-11 dark:bg-blue-600 dark:text-white dark:hover:bg-blue-500"
+                  >
+                    Continue Learning
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                  <p className="text-[11px] text-gray-400 mt-3">
+                    Opens your latest backend learning path and stage content.
+                  </p>
+                </div>
+              )}
+
+              <div className="bg-white dark:bg-[#111111] p-4 sm:p-5 rounded-2xl border border-gray-200 dark:border-white/10 shadow-soft">
+                <h3 className="font-serif text-xs sm:text-sm font-bold mb-3 text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                   Progress Snapshot
                 </h3>
                 <div className="space-y-3 text-sm">
@@ -612,8 +937,39 @@ export const Dashboard: FC<DashboardProps> = ({
                   </div>
                 )}
               </div>
+
+              {/* Suggested next step & quick stats */}
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 rounded-2xl border border-blue-200/50 dark:border-blue-800/40 p-4">
+                <h3 className="text-xs font-semibold text-blue-800 dark:text-blue-300 uppercase tracking-wide mb-3">
+                  Suggested next step
+                </h3>
+                {displayResult?.comprehensiveReport?.weaknesses?.length ? (
+                  <p className="text-sm text-slate-700 dark:text-gray-300 mb-2">
+                    Focus on <span className="font-medium text-blue-700 dark:text-blue-300">
+                      {displayResult.comprehensiveReport.weaknesses[0]?.area}
+                    </span> — {displayResult.comprehensiveReport.weaknesses[0]?.recommendation.slice(0, 80)}
+                    {displayResult.comprehensiveReport.weaknesses[0]?.recommendation.length > 80 ? "…" : ""}
+                  </p>
+                ) : learningCompletion < 100 && dashboardData?.learning.totalContentItems ? (
+                  <p className="text-sm text-slate-700 dark:text-gray-300 mb-2">
+                    Continue your learning path — {dashboardData.learning.completedItems} of {dashboardData.learning.totalContentItems} items completed.
+                  </p>
+                ) : totalAssessments > 0 ? (
+                  <p className="text-sm text-slate-700 dark:text-gray-300 mb-2">
+                    Take another assessment to track your improvement.
+                  </p>
+                ) : (
+                  <p className="text-sm text-slate-700 dark:text-gray-300 mb-2">
+                    Start your first assessment to get personalized insights.
+                  </p>
+                )}
+                <Button size="sm" onClick={learningCompletion < 100 ? onOpenLearningPath : onStartAssessment} className="mt-2">
+                  {learningCompletion < 100 ? "Continue Learning" : "Choose Track"}
+                </Button>
+              </div>
             </div>
           </div>
+        </div>
         </>
       )}
 

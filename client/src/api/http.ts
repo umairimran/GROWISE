@@ -122,7 +122,7 @@ export class ApiHttpError extends ApiError {
   }
 }
 
-const DEFAULT_BASE_URL = "http://localhost:8000";
+const DEFAULT_BASE_URL = "http://localhost:8001";
 
 const getApiBaseUrl = (explicitBaseUrl?: string): string => {
   const viteEnvBaseUrl = (import.meta as ImportMeta & { env?: { VITE_API_BASE_URL?: string } }).env?.VITE_API_BASE_URL;

@@ -83,14 +83,26 @@ def _build_search_prompt(stage_input: dict[str, Any]) -> str:
     focus_area = stage_input.get("focus_area", "")
     track_name = stage_input.get("track_name", "")
     difficulty = stage_input.get("difficulty_level", "")
+    learner_profile = (stage_input.get("learner_profile_context") or "").strip()
+
+    profile_block = ""
+    if learner_profile:
+        profile_block = f"""
+Learner profile (from their assessment report):
+{learner_profile}
+
+IMPORTANT: Bias the resources toward closing the learner's weaknesses and priorities above, while still matching the stage focus."""
+
     return f"""Search the internet and find high-quality educational resources for this learning stage:
 
 Stage: {stage_name}
 Track: {track_name}
 Focus: {focus_area}
 Difficulty: {difficulty}
+{profile_block}
 
-Find articles, tutorials, documentation, or blog posts from the web. Return the results as JSON with the exact structure specified in your instructions."""
+Find articles, tutorials, documentation, videos, and best practices from the web. Prefer practical resources with examples and exercises.
+Return the results as JSON with the exact structure specified in your instructions."""
 
 
 def _extract_json_from_response(text: str) -> dict:
