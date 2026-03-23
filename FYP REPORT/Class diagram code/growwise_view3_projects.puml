@@ -1,0 +1,115 @@
+@startuml GrowWise_View3_Projects
+' ===============================
+'  View 3: Project Workflow
+'  Focus: Project assignments, submissions, and evaluation
+' ===============================
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide circle
+skinparam nodesep 80
+skinparam ranksep 80
+
+title **GrowWise - View 3: Project Workflow & Evaluation**
+
+class User {
+    - user_id: int <<PK>>
+    - email: string
+    - first_name: string
+    - last_name: string
+    + login(): boolean
+}
+
+class LearningTrack {
+    - track_id: int <<PK>>
+    - track_name: string
+    - difficulty_level: enum
+    + getModules(): list
+}
+
+class ProjectAssignment {
+    - project_id: int <<PK>>
+    - track_id: int <<FK>>
+    - project_title: string
+    - project_description: text
+    - requirements: json
+    - difficulty_level: enum
+    - created_at: timestamp
+    - is_active: boolean
+    + createProject(): boolean
+    + updateProject(data: json): boolean
+    + getRequirements(): json
+}
+
+class UserProjectAssignment {
+    - user_project_id: int <<PK>>
+    - user_id: int <<FK>>
+    - project_id: int <<FK>>
+    - assigned_at: timestamp
+    - due_date: timestamp
+    - status: enum
+    + assignToUser(): boolean
+    + updateStatus(status: enum): void
+    + extendDeadline(newDate: timestamp): boolean
+}
+
+class ProjectSubmission {
+    - submission_id: int <<PK>>
+    - user_project_id: int <<FK>>
+    - submission_data: json
+    - submission_text: text
+    - submitted_at: timestamp
+    - ai_evaluation: json
+    - human_feedback: text
+    - score: decimal
+    - evaluation_criteria: json
+    + submitProject(data: json): boolean
+    + evaluateSubmission(): json
+    + getFeedback(): string
+    + updateScore(score: decimal): void
+}
+
+abstract class ProjectEvaluator {
+    + {abstract} evaluateCode(submission: ProjectSubmission): json
+    + {abstract} assessApproach(submission: ProjectSubmission): json
+    + {abstract} provideFeedback(evaluation: json): string
+    + {abstract} calculateScore(evaluation: json): decimal
+}
+
+' Relationships
+LearningTrack "1" *-- "0..*" ProjectAssignment : includes
+ProjectAssignment "1" -- "0..*" UserProjectAssignment : assigned as
+User "1" -- "0..*" UserProjectAssignment : receives
+UserProjectAssignment "1" -- "0..1" ProjectSubmission : submitted
+ProjectEvaluator ..> ProjectSubmission : evaluates
+
+note right of ProjectAssignment
+  **Project Template**
+  - Reusable project definition
+  - Belongs to a learning track
+  - Contains requirements & rubric
+end note
+
+note right of UserProjectAssignment
+  **User Instance**
+  - Individual assignment to user
+  - Tracks deadlines & status
+  - Links user to project template
+end note
+
+note right of ProjectSubmission
+  **Submission & Feedback**
+  - User's completed work
+  - AI + human evaluation
+  - Score and detailed feedback
+end note
+
+note bottom of ProjectEvaluator
+  AI Evaluator analyzes:
+  - Code quality
+  - Approach & methodology
+  - Completeness
+  - Best practices
+end note
+
+@enduml

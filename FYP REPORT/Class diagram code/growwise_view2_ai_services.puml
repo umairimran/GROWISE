@@ -1,0 +1,123 @@
+@startuml GrowWise_View2_AIServices
+' ===============================
+'  View 2: AI Services & Knowledge
+'  Focus: AI mentor, RAG, and intelligent features
+' ===============================
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide circle
+skinparam nodesep 80
+skinparam ranksep 80
+
+title **GrowWise - View 2: AI Services & Knowledge Management**
+
+class User {
+    - user_id: int <<PK>>
+    - email: string
+    - first_name: string
+    - last_name: string
+    + login(): boolean
+}
+
+class LearningModule {
+    - module_id: int <<PK>>
+    - track_id: int <<FK>>
+    - module_name: string
+    - learning_objectives: text
+    + getContent(): json
+}
+
+class RAGKnowledgeBase {
+    - knowledge_id: int <<PK>>
+    - module_id: int <<FK>>
+    - content_type: enum
+    - title: string
+    - content: text
+    - metadata: json
+    - embedding_vector: vector
+    - is_active: boolean
+    + addContent(data: json): boolean
+    + searchContent(query: string): list
+    + updateContent(data: json): boolean
+}
+
+class AIMentorInteraction {
+    - interaction_id: int <<PK>>
+    - user_id: int <<FK>>
+    - module_id: int <<FK>>
+    - user_question: text
+    - ai_response: text
+    - context_data: json
+    - response_time_ms: int
+    - created_at: timestamp
+    - feedback_rating: int
+    + askQuestion(question: string): string
+    + getResponse(): string
+    + rateResponse(rating: int): void
+}
+
+abstract class RAGAssistant {
+    + {abstract} retrieveInfo(question: string, context: json): string
+    + {abstract} generateResponse(question: string, knowledge: json): string
+    + {abstract} getContext(moduleId: int): json
+}
+
+class SkillAssessment {
+    - assessment_id: int <<PK>>
+    - user_id: int <<FK>>
+    - track_id: int <<FK>>
+    - score_percentage: decimal
+    - assessment_data: json
+}
+
+class PersonalizedLearningPath {
+    - path_id: int <<PK>>
+    - user_id: int <<FK>>
+    - track_id: int <<FK>>
+    - assessment_id: int <<FK>>
+    - path_data: json
+    - status: enum
+}
+
+class UserProgress {
+    - progress_id: int <<PK>>
+    - user_id: int <<FK>>
+    - module_id: int <<FK>>
+    - status: enum
+    - progress_percentage: decimal
+}
+
+abstract class PathGenerator {
+    + {abstract} generatePath(assessment: SkillAssessment): PersonalizedLearningPath
+    + {abstract} adaptPath(userProgress: UserProgress): PersonalizedLearningPath
+    + {abstract} updatePath(pathId: int, newData: json): void
+}
+
+' Relationships
+LearningModule "1" -- "0..*" RAGKnowledgeBase : documented in
+User "1" -- "0..*" AIMentorInteraction : asks
+AIMentorInteraction "*" -- "1" LearningModule : about
+
+' AI Component Dependencies
+RAGAssistant ..> RAGKnowledgeBase : queries
+RAGAssistant ..> AIMentorInteraction : powers
+PathGenerator ..> SkillAssessment : analyzes
+PathGenerator ..> PersonalizedLearningPath : creates
+PathGenerator ..> UserProgress : adapts based on
+
+note top of RAGAssistant
+  AI Assistant uses RAG to:
+  - Search knowledge base
+  - Retrieve relevant content
+  - Generate contextualized responses
+end note
+
+note bottom of PathGenerator
+  Path Generator uses AI to:
+  - Analyze assessment results
+  - Create personalized paths
+  - Adapt based on progress
+end note
+
+@enduml
