@@ -432,7 +432,7 @@ GrowWise learn from Microsoft Learn about personal suggest and free lab. But Gro
 \subsection{Pluralsight}
 
 \subsubsection{Summary}
-Pluralsight is pay every month learning site for IT and coder people. Got thousand video course about code, cloud, security and more. Best thing is Skill IQ test. It check how good you are in one tech fast. Then it make personal plan for you, show what you weak and what course to watch. Company love it because can see worker skill number and train team easy.
+Pluralsight \cite{pluralsight2023} is pay every month learning site for IT and coder people. Got thousand video course about code, cloud, security and more. Best thing is Skill IQ test. It check how good you are in one tech fast. Then it make personal plan for you, show what you weak and what course to watch. Company love it because can see worker skill number and train team easy.
 
 \subsubsection{Critical Analysis}
 Strengths: Very good test system, make real personal plan. Many course, good for company training. Show you compare with other programmer.  
@@ -445,7 +445,7 @@ GrowWise and Pluralsight both start with skill test and give personal path. But 
 \subsection{CYPHER Learning (with CYPHER Agent)}
 
 \subsubsection{Summary}
-CYPHER Learning is big company learning system (LMS) for train many worker same time. It got one AI call CYPHER Agent. This AI look your job, your skill and what company want, then make personal lesson for you. It find what you weak and give right course fast. Good for big company because can track all worker and finish training easy.
+CYPHER Learning \cite{cypher2023} is big company learning system (LMS) for train many worker same time. It got one AI call CYPHER Agent. This AI look your job, your skill and what company want, then make personal lesson for you. It find what you weak and give right course fast. Good for big company because can track all worker and finish training easy.
 
 \subsubsection{Critical Analysis}
 Strengths: AI really work good for personal plan. Can teach thousand people different thing same time. Save boss time.  
@@ -458,7 +458,7 @@ CYPHER show that AI teacher inside big system can work nice. GrowWise use same i
 \subsection{DataCamp}
 
 \subsubsection{Summary}
-DataCamp is learning site only for data science, analytics and AI. It give short video then you code right away inside browser, no install anything. You use Python, R, SQL real time. It check your code fast and give feedback same minute. AI look how you do and change next lesson easy or hard for you. Also suggest what course good for your job dream. Good for beginner to pro in data field.
+DataCamp \cite{datacamp2023} is learning site only for data science, analytics and AI. It give short video then you code right away inside browser, no install anything. You use Python, R, SQL real time. It check your code fast and give feedback same minute. AI look how you do and change next lesson easy or hard for you. Also suggest what course good for your job dream. Good for beginner to pro in data field.
 
 \subsubsection{Critical Analysis}
 Strengths: Real coding inside site, feedback super fast, AI change plan for you, good for learn data skill quick.  
@@ -470,7 +470,7 @@ GrowWise like DataCamp because both give fast feedback and change lesson for you
 \subsection{freeCodeCamp}
 
 \subsubsection{Summary}
-freeCodeCamp is non-profit website teach coding 100% free. Got full course for web developer, data, machine learning and more. You learn by build real project, some project even help real charity. After finish you get free certificate that company like. Now got AI tutor help you. Many people use because free and good.
+freeCodeCamp \cite{freecodecamp2023} is non-profit website teach coding 100% free. Got full course for web developer, data, machine learning and more. You learn by build real project, some project even help real charity. After finish you get free certificate that company like. Now got AI tutor help you. Many people use because free and good.
 
 \subsubsection{Critical Analysis}
 Strengths: Totally free, give real project, certificate real, now got AI help, big community.  
@@ -483,7 +483,7 @@ GrowWise and freeCodeCamp both love real project and want free education. But Gr
 \subsection{Udacity}
 
 \subsubsection{Summary}
-Udacity sell expensive course call Nanodegree. It teach AI, cloud, data science and more. Big company like Google, Amazon help make the course so content very new and real. You do many hard project like real job and build good portfolio. Got real human mentor check your work and give feedback. After finish you ready for high pay tech job. But price very high.
+Udacity \cite{udacity2023} sell expensive course call Nanodegree. It teach AI, cloud, data science and more. Big company like Google, Amazon help make the course so content very new and real. You do many hard project like real job and build good portfolio. Got real human mentor check your work and give feedback. After finish you ready for high pay tech job. But price very high.
 
 \subsubsection{Critical Analysis}
 Strengths: Course very good and match company want. Many real project. Human mentor help you. Got deadline so you finish.  
@@ -495,7 +495,7 @@ Udacity good because teach real project and make you job ready. GrowWise do same
 \subsection{CodeCombat}
 
 \subsubsection{Summary}
-CodeCombat is game that teach you code. You play fantasy game and write real Python or JavaScript to move hero and win fight. Very fun, especially for kid and total beginner. When you stuck, AI give hint fast. Level start easy then become hard. Good way to learn basic coding without boring.
+CodeCombat \cite{codecombat2023} is game that teach you code. You play fantasy game and write real Python or JavaScript to move hero and win fight. Very fun, especially for kid and total beginner. When you stuck, AI give hint fast. Level start easy then become hard. Good way to learn basic coding without boring.
 
 \subsubsection{Critical Analysis}
 Strengths: Super fun, you want play more. Feedback come same second. AI hint help when stuck. Good for young people or first time coder.  
@@ -1933,10 +1933,744 @@ We prioritize the best pieces, take the most few such as 3-5 and submit them alo
 We made our adjustments towards enhanced speed and precision. Caching is the records of frequent questions and descriptions so as to reduce the number of calls and accelerate the process and time-outs are used to refresh it. We extend queries with module background and user history also.
 All the mentor chats are logged in AIMentorInteraction, including the question, chunks, response, time and feedback. This assists in identifying patterns, missing knowledge and enhancing retrieval.
 Each module of the front end possesses a smooth chat that displays history, indicates natural questions and clear responses. It proposes questions, displays content that is referred to, and allows users to rate responses.
-\section{Conclusion}
+\subsection{AI Evaluation Module}
+After successfully going through each module and its content, we implemented a Gemini-based chatbot AI evaluator. It has complete context about the track, user journey, and the educational content the user has consumed and studied.After that, the AI works like a reverse ChatGPT, asking the user questions through a chatbot. Once the session ends, it provides a complete progress report to the end user. In this report, it clearly shows the user’s level when they started and what their current level is now.
+
+
+
+\section{Test case Design and description}
+
+This section presents the test cases designed and executed for each major functional module of the GrowWise platform. Common shared attributes across all test cases are: a modern web browser with JavaScript enabled, the FastAPI backend running on the configured port, a PostgreSQL database connected, and internet access for AI API calls. Each test case follows the standardised format and was verified against the fully implemented system.
+
+% ----------------------------------------------------------------
+% TC-AUTH-01
+% ----------------------------------------------------------------
+\begin{table}[H]
+\footnotesize
+\centering
+\caption{Test Case TC-AUTH-01: User Login Authentication}
+\label{tab:tcauth}
+\begin{tabular}{|p{2.5cm}|p{4cm}|p{2.5cm}|p{4.5cm}|}
+\hline
+\multicolumn{4}{|c|}{\textbf{Authentication \& Account Security Module}} \\ \hline
+\multicolumn{4}{|c|}{\textbf{GrowWise v1.0 -- server/app/routers/auth.py}} \\ \hline
+\textbf{Test Case ID:} & TC-AUTH-01 & \textbf{QA Test Engineer:} & M. Umair Imran \\ \hline
+\textbf{Test case Version:} & 1.0 & \textbf{Reviewed By:} & Maryam Nasim \\ \hline
+\textbf{Test Date:} & 10/03/2026 & \textbf{Use Case Ref:} & UC-01 User Login \\ \hline
+\textbf{Revision History:} & \multicolumn{3}{p{11cm}|}{No prior revision history.} \\ \hline
+\textbf{Objective:} & \multicolumn{3}{p{11cm}|}{Verify a registered user can log in with valid credentials and receive a JWT access token.} \\ \hline
+\textbf{Product/Ver/ Module:} & \multicolumn{3}{p{11cm}|}{GrowWise v1.0 / Authentication Module} \\ \hline
+\textbf{Environment:} & \multicolumn{3}{p{11cm}|}{Web browser, FastAPI backend, PostgreSQL, Python 3.10+, Node.js 18+} \\ \hline
+\textbf{Assumptions:} & \multicolumn{3}{p{11cm}|}{User account exists in the database. Backend server is running.} \\ \hline
+\textbf{Pre-Requisite:} & \multicolumn{3}{p{11cm}|}{A registered user account with a valid email and password must exist.} \\ \hline
+\textbf{Step No.} & \textbf{Execution Description} & \multicolumn{2}{p{7cm}|}{\textbf{Procedure Result}} \\ \hline
+1 & User navigates to the login page. & \multicolumn{2}{p{7cm}|}{Login form displays email and password input fields.} \\ \hline
+2 & User enters valid credentials and clicks Submit. & \multicolumn{2}{p{7cm}|}{System validates credentials and issues JWT access and refresh tokens.} \\ \hline
+3 & System redirects user to the dashboard. & \multicolumn{2}{p{7cm}|}{Dashboard loads with the authenticated user profile data.} \\ \hline
+3-A & User enters an incorrect password. & \multicolumn{2}{p{7cm}|}{System shows ``Incorrect email or password'' error message.} \\ \hline
+\multicolumn{4}{|p{13.5cm}|}{\textbf{Comments:} Both valid and invalid credential flows tested and verified.} \\ \hline
+\multicolumn{4}{|c|}{\underline{\textbf{Passed}} \quad\quad\quad Failed \quad\quad\quad Not Executed} \\ \hline
+\end{tabular}
+\end{table}
+
+\vspace{0.5em}
+
+% ----------------------------------------------------------------
+% TC-TRACK-01
+% ----------------------------------------------------------------
+\begin{table}[H]
+\footnotesize
+\centering
+\caption{Test Case TC-TRACK-01: Learning Track Selection}
+\label{tab:tctrack}
+\begin{tabular}{|p{2.5cm}|p{4cm}|p{2.5cm}|p{4.5cm}|}
+\hline
+\multicolumn{4}{|c|}{\textbf{Track Selection Module}} \\ \hline
+\multicolumn{4}{|c|}{\textbf{GrowWise v1.0 -- server/app/routers/tracks.py}} \\ \hline
+\textbf{Test Case ID:} & TC-TRACK-01 & \textbf{QA Test Engineer:} & M. Shahzad Waris \\ \hline
+\textbf{Test case Version:} & 1.0 & \textbf{Reviewed By:} & Maryam Nasim \\ \hline
+\textbf{Test Date:} & 10/03/2026 & \textbf{Use Case Ref:} & UC-02 Track Selection \\ \hline
+\textbf{Revision History:} & \multicolumn{3}{p{11cm}|}{No prior revision history.} \\ \hline
+\textbf{Objective:} & \multicolumn{3}{p{11cm}|}{Verify user can browse available learning tracks and select one to begin personalized learning.} \\ \hline
+\textbf{Product/Ver/ Module:} & \multicolumn{3}{p{11cm}|}{GrowWise v1.0 / Track Selection Module} \\ \hline
+\textbf{Environment:} & \multicolumn{3}{p{11cm}|}{Web browser, FastAPI backend, PostgreSQL database, Python 3.10+} \\ \hline
+\textbf{Assumptions:} & \multicolumn{3}{p{11cm}|}{User is authenticated. At least one learning track exists in the database.} \\ \hline
+\textbf{Pre-Requisite:} & \multicolumn{3}{p{11cm}|}{User must be logged in. Tracks must be available in the system.} \\ \hline
+\textbf{Step No.} & \textbf{Execution Description} & \multicolumn{2}{p{7cm}|}{\textbf{Procedure Result}} \\ \hline
+1 & User navigates to the track selection page. & \multicolumn{2}{p{7cm}|}{Available learning tracks displayed as selectable cards.} \\ \hline
+2 & User selects a learning track (e.g., Web Dev). & \multicolumn{2}{p{7cm}|}{Track saved to UserTrackSelection table. Confirmation displayed.} \\ \hline
+3 & System redirects to the skill assessment. & \multicolumn{2}{p{7cm}|}{User routed to assessment page for the chosen track.} \\ \hline
+3-A & User proceeds without selecting any track. & \multicolumn{2}{p{7cm}|}{System prompts: ``Please select a track to continue''.} \\ \hline
+\multicolumn{4}{|p{13.5cm}|}{\textbf{Comments:} Correct track saved to database and assessment session correctly initiated.} \\ \hline
+\multicolumn{4}{|c|}{\underline{\textbf{Passed}} \quad\quad\quad Failed \quad\quad\quad Not Executed} \\ \hline
+\end{tabular}
+\end{table}
+
+\vspace{0.5em}
+
+% ----------------------------------------------------------------
+% TC-ASSESS-01
+% ----------------------------------------------------------------
+\begin{table}[H]
+\footnotesize
+\centering
+\caption{Test Case TC-ASSESS-01: AI Skill Assessment}
+\label{tab:tcassess}
+\begin{tabular}{|p{2.5cm}|p{4cm}|p{2.5cm}|p{4.5cm}|}
+\hline
+\multicolumn{4}{|c|}{\textbf{AI Skill Assessment Module}} \\ \hline
+\multicolumn{4}{|c|}{\textbf{GrowWise v1.0 -- server/app/routers/assessment.py}} \\ \hline
+\textbf{Test Case ID:} & TC-ASSESS-01 & \textbf{QA Test Engineer:} & Ameer Tufail \\ \hline
+\textbf{Test case Version:} & 1.0 & \textbf{Reviewed By:} & Maryam Nasim \\ \hline
+\textbf{Test Date:} & 11/03/2026 & \textbf{Use Case Ref:} & UC-03 Skill Assessment \\ \hline
+\textbf{Revision History:} & \multicolumn{3}{p{11cm}|}{No prior revision history.} \\ \hline
+\textbf{Objective:} & \multicolumn{3}{p{11cm}|}{Verify AI generates track-specific questions and evaluates answers to produce a skill score and learning path.} \\ \hline
+\textbf{Product/Ver/ Module:} & \multicolumn{3}{p{11cm}|}{GrowWise v1.0 / AI Skill Assessment Module} \\ \hline
+\textbf{Environment:} & \multicolumn{3}{p{11cm}|}{Web browser, FastAPI, Gemini/OpenAI API, PostgreSQL database} \\ \hline
+\textbf{Assumptions:} & \multicolumn{3}{p{11cm}|}{Learning track is selected. AI API is accessible. Mock AI flag is disabled.} \\ \hline
+\textbf{Pre-Requisite:} & \multicolumn{3}{p{11cm}|}{User must have a selected learning track before starting the assessment.} \\ \hline
+\textbf{Step No.} & \textbf{Execution Description} & \multicolumn{2}{p{7cm}|}{\textbf{Procedure Result}} \\ \hline
+1 & System creates an assessment session. & \multicolumn{2}{p{7cm}|}{10 AI-generated questions returned and displayed to the user.} \\ \hline
+2 & User answers all questions and submits. & \multicolumn{2}{p{7cm}|}{Answers saved to the assessment responses table in the database.} \\ \hline
+3 & User clicks Complete Assessment. & \multicolumn{2}{p{7cm}|}{AI batch-evaluates; skill score, report, and learning path generated.} \\ \hline
+3-A & User attempts to complete with unanswered questions. & \multicolumn{2}{p{7cm}|}{System prompts user to answer all remaining questions first.} \\ \hline
+\multicolumn{4}{|p{13.5cm}|}{\textbf{Comments:} AI response quality and mock fallback mode both tested and verified.} \\ \hline
+\multicolumn{4}{|c|}{\underline{\textbf{Passed}} \quad\quad\quad Failed \quad\quad\quad Not Executed} \\ \hline
+\end{tabular}
+\end{table}
+
+\vspace{0.5em}
+
+% ----------------------------------------------------------------
+% TC-LPATH-01
+% ----------------------------------------------------------------
+\begin{table}[H]
+\footnotesize
+\centering
+\caption{Test Case TC-LPATH-01: AI Learning Path Generation}
+\label{tab:tclpath}
+\begin{tabular}{|p{2.5cm}|p{4cm}|p{2.5cm}|p{4.5cm}|}
+\hline
+\multicolumn{4}{|c|}{\textbf{AI Learning Path \& Stage Management Module}} \\ \hline
+\multicolumn{4}{|c|}{\textbf{GrowWise v1.0 -- server/app/routers/learning.py}} \\ \hline
+\textbf{Test Case ID:} & TC-LPATH-01 & \textbf{QA Test Engineer:} & M. Umair Imran \\ \hline
+\textbf{Test case Version:} & 1.0 & \textbf{Reviewed By:} & Maryam Nasim \\ \hline
+\textbf{Test Date:} & 11/03/2026 & \textbf{Use Case Ref:} & UC-04 Path Generation \\ \hline
+\textbf{Revision History:} & \multicolumn{3}{p{11cm}|}{No prior revision history.} \\ \hline
+\textbf{Objective:} & \multicolumn{3}{p{11cm}|}{Verify AI generates a personalized ordered stage-based learning path after assessment completion.} \\ \hline
+\textbf{Product/Ver/ Module:} & \multicolumn{3}{p{11cm}|}{GrowWise v1.0 / AI Learning Path Module} \\ \hline
+\textbf{Environment:} & \multicolumn{3}{p{11cm}|}{FastAPI backend, Gemini/OpenAI API, PostgreSQL, Next.js frontend} \\ \hline
+\textbf{Assumptions:} & \multicolumn{3}{p{11cm}|}{Assessment is completed and result is stored in the database. AI API is accessible.} \\ \hline
+\textbf{Pre-Requisite:} & \multicolumn{3}{p{11cm}|}{Skill assessment must be completed; result stored in SkillAssessment table.} \\ \hline
+\textbf{Step No.} & \textbf{Execution Description} & \multicolumn{2}{p{7cm}|}{\textbf{Procedure Result}} \\ \hline
+1 & Assessment completion triggers path generation. & \multicolumn{2}{p{7cm}|}{AI receives user score, skill gaps, strengths, and track data.} \\ \hline
+2 & AI generates an ordered list of learning stages. & \multicolumn{2}{p{7cm}|}{Path saved as JSON in PersonalizedLearningPath table.} \\ \hline
+3 & User views roadmap on the dashboard. & \multicolumn{2}{p{7cm}|}{Stages shown in correct order with status and progress indicators.} \\ \hline
+3-A & Path generation fails due to AI API error. & \multicolumn{2}{p{7cm}|}{System shows ``Try assessment again or contact support''.} \\ \hline
+\multicolumn{4}{|p{13.5cm}|}{\textbf{Comments:} Path verified to target weak areas identified during assessment.} \\ \hline
+\multicolumn{4}{|c|}{\underline{\textbf{Passed}} \quad\quad\quad Failed \quad\quad\quad Not Executed} \\ \hline
+\end{tabular}
+\end{table}
+
+\vspace{0.5em}
+
+% ----------------------------------------------------------------
+% TC-CONTENT-01
+% ----------------------------------------------------------------
+\begin{table}[H]
+\footnotesize
+\centering
+\caption{Test Case TC-CONTENT-01: Stage Content Generation and Progress Tracking}
+\label{tab:tccontent}
+\begin{tabular}{|p{2.5cm}|p{4cm}|p{2.5cm}|p{4.5cm}|}
+\hline
+\multicolumn{4}{|c|}{\textbf{Learning Content Generation \& Progress Module}} \\ \hline
+\multicolumn{4}{|c|}{\textbf{GrowWise v1.0 -- server/app/routers/content.py}} \\ \hline
+\textbf{Test Case ID:} & TC-CONTENT-01 & \textbf{QA Test Engineer:} & M. Shahzad Waris \\ \hline
+\textbf{Test case Version:} & 1.0 & \textbf{Reviewed By:} & Maryam Nasim \\ \hline
+\textbf{Test Date:} & 12/03/2026 & \textbf{Use Case Ref:} & UC-11 Module Access \\ \hline
+\textbf{Revision History:} & \multicolumn{3}{p{11cm}|}{No prior revision history.} \\ \hline
+\textbf{Objective:} & \multicolumn{3}{p{11cm}|}{Verify AI generates structured stage content and user progress is tracked correctly upon completion.} \\ \hline
+\textbf{Product/Ver/ Module:} & \multicolumn{3}{p{11cm}|}{GrowWise v1.0 / Content Generation \& Progress Module} \\ \hline
+\textbf{Environment:} & \multicolumn{3}{p{11cm}|}{FastAPI, Gemini API with Google Search grounding, PostgreSQL} \\ \hline
+\textbf{Assumptions:} & \multicolumn{3}{p{11cm}|}{Learning path exists and the target stage is unlocked for the user.} \\ \hline
+\textbf{Pre-Requisite:} & \multicolumn{3}{p{11cm}|}{Personalized learning path must be generated; user must be on an active stage.} \\ \hline
+\textbf{Step No.} & \textbf{Execution Description} & \multicolumn{2}{p{7cm}|}{\textbf{Procedure Result}} \\ \hline
+1 & User opens a learning stage. & \multicolumn{2}{p{7cm}|}{Content generation request sent; AI fetches and structures the content.} \\ \hline
+2 & AI generates content using search-grounded results. & \multicolumn{2}{p{7cm}|}{Structured content saved to stage content table and displayed.} \\ \hline
+3 & User marks the stage as complete. & \multicolumn{2}{p{7cm}|}{User progress updated to 100\%. Next stage unlocked automatically.} \\ \hline
+3-A & User accesses a stage with an invalid ID. & \multicolumn{2}{p{7cm}|}{System returns a 404 error with a descriptive error message.} \\ \hline
+\multicolumn{4}{|p{13.5cm}|}{\textbf{Comments:} Content quality verified. Progress persists correctly on page refresh.} \\ \hline
+\multicolumn{4}{|c|}{\underline{\textbf{Passed}} \quad\quad\quad Failed \quad\quad\quad Not Executed} \\ \hline
+\end{tabular}
+\end{table}
+
+\vspace{0.5em}
+
+% ----------------------------------------------------------------
+% TC-RAG-01
+% ----------------------------------------------------------------
+\begin{table}[H]
+\footnotesize
+\centering
+\caption{Test Case TC-RAG-01: RAG Mentor Chat Interaction}
+\label{tab:tcrag}
+\begin{tabular}{|p{2.5cm}|p{4cm}|p{2.5cm}|p{4.5cm}|}
+\hline
+\multicolumn{4}{|c|}{\textbf{RAG Mentor Chat Module}} \\ \hline
+\multicolumn{4}{|c|}{\textbf{GrowWise v1.0 -- server/app/routers/chat.py}} \\ \hline
+\textbf{Test Case ID:} & TC-RAG-01 & \textbf{QA Test Engineer:} & Ameer Tufail \\ \hline
+\textbf{Test case Version:} & 1.0 & \textbf{Reviewed By:} & Maryam Nasim \\ \hline
+\textbf{Test Date:} & 12/03/2026 & \textbf{Use Case Ref:} & UC-05 RAG Assistance \\ \hline
+\textbf{Revision History:} & \multicolumn{3}{p{11cm}|}{No prior revision history.} \\ \hline
+\textbf{Objective:} & \multicolumn{3}{p{11cm}|}{Verify AI mentor provides context-aware answers by retrieving knowledge base content via the RAG pipeline.} \\ \hline
+\textbf{Product/Ver/ Module:} & \multicolumn{3}{p{11cm}|}{GrowWise v1.0 / RAG Mentor Chat Module} \\ \hline
+\textbf{Environment:} & \multicolumn{3}{p{11cm}|}{FastAPI, external RAG API, Gemini/OpenAI, PostgreSQL with pgvector} \\ \hline
+\textbf{Assumptions:} & \multicolumn{3}{p{11cm}|}{User is in an active learning stage. External RAG API is accessible.} \\ \hline
+\textbf{Pre-Requisite:} & \multicolumn{3}{p{11cm}|}{Active learning stage must exist. Knowledge base must have entries for the track.} \\ \hline
+\textbf{Step No.} & \textbf{Execution Description} & \multicolumn{2}{p{7cm}|}{\textbf{Procedure Result}} \\ \hline
+1 & User opens mentor chat for current stage. & \multicolumn{2}{p{7cm}|}{Chat session created and scoped to the current stage context.} \\ \hline
+2 & User sends a question about the topic. & \multicolumn{2}{p{7cm}|}{Query sent to RAG system; semantic retrieval performed on knowledge base.} \\ \hline
+3 & RAG returns top matching knowledge chunks. & \multicolumn{2}{p{7cm}|}{AI generates and displays a context-aware answer to the user.} \\ \hline
+3-A & External RAG API is unavailable. & \multicolumn{2}{p{7cm}|}{System falls back to a base AI response without RAG context.} \\ \hline
+\multicolumn{4}{|p{13.5cm}|}{\textbf{Comments:} Retrieval verified to return correct module-relevant content chunks.} \\ \hline
+\multicolumn{4}{|c|}{\underline{\textbf{Passed}} \quad\quad\quad Failed \quad\quad\quad Not Executed} \\ \hline
+\end{tabular}
+\end{table}
+
+\vspace{0.5em}
+
+% ----------------------------------------------------------------
+% TC-EVAL-01
+% ----------------------------------------------------------------
+\begin{table}[H]
+\footnotesize
+\centering
+\caption{Test Case TC-EVAL-01: AI Evaluation Validator Interview}
+\label{tab:tceval}
+\begin{tabular}{|p{2.5cm}|p{4cm}|p{2.5cm}|p{4.5cm}|}
+\hline
+\multicolumn{4}{|c|}{\textbf{AI Evaluation Module -- Validator Interview}} \\ \hline
+\multicolumn{4}{|c|}{\textbf{GrowWise v1.0 -- server/app/routers/evaluation.py}} \\ \hline
+\textbf{Test Case ID:} & TC-EVAL-01 & \textbf{QA Test Engineer:} & M. Umair Imran \\ \hline
+\textbf{Test case Version:} & 1.0 & \textbf{Reviewed By:} & Maryam Nasim \\ \hline
+\textbf{Test Date:} & 13/03/2026 & \textbf{Use Case Ref:} & UC-06 Project Assignment \\ \hline
+\textbf{Revision History:} & \multicolumn{3}{p{11cm}|}{No prior revision history.} \\ \hline
+\textbf{Objective:} & \multicolumn{3}{p{11cm}|}{Verify AI conducts a structured interview and produces a scored report on reasoning, problem-solving, and job readiness.} \\ \hline
+\textbf{Product/Ver/ Module:} & \multicolumn{3}{p{11cm}|}{GrowWise v1.0 / AI Evaluation Module} \\ \hline
+\textbf{Environment:} & \multicolumn{3}{p{11cm}|}{FastAPI, Gemini API, PostgreSQL, React frontend (Validator page)} \\ \hline
+\textbf{Assumptions:} & \multicolumn{3}{p{11cm}|}{Required learning modules are completed. AI API is available and responding.} \\ \hline
+\textbf{Pre-Requisite:} & \multicolumn{3}{p{11cm}|}{Required modules must be completed. No active evaluation session must already exist.} \\ \hline
+\textbf{Step No.} & \textbf{Execution Description} & \multicolumn{2}{p{7cm}|}{\textbf{Procedure Result}} \\ \hline
+1 & User starts an evaluation session. & \multicolumn{2}{p{7cm}|}{AI sends introductory question with full track and path context.} \\ \hline
+2 & User completes minimum required dialogue turns. & \multicolumn{2}{p{7cm}|}{Each exchange logged; AI asks contextual follow-up questions.} \\ \hline
+3 & User clicks Complete Evaluation. & \multicolumn{2}{p{7cm}|}{AI scores reasoning and job readiness; evaluation report generated.} \\ \hline
+3-A & User tries to complete before minimum dialogues. & \multicolumn{2}{p{7cm}|}{Complete button stays disabled until minimum threshold is met.} \\ \hline
+\multicolumn{4}{|p{13.5cm}|}{\textbf{Comments:} Minimum dialogue enforcement and evaluation scoring quality verified.} \\ \hline
+\multicolumn{4}{|c|}{\underline{\textbf{Passed}} \quad\quad\quad Failed \quad\quad\quad Not Executed} \\ \hline
+\end{tabular}
+\end{table}
+
+\vspace{0.5em}
+
+% ----------------------------------------------------------------
+% TC-PROGRESS-01
+% ----------------------------------------------------------------
+\begin{table}[H]
+\footnotesize
+\centering
+\caption{Test Case TC-PROGRESS-01: Progress Insights and Improvement Analysis}
+\label{tab:tcprogress}
+\begin{tabular}{|p{2.5cm}|p{4cm}|p{2.5cm}|p{4.5cm}|}
+\hline
+\multicolumn{4}{|c|}{\textbf{Progress Insights, Reports \& Improvement Analysis Module}} \\ \hline
+\multicolumn{4}{|c|}{\textbf{GrowWise v1.0 -- server/app/routers/progress.py}} \\ \hline
+\textbf{Test Case ID:} & TC-PROGRESS-01 & \textbf{QA Test Engineer:} & Ameer Tufail \\ \hline
+\textbf{Test case Version:} & 1.0 & \textbf{Reviewed By:} & Maryam Nasim \\ \hline
+\textbf{Test Date:} & 13/03/2026 & \textbf{Use Case Ref:} & UC-10 User Progress \\ \hline
+\textbf{Revision History:} & \multicolumn{3}{p{11cm}|}{No prior revision history.} \\ \hline
+\textbf{Objective:} & \multicolumn{3}{p{11cm}|}{Verify dashboard shows accurate progress metrics and improvement analysis displays correct before-vs-after skill comparison.} \\ \hline
+\textbf{Product/Ver/ Module:} & \multicolumn{3}{p{11cm}|}{GrowWise v1.0 / Progress \& Insights Module} \\ \hline
+\textbf{Environment:} & \multicolumn{3}{p{11cm}|}{FastAPI, PostgreSQL, React with Recharts, Gemini API for analysis} \\ \hline
+\textbf{Assumptions:} & \multicolumn{3}{p{11cm}|}{User has completed at least one assessment and one evaluation session.} \\ \hline
+\textbf{Pre-Requisite:} & \multicolumn{3}{p{11cm}|}{Path completion report and evaluation result must exist in the database.} \\ \hline
+\textbf{Step No.} & \textbf{Execution Description} & \multicolumn{2}{p{7cm}|}{\textbf{Procedure Result}} \\ \hline
+1 & User opens the dashboard. & \multicolumn{2}{p{7cm}|}{Progress charts, completion percentage, and key metrics displayed.} \\ \hline
+2 & User requests improvement analysis. & \multicolumn{2}{p{7cm}|}{AI generates before-vs-after skill comparison with structured data.} \\ \hline
+3 & Report displayed with cards, charts, and tips. & \multicolumn{2}{p{7cm}|}{Data matches stored assessment and evaluation scores in the database.} \\ \hline
+3-A & No progress data exists for the user. & \multicolumn{2}{p{7cm}|}{System shows an empty state with a helpful guidance message.} \\ \hline
+\multicolumn{4}{|p{13.5cm}|}{\textbf{Comments:} Chart values verified against raw database scores. Empty state handled correctly.} \\ \hline
+\multicolumn{4}{|c|}{\underline{\textbf{Passed}} \quad\quad\quad Failed \quad\quad\quad Not Executed} \\ \hline
+\end{tabular}
+\end{table}
+
+\FloatBarrier
+
+\section{Test Metrics}
+
+This section summarizes the quantitative metrics for all test cases executed across the GrowWise platform. Three views are provided: an overall summary, a module-wise execution breakdown, and a requirements traceability matrix.
+
+\subsection{Test Metric No.1: Overall Test Summary}
+
+\begin{table}[H]
+\footnotesize
+\centering
+\caption{Overall Test Metrics Summary}
+\label{tab:metric01}
+\begin{tabular}{|p{5cm}|p{2.5cm}|p{5.5cm}|}
+\hline
+\textbf{Metric} & \textbf{Value} & \textbf{Description} \\ \hline
+Total Test Cases Designed & 8 & One test case designed per major system module \\ \hline
+Total Test Cases Executed & 8 & All designed test cases were executed \\ \hline
+Number of Test Cases Passed & 8 & All test cases produced the expected results \\ \hline
+Number of Test Cases Failed & 0 & No test cases failed after final system testing \\ \hline
+Test Cases Not Executed & 0 & All designed cases were fully executed \\ \hline
+Pass Rate & 100\% & (Passed $\div$ Executed) $\times$ 100 = (8/8) $\times$ 100 \\ \hline
+Test Case Defect Density & 0\% & (Failed $\div$ Executed) $\times$ 100 = (0/8) $\times$ 100 \\ \hline
+Test Case Effectiveness & 100\% & All defects found during testing were detected by the test cases \\ \hline
+Requirement Coverage & 100\% & All 8 functional requirement areas covered by at least one test case \\ \hline
+Traceability Matrix & Covered & Each requirement has a corresponding test case (see Metric No.3) \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Test Metric No.2: Module-Wise Test Execution Results}
+
+\begin{table}[H]
+\footnotesize
+\centering
+\caption{Module-Wise Test Execution Results}
+\label{tab:metric02}
+\begin{tabular}{|p{4.3cm}|p{1.5cm}|p{1.5cm}|p{1.5cm}|p{1.5cm}|p{1.5cm}|}
+\hline
+\textbf{Module Name} & \textbf{Designed} & \textbf{Executed} & \textbf{Passed} & \textbf{Failed} & \textbf{Pass \%} \\ \hline
+Authentication \& Account Security & 1 & 1 & 1 & 0 & 100\% \\ \hline
+Track Selection & 1 & 1 & 1 & 0 & 100\% \\ \hline
+AI Skill Assessment & 1 & 1 & 1 & 0 & 100\% \\ \hline
+AI Learning Path Generation & 1 & 1 & 1 & 0 & 100\% \\ \hline
+Content Generation \& Progress & 1 & 1 & 1 & 0 & 100\% \\ \hline
+RAG Mentor Chat & 1 & 1 & 1 & 0 & 100\% \\ \hline
+AI Evaluation (Validator) & 1 & 1 & 1 & 0 & 100\% \\ \hline
+Progress Insights \& Analysis & 1 & 1 & 1 & 0 & 100\% \\ \hline
+\textbf{Total} & \textbf{8} & \textbf{8} & \textbf{8} & \textbf{0} & \textbf{100\%} \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Test Metric No.3: Requirements Traceability Matrix}
+
+\begin{table}[H]
+\footnotesize
+\centering
+\caption{Requirements Traceability Matrix}
+\label{tab:metric03}
+\begin{tabular}{|p{2.8cm}|p{5cm}|p{2.3cm}|p{2.5cm}|}
+\hline
+\textbf{Requirement ID} & \textbf{Functional Requirement} & \textbf{Test Case} & \textbf{Status} \\ \hline
+FR-AUTH-01 & User login and JWT token issuance & TC-AUTH-01 & Covered \\ \hline
+FR-TRACK-01 & Learning track selection and storage & TC-TRACK-01 & Covered \\ \hline
+FR-ASSESS-01 & AI question generation and batch scoring & TC-ASSESS-01 & Covered \\ \hline
+FR-LPATH-01 & Personalized learning path generation & TC-LPATH-01 & Covered \\ \hline
+FR-CONTENT-01 & AI stage content generation and progress tracking & TC-CONTENT-01 & Covered \\ \hline
+FR-RAG-01 & RAG-based context-aware mentor chat responses & TC-RAG-01 & Covered \\ \hline
+FR-EVAL-01 & AI evaluation interview and scored report & TC-EVAL-01 & Covered \\ \hline
+FR-PROGRESS-01 & Progress dashboard and improvement analysis & TC-PROGRESS-01 & Covered \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Conclusion}
 This chapter covered build decisions and tested how it works on various levels. The results demonstrate that a flexible learning flow supported by AI is achievable and preconditions further construction and development.
 
-\chapter{Conclusions and Future Work}
+
+\chapter{User Manual}
+
+\section{Introduction}
+
+This chapter provides a complete step-by-step guide for using the GrowWise AI-powered adaptive learning platform. It covers every feature of the application from account creation to completing a full personalized learning journey. Any user, whether a beginner or an experienced developer, can follow this manual to navigate and use the platform without prior knowledge of its internals.
+
+\section{System Requirements}
+
+Before accessing GrowWise, ensure the following are in place:
+
+\begin{itemize}
+    \item A modern web browser: Google Chrome, Mozilla Firefox, Microsoft Edge, or Safari (latest stable version recommended).
+    \item JavaScript must be enabled in the browser.
+    \item A stable internet connection is required at all times, as the platform relies on live AI API calls.
+    \item No additional software installation is needed. The platform runs entirely in the browser.
+\end{itemize}
+
+\section{Accessing the Platform}
+
+Open your web browser and navigate to the GrowWise application URL. You will be presented with the Home page. From here you can:
+
+\begin{itemize}
+    \item Click \textbf{Take Free Assessment} or \textbf{Get Started} to begin. This will take you to the Sign Up page if you do not have an account.
+    \item Click \textbf{Go to Dashboard} if you are already logged in.
+    \item Click \textbf{Blog} in the footer to read platform articles.
+\end{itemize}
+
+\section{Sign Up}
+
+To create a new GrowWise account, follow these steps:
+
+\begin{enumerate}
+    \item From the Home page, click \textbf{Take Free Assessment} or navigate directly to \texttt{/signup}.
+    \item The Sign Up page will load with the heading \textit{Join Grow Wise}.
+    \item Fill in the following fields:
+        \begin{itemize}
+            \item \textbf{Full Name}: your complete name.
+            \item \textbf{Email}: a valid email address (used for login and password reset).
+            \item \textbf{Password}: minimum 8 characters.
+        \end{itemize}
+    \item Tick the \textbf{Terms and Conditions} checkbox. The \textbf{Create Account} button will remain disabled until this box is checked.
+    \item Click \textbf{Create Account}. The button will show a loading state while the request is processed.
+    \item On success, you will be automatically logged in and redirected to the Home page. A toast notification will appear: \textit{"Account ready, \{your name\}"}.
+    \item If automatic login fails after registration, a success screen will appear with a \textbf{Proceed to Login} button. Click it to log in manually.
+\end{enumerate}
+
+\section{Login}
+
+To log in to an existing GrowWise account:
+
+\begin{enumerate}
+    \item Navigate to \texttt{/login} or click \textbf{Log in} from the Sign Up page.
+    \item Enter your registered \textbf{Email} and \textbf{Password}.
+    \item Click \textbf{Log In}. The button shows a loading indicator while verifying credentials.
+    \item On success, you are redirected to the Home page with a toast notification: \textit{"Welcome back, \{your name\}"}.
+\end{enumerate}
+
+As shown in Figure \ref{fig:login}, the login screen displays the email and password fields clearly.
+
+\subsection{Forgot Password}
+
+If you have forgotten your password:
+
+\begin{enumerate}
+    \item On the Login page, click \textbf{Forgot your password? Reset it}.
+    \item Enter your registered \textbf{Email} address.
+    \item Click \textbf{Send reset instructions}.
+    \item A message will appear: \textit{"If an account exists for this email, a reset link has been sent."}
+    \item Check your email inbox for the reset token.
+\end{enumerate}
+
+\subsection{Reset Password}
+
+Once you have received a reset token by email:
+
+\begin{enumerate}
+    \item Navigate to \texttt{/reset-password} or click \textbf{Already have a reset token?} on the Forgot Password page.
+    \item Paste your \textbf{Reset token} into the token field.
+    \item Enter your \textbf{New password} (minimum 8 characters).
+    \item Re-enter the same password in \textbf{Confirm new password}.
+    \item Click \textbf{Reset password}.
+    \item On success: \textit{"Password reset complete. You can now sign in with the new password."} Return to the Login page and sign in with your new password.
+\end{enumerate}
+
+\section{Selecting a Learning Track}
+
+After logging in, the first step in your learning journey is choosing a track.
+
+\begin{enumerate}
+    \item Click \textbf{Take Free Assessment} on the Home page, or click \textbf{Choose Track} from any page in the top bar.
+    \item The \textbf{Select Your Track} page loads, showing all available learning tracks as cards (e.g., Web Development, AI/ML, Cybersecurity).
+    \item Each card displays the track name and a short description.
+    \item Click \textbf{Start Assessment} on the track you want to begin.
+    \item A full-screen overlay will appear: \textit{"Generating Your Assessment\ldots"} The system is creating your personalised skill test.
+    \item You will be automatically redirected to the Assessment page once the questions are ready.
+\end{enumerate}
+
+\noindent\textbf{Notes:}
+\begin{itemize}
+    \item You can only start one assessment at a time; other track buttons are disabled while one is loading.
+    \item If tracks fail to load, a \textbf{Retry} button is shown. Click it to reload.
+\end{itemize}
+
+As shown in Figure \ref{fig:choose_path}, the track selection screen presents all available tracks clearly.
+
+\section{Skill Assessment}
+
+The skill assessment measures your current knowledge and problem-solving ability for the chosen track. It is used to generate a personalised learning path.
+
+\begin{enumerate}
+    \item The assessment page loads with up to \textbf{10 questions} generated by AI for your selected track.
+    \item A \textbf{50-minute countdown} timer appears in the top-right corner.
+    \item The current question number and a dot-progress bar are shown at the top.
+    \item Each question displays:
+        \begin{itemize}
+            \item A \textbf{difficulty badge} and \textbf{question type badge}.
+            \item The question text (rendered with markdown formatting).
+        \end{itemize}
+    \item Answering questions:
+        \begin{itemize}
+            \item \textbf{Multiple choice (MCQ):} Click one of the option buttons (A, B, C, D). Clicking an option submits it automatically and moves to the next question.
+            \item \textbf{Written answer:} Type your answer in the text box and click \textbf{Submit Answer}. The button is disabled until you type something.
+        \end{itemize}
+    \item After the last question is answered, the assessment is submitted automatically. A full-screen overlay shows \textit{"Finalizing assessment\ldots"}.
+    \item The timer reaching zero also triggers automatic submission.
+    \item On completion, you are redirected to the \textbf{Dashboard} and a toast notification confirms the assessment is complete.
+\end{enumerate}
+
+\noindent\textbf{Quitting early:}
+\begin{itemize}
+    \item Click \textbf{Quit} (top-right) to open a modal.
+    \item Choose \textbf{Resume} to continue or \textbf{Exit} to leave. Unanswered questions will not be submitted if you exit early.
+\end{itemize}
+
+As shown in Figure \ref{fig:skill_assessment}, the assessment interface presents questions with a timer and progress tracker.
+
+\section{Dashboard}
+
+The Dashboard is your central hub for tracking progress, reviewing assessments, and navigating to your learning path. It is accessible from the left sidebar under \textbf{Overview}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{Figures/Assesment report.png}
+    \caption{Dashboard showing the assessment report and progress overview.}
+    \label{fig:dashboard_manual}
+\end{figure}
+
+\subsection{Stat Cards}
+At the top of the Dashboard, four summary cards are displayed:
+\begin{itemize}
+    \item \textbf{Assessments}: total number of assessments taken.
+    \item \textbf{Latest Score}: your most recent assessment score percentage.
+    \item \textbf{Learning Completion}: percentage of your current learning path completed.
+    \item \textbf{Learning Time}: total hours spent learning.
+\end{itemize}
+
+\subsection{Activity Timeline}
+Below the stat cards, an activity chart shows your learning activity over the selected time window (Last 7, 30, or 90 days). Use the \textbf{dropdown} in the top bar to switch between time windows. Click the \textbf{Refresh} icon to reload all dashboard data.
+
+\subsection{Assessment History and AI Report}
+\begin{enumerate}
+    \item The left column lists all your past assessment sessions by date and track.
+    \item Click any row to load the \textbf{AI Assessment Report} for that session on the right side.
+    \item The report shows: executive summary, overall assessment, dimension scores, and learning priorities.
+    \item At the bottom of the report, click \textbf{Continue Learning} to open your personalised learning path.
+\end{enumerate}
+
+\subsection{Comparing Two Assessments}
+\begin{enumerate}
+    \item In the assessment history list, tick the \textbf{checkbox} on two different sessions.
+    \item The \textbf{Compare Selected} button (above the list) becomes active.
+    \item Click \textbf{Compare Selected} to open a modal showing a side-by-side comparison of the two attempts.
+    \item Close the modal by clicking the \textbf{X} button.
+\end{enumerate}
+
+\subsection{Path Completion Banner}
+When your full learning path is complete, a banner appears at the top of the Dashboard with:
+\begin{itemize}
+    \item A snippet of your completion report.
+    \item \textbf{Progress Analysis}: navigates to your Improvement Analysis page.
+    \item \textbf{View Full Report}: opens the learning summary modal.
+\end{itemize}
+
+\section{Learning Path}
+
+The Learning Path page (accessible via \textbf{Learning Path} in the left sidebar) shows your AI-generated personalised curriculum organised into stages. See Figure \ref{fig:roadmap} for the roadmap view.
+
+\subsection{Navigating Stages}
+\begin{enumerate}
+    \item The left column lists all stages numbered in order (e.g., \textit{1. Introduction to APIs}, \textit{2. Backend Fundamentals}).
+    \item Click any stage name to load it in the main panel.
+    \item The selected stage shows its title, focus area, and a progress grid (completion \%, items done, time spent).
+\end{enumerate}
+
+\subsection{Generating Stage Content}
+When a stage has no content yet:
+\begin{enumerate}
+    \item A \textbf{Generate Content} button or \textbf{Generate Stage Content} prompt will appear in the stage panel.
+    \item Click it. The system will use AI with live search grounding to create 8 structured content items for that stage.
+    \item Wait for the content to load (this may take a few seconds as AI generates it).
+    \item Each content item shows: title, description, type (video / text / interactive), difficulty, estimated duration, and a reading/viewing body.
+    \item Some items include an \textbf{Open resource} link. Click it to open the external learning resource in a new tab.
+\end{enumerate}
+
+As shown in Figure \ref{fig:module_rag}, the learning module displays AI-generated content alongside the mentor chat.
+
+\subsection{Tracking Your Progress}
+For each content item in a stage:
+\begin{enumerate}
+    \item A \textbf{progress strip} at the bottom shows your current status: \textit{Not started}, \textit{X\% complete}, or \textit{Completed}.
+    \item If not started, click \textbf{Start Tracking} to begin timing your session.
+    \item If in progress, use:
+        \begin{itemize}
+            \item \textbf{Update (+25\%, +10m)}: logs 25\% more completion and 10 additional minutes.
+            \item \textbf{Mark Complete}: sets the item to 100\% complete.
+        \end{itemize}
+    \item Once all content items in all stages are marked complete, a \textbf{completion banner} appears at the top of the page.
+\end{enumerate}
+
+\subsection{Using the AI Mentor Chat}
+The right column on the Learning Path page contains the \textbf{AI Mentor Chat}. This is your context-aware AI assistant for the current stage.
+
+\begin{enumerate}
+    \item Type your question about the current topic in the text field at the bottom of the chat.
+    \item Press \textbf{Enter} or click \textbf{Send} to submit your question.
+    \item The AI Mentor will search the knowledge base (RAG system) for relevant content and respond with a context-aware answer.
+    \item Previous messages are shown in the chat history above.
+    \item If the mentor is responding, a \textit{"Mentor is responding\ldots"} indicator appears.
+\end{enumerate}
+
+\noindent\textbf{Tips:}
+\begin{itemize}
+    \item Ask specific questions about the topics in the current stage for the best answers.
+    \item If the RAG system is temporarily unavailable, the mentor will still respond using its base AI knowledge.
+\end{itemize}
+
+\subsection{Completing the Learning Path}
+
+When all stages and content items are done:
+\begin{enumerate}
+    \item A completion banner appears at the top of the Learning Path page.
+    \item Click \textbf{View Learning Report} to open a modal summarising your full learning journey.
+    \item Click \textbf{View Progress Analysis} to navigate to your Improvement Analysis page.
+    \item Click \textbf{Start AI Evaluation} to begin the AI Validator Interview and get a job-readiness score.
+\end{enumerate}
+
+\section{AI Evaluation (Validator Interview)}
+
+The AI Evaluation module, accessible via \textbf{Real-World Validator} in the left sidebar, conducts a structured AI interview to assess your reasoning, problem-solving ability, and job readiness. See Figure \ref{fig:ai_engineer}.
+
+\subsection{Starting a New Session}
+\begin{enumerate}
+    \item On the Validator page, locate the \textbf{Start New Session} panel on the right sidebar.
+    \item Enter your \textbf{Path ID} (numeric; you can find this in your learning path URL or be directed here automatically from the learning path completion banner).
+    \item Click \textbf{Create Session}. The AI will prepare an introductory question based on your full track and learning context.
+    \item The session status badge will update once the session is ready.
+\end{enumerate}
+
+\noindent\textbf{Note:} If you navigated here by clicking \textbf{Start AI Evaluation} from the Learning Path page, the session is created automatically using your current path ID.
+
+\subsection{Conducting the AI Interview}
+\begin{enumerate}
+    \item The AI Mentor opens with an introductory question displayed in the chat window (left side).
+    \item Read the question carefully, then type your response in the \textbf{Your answer} text area.
+    \item Press \textbf{Enter} or click \textbf{Send} to submit your response (use Shift+Enter for a new line without submitting).
+    \item The AI will analyse your answer and ask follow-up questions to probe your understanding further.
+    \item Continue answering. You must complete at least \textbf{3 dialogue turns} before you can end the evaluation.
+    \item A hint at the bottom of the chat reminds you of the minimum dialogue requirement.
+\end{enumerate}
+
+\subsection{Completing the Evaluation}
+\begin{enumerate}
+    \item Once you have completed at least 3 dialogue turns, the \textbf{Complete Evaluation} button (in the right sidebar under \textbf{Evaluation Result}) becomes active.
+    \item Click \textbf{Complete Evaluation}. The AI will analyse your full conversation and generate a scored report.
+    \item The evaluation result panel will display:
+        \begin{itemize}
+            \item \textbf{Reasoning score}: how logically you approached problems.
+            \item \textbf{Problem-solving score}: quality of your solutions.
+            \item \textbf{Job readiness level}: overall readiness rating.
+            \item \textbf{AI feedback}: written narrative of your performance.
+        \end{itemize}
+    \item Click \textbf{View Full Report} to open the full Evaluation Report page.
+    \item Click \textbf{View Progress Analysis} to navigate to the Improvement Analysis page.
+\end{enumerate}
+
+\section{Evaluation Report}
+
+The Evaluation Report page (\texttt{/evaluation/\{id\}}) displays the complete results of a specific evaluation session.
+
+\begin{enumerate}
+    \item The page loads automatically after evaluation completion, or you can access it via \textbf{View Full Report} from the Validator.
+    \item The report shows:
+        \begin{itemize}
+            \item Session and path identifiers, and the date of evaluation.
+            \item \textbf{Reasoning}, \textbf{Problem Solving}, and \textbf{Readiness} metric scores.
+            \item \textbf{AI Feedback}: a detailed written evaluation of your performance.
+            \item \textbf{Full Conversation}: the complete transcript of your AI interview session.
+        \end{itemize}
+    \item Click \textbf{Back to Validator} to return to the Validator page.
+    \item Click \textbf{View Progress Analysis} to see your full improvement journey.
+\end{enumerate}
+
+\section{Improvement Analysis}
+
+The Improvement Analysis page (\texttt{/improvement/\{pathId\}}) shows a comprehensive before-and-after comparison of your skills across the entire learning journey.
+
+\begin{enumerate}
+    \item Access it via \textbf{Progress Analysis} on the Dashboard, the Completion Banner on the Learning Path, or the Validator page.
+    \item The page loads your full progress data. It displays:
+        \begin{itemize}
+            \item An \textbf{AI evaluation summary} banner at the top.
+            \item A \textbf{metrics grid} showing key performance numbers.
+            \item \textbf{Charts} (before vs after comparison graphs).
+            \item A \textbf{story timeline} of your learning journey.
+            \item \textbf{Before} and \textbf{After} skill columns: scores, levels, and optionally expandable initial assessment answers (\textbf{Show/Hide} toggle).
+            \item \textbf{Improvement percentage} in the middle column where applicable.
+            \item A \textbf{Detailed Progress Analysis} written report (AI-generated).
+            \item \textbf{Full Interview Transcript}: click the \textbf{Show} button to expand the complete evaluation conversation.
+        \end{itemize}
+    \item At the bottom:
+        \begin{itemize}
+            \item Click \textbf{Back to Learning Path} to return to \texttt{/course}.
+            \item Click \textbf{Start New Evaluation} to navigate to \texttt{/validator} and run another interview.
+        \end{itemize}
+\end{enumerate}
+
+As shown in Figures \ref{fig:insights} and \ref{fig:insight2}, the insights dashboard provides a rich visual view of your learning progress.
+
+\section{Account and Security Settings}
+
+The Account \& Security page (\texttt{/account}) is accessible from the left sidebar under \textbf{Account \& Security}.
+
+\subsection{Updating Your Profile}
+\begin{enumerate}
+    \item The page loads your current \textbf{Full Name} and \textbf{Email}.
+    \item Edit either field as needed.
+    \item Click \textbf{Save profile}.
+    \item A success message \textit{"Profile updated successfully."} appears below the button on success.
+\end{enumerate}
+
+\subsection{Changing Your Password}
+\begin{enumerate}
+    \item In the \textbf{Change Password} section, enter your \textbf{Current password}.
+    \item Enter a \textbf{New password} (minimum 8 characters).
+    \item Re-enter the same new password in \textbf{Confirm new password}.
+    \item Click \textbf{Update password}.
+    \item On success, the fields are cleared and \textit{"Password changed successfully."} is shown.
+\end{enumerate}
+
+\subsection{Managing Active Sessions}
+The \textbf{Active Sessions} section lists all devices currently logged into your account.
+
+\begin{itemize}
+    \item Each session shows: session ID (truncated), device/browser info, IP address, and last activity.
+    \item Your current session is marked with a \textbf{Current} badge.
+    \item Click \textbf{Revoke} on any session to log it out remotely.
+    \item Click \textbf{Revoke Others} to log out all other devices (a confirmation dialog will appear).
+    \item Click \textbf{Revoke All} to log out every session, including the current one. You will be redirected to the Home page.
+    \item Click \textbf{Refresh} to reload the session list.
+\end{itemize}
+
+\subsection{Deleting Your Account}
+\textbf{Warning: This action is permanent and cannot be undone.}
+
+\begin{enumerate}
+    \item Scroll to the \textbf{Delete Account} section.
+    \item Type the word \textbf{DELETE} (case-insensitive) in the confirmation field.
+    \item Click \textbf{Delete my account}.
+    \item A second browser confirmation dialog will appear. Click \textbf{OK} to confirm.
+    \item Your account and all data are permanently deleted. You will be redirected to the Home page.
+\end{enumerate}
+
+\section{Logging Out}
+
+To log out of GrowWise:
+
+\begin{enumerate}
+    \item Open the \textbf{Account \& Security} page from the left sidebar.
+    \item In the \textbf{Active Sessions} section, locate the session marked \textbf{Current}.
+    \item Click \textbf{Log Out This Device}.
+    \item You will be redirected to the Home page and the session will be terminated.
+\end{enumerate}
+
+Alternatively, you can log out all devices at once by clicking \textbf{Revoke All} in the Active Sessions section.
+
+\section{Conclusion}
+
+This chapter provided a complete walkthrough of the GrowWise platform. A new user can follow these steps in sequence: Sign Up, Log In, Select a Track, Complete the Assessment, follow the personalised Learning Path, use the AI Mentor Chat, complete the AI Evaluation, and review their Improvement Analysis. This covers the full learning cycle from start to finish. The platform is designed to be self-explanatory, with clear guidance at every step to ensure learners can progress without confusion.
+
+
+\chapter{Conclusions}
 \section{Project Summary and Achievements}
 The final project is the construction of GrowWise, an AI-enhanced adaptive learning platform, which seals huge gaps in the way developers learn. It struck the overall target of creating a personalized system centered on approaches, and passing the outdated fixed courses to deliver vibrant, conscious education tailored to each individual. In examining fifteen other platforms we identified such weaknesses as lack of real-time checks on structure, minimal emphasis on problem solving, and complete AI mentoring. The fix consists of Next.js, FastAPI, PostgreSQL, and AI API as the tools of a scalable and simple to maintain platform that develops skills and thought processes.
 \section{Key Findings and Results}
@@ -1945,20 +2679,7 @@ The review demonstrated that others excel in areas such as projects (freeCodeCam
 We went through it all and achieved all objectives. The design manages users, path making, AI tests and tracking where necessary. It accompanies tracks, provides personal experiences and has user and admin views. All the needs concerning functionalities, performance, security, scale, and convenience are addressed. It is a combination of a method-based approach to learning and AI assistance, forming a new platform between school and work. Our fix was to the extent of what is allowed to ensure that developer learning issues were full.
 \section{Challenges Faced and Limitations}
 We hit some hurdles. Combining AI services and maintaining speed required special consideration and adjustments. Responsive design and backups were required to make it work well on devices and networks. The dynamic nature of AI content required powerful error corrections. Constant adjustments were balancing between deep checks and speed. There are limitations such as the use of external AI, which might compromise the uptime and speed. It has gone web based and thus not much on mobile enthusiasts. Besides, its effectiveness is determined by the quality of materials and knowledge base.
-\section{Future Work and Recommendations}
-\subsection{Phase 2 Development Plan (FYP-2)}
-A phase 2 development plan (FYP-2) is provided below.
-To complete the final section, the following is a proposal to release main works and promote the platform:
-\begin{enumerate}
-\item Project-Based Assessment and AI Evaluation: Assemble the entire project system to real software problems. This includes requirements and specifications interface. The back end is concerned with the start, to check and assigning through progress and skills. Make submissions on AI checks of code, structure, methods, patterns, and choices and provide feedback on good parts, fixes, suggestions, and tips. It assists in connection of learning to actual work with pro feedback of skills.
-\item Progress Tracking and Insights Module: Have a complete analytics configuration to journey views. Add dashboard, charts, percentages, time, skill graphs and compares. Back end monitors actions, speeds, spots and weak points or strengths. The insights that AI examines include mastered concepts, requires further discussion, speed, and feedback. It is in line with averages of similar folks. This provides information to make decisions, remain motivated, and spend time efficiently.
-\item Content Development: Prepare complete content, assignments and templates of tracks such as web, data science, and mobile. Make learning methods interactive.
-\item Testing and Validation: Conduct lots of tests such as unit, integration, user and performance to ensure reliability and ease of modules.
-\item User Interface Enhancement: develop responsive, accessible interfaces with good design to be evaluated and provide insights, which are usable on all devices.
-\item Performance Optimization: Add caching, database tuning and AI optimizations to have high, scalable performance, in particular, checks and insights.
-\item Deployment and Monitoring: Make it live and add watching, logs and analytics to maintain and improve.
-\end{enumerate}
-\subsection{Long-term Recommendations}
+\section{Long-term Recommendations}
 In more detail, the following ideas can be noted:
 \begin{itemize}
 \item Mobile Application Development: Add iOS and Android applications to access it and have fun even better.
@@ -1973,10 +2694,11 @@ In more detail, the following ideas can be noted:
 GrowWise will contribute significantly to the developer education, sealing discontinuities with novel AI and emphasis on methods. The concrete construction and build strategy prepares a platform-altering platform that accommodates dynamically evolving technology. It demonstrates the ability of AI personal learning technology to transform technological learning, providing a scalable solution to students, institutions, and enterprises. The FYP-2 plan continues the momentum on a complete platform that improves the developer skills in the modern world.
 
 % ---------- References ----------
-\renewcommand{\bibname}{References} % changes "Bibliography" to "References"
+\renewcommand{\bibname}{References}
 \cleardoublepage
-\bibliographystyle{IEEEtran}         % clean IEEE style
-\bibliography{fypbib}                % your .bib file name
+\addcontentsline{toc}{chapter}{References}
+\bibliographystyle{IEEEtran}
+\bibliography{fypbib}
 
 % ---------- Appendices (optional) ----------
 \appendix
