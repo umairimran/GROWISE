@@ -14,9 +14,12 @@ import { ApiHttpError } from "../api/http";
 import { authService } from "../api/services/auth";
 import type { components } from "../api/generated/openapi";
 import { Button } from "../components/Button";
+import { HeroBadge, InlineNotice, Panel, StatusPill, WorkspaceFrame } from "../components/workspace";
 import { useAuthStore } from "../state/authStore";
 
 type UserSessionResponse = components["schemas"]["UserSessionResponse"];
+
+const DELETE_CONFIRMATION_TEXT = "DELETE";
 
 const toErrorMessage = (error: unknown, fallback: string): string => {
   if (error instanceof ApiHttpError) {
@@ -50,8 +53,6 @@ const truncateSessionId = (value: string): string => {
 
   return `${value.slice(0, 8)}...${value.slice(-8)}`;
 };
-
-const DELETE_CONFIRMATION_TEXT = "DELETE";
 
 export const AccountSecurity: FC = () => {
   const navigate = useNavigate();
@@ -130,17 +131,18 @@ export const AccountSecurity: FC = () => {
 
   const sortedSessions = useMemo(
     () =>
-      [...sessions].sort((a, b) => {
-        if (a.session_id === currentSessionId) {
+      [...sessions].sort((left, right) => {
+        if (left.session_id === currentSessionId) {
           return -1;
         }
-        if (b.session_id === currentSessionId) {
+
+        if (right.session_id === currentSessionId) {
           return 1;
         }
 
-        return Date.parse(b.last_activity) - Date.parse(a.last_activity);
+        return Date.parse(right.last_activity) - Date.parse(left.last_activity);
       }),
-    [currentSessionId, sessions]
+    [currentSessionId, sessions],
   );
 
   const handleProfileSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -148,6 +150,7 @@ export const AccountSecurity: FC = () => {
 
     const nextFullName = fullName.trim();
     const nextEmail = email.trim();
+
     if (!nextFullName || !nextEmail) {
       setProfileError("Full name and email are required.");
       return;
@@ -221,12 +224,12 @@ export const AccountSecurity: FC = () => {
     try {
       await authService.revokeSession(sessionId);
       setSessions((currentSessions) =>
-        currentSessions.filter((session) => session.session_id !== sessionId)
+        currentSessions.filter((session) => session.session_id !== sessionId),
       );
       setSessionsSuccess(
         sessionId === currentSessionId
           ? "Current session revoked. Redirecting to login."
-          : "Session revoked successfully."
+          : "Session revoked successfully.",
       );
     } catch (error) {
       setSessionsError(toErrorMessage(error, "Failed to revoke this session."));
@@ -239,6 +242,7 @@ export const AccountSecurity: FC = () => {
     const confirmationText = exceptCurrent
       ? "Revoke all other active sessions?"
       : "Revoke all active sessions (including this one)?";
+
     if (!window.confirm(confirmationText)) {
       return;
     }
@@ -249,6 +253,7 @@ export const AccountSecurity: FC = () => {
 
     try {
       await authService.revokeAllSessions(exceptCurrent);
+
       if (exceptCurrent) {
         await refreshSessions();
         setSessionsSuccess("All other sessions were revoked.");
@@ -289,321 +294,362 @@ export const AccountSecurity: FC = () => {
 
   if (isInitialLoading) {
     return (
-      <div className="py-12 text-center">
-        <div className="mx-auto h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3" />
-        <p className="text-sm text-gray-500">Loading account settings...</p>
-      </div>
+      <Panel className="p-10 text-center">
+        <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <p className="mt-4 text-sm text-muted-foreground">Loading account settings...</p>
+      </Panel>
     );
   }
 
   return (
-    <div className="space-y-6 pb-10">
-      <section className="rounded-2xl border border-border bg-surface p-6 shadow-sm">
-        <div className="flex items-start gap-3">
-          <div className="rounded-lg bg-blue-500/10 p-2 text-blue-600">
-            <ShieldCheck className="h-5 w-5" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-serif font-bold text-contrast">Account & Security</h1>
-            <p className="text-sm text-gray-500 mt-1">
-              Manage your profile, password, active sessions, and account access.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {pageError && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 flex items-center gap-3">
-          <span className="flex-1">{pageError}</span>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => {
-              setIsInitialLoading(true);
-              void loadAccountData();
-            }}
-          >
-            Retry
+    <WorkspaceFrame
+      label={<HeroBadge text="Settings" />}
+      title="Account and security"
+      description="Manage your profile, password, active sessions, and account access without leaving the workspace shell."
+      actions={
+        <div className="flex flex-wrap gap-2">
+          <StatusPill tone="neutral">{email}</StatusPill>
+          <Button size="sm" variant="outline" onClick={() => void refreshSessions()} isLoading={isSessionsRefreshing}>
+            <RefreshCw className="h-4 w-4" />
+            Refresh sessions
           </Button>
         </div>
+      }
+      className="py-4"
+    >
+      {pageError && (
+        <InlineNotice
+          tone="error"
+          title="Account data could not be loaded"
+          action={
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setIsInitialLoading(true);
+                void loadAccountData();
+              }}
+            >
+              Retry
+            </Button>
+          }
+        >
+          {pageError}
+        </InlineNotice>
       )}
 
-      <section className="grid gap-6 lg:grid-cols-2">
-        <form
-          onSubmit={handleProfileSubmit}
-          className="rounded-2xl border border-border bg-surface p-6 shadow-sm space-y-4"
-        >
-          <div className="flex items-center gap-2">
-            <UserRound className="h-5 w-5 text-gray-500" />
-            <h2 className="text-lg font-semibold text-contrast">Profile</h2>
+      <div className="grid gap-6 xl:grid-cols-2">
+        <Panel className="p-6 sm:p-7">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <UserRound className="h-4 w-4 text-primary" />
+                <div className="metric-label">Profile</div>
+              </div>
+              <h2 className="mt-3 font-display text-3xl font-semibold text-contrast">Identity</h2>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                Keep your name and email aligned with the rest of the product.
+              </p>
+            </div>
+            <StatusPill tone="accent">Primary account</StatusPill>
           </div>
 
-          {profileError && (
-            <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {profileError}
-            </p>
-          )}
-          {profileSuccess && (
-            <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4" />
-              {profileSuccess}
-            </p>
-          )}
+          <form onSubmit={handleProfileSubmit} className="mt-8 space-y-5">
+            {profileError && (
+              <InlineNotice tone="error" title="Profile update failed">
+                {profileError}
+              </InlineNotice>
+            )}
+            {profileSuccess && (
+              <InlineNotice tone="success" title="Profile saved">
+                {profileSuccess}
+              </InlineNotice>
+            )}
 
-          <div>
-            <label htmlFor="account-full-name" className="block text-sm font-medium text-gray-700 mb-1.5">
-              Full name
-            </label>
-            <input
-              id="account-full-name"
-              type="text"
-              required
-              value={fullName}
-              onChange={(event) => setFullName(event.target.value)}
-              className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
-            />
+            <div>
+              <label htmlFor="account-full-name" className="field-label">
+                Full name
+              </label>
+              <input
+                id="account-full-name"
+                type="text"
+                required
+                value={fullName}
+                onChange={(event) => setFullName(event.target.value)}
+                className="field-input"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="account-email" className="field-label">
+                Email address
+              </label>
+              <input
+                id="account-email"
+                type="email"
+                required
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                className="field-input"
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              <Button type="submit" isLoading={isProfileSaving}>
+                Save profile
+              </Button>
+              <StatusPill tone="neutral">Used across auth, dashboard, and reports</StatusPill>
+            </div>
+          </form>
+        </Panel>
+
+        <Panel className="p-6 sm:p-7" muted>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <KeyRound className="h-4 w-4 text-primary" />
+                <div className="metric-label">Credential update</div>
+              </div>
+              <h2 className="mt-3 font-display text-3xl font-semibold text-contrast">Password</h2>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                Keep your account secure with a direct password change flow and clear validation.
+              </p>
+            </div>
+            <StatusPill tone="neutral">Min 8 characters</StatusPill>
           </div>
 
-          <div>
-            <label htmlFor="account-email" className="block text-sm font-medium text-gray-700 mb-1.5">
-              Email address
-            </label>
-            <input
-              id="account-email"
-              type="email"
-              required
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
-            />
+          <form onSubmit={handlePasswordSubmit} className="mt-8 space-y-5">
+            {passwordError && (
+              <InlineNotice tone="error" title="Password update failed">
+                {passwordError}
+              </InlineNotice>
+            )}
+            {passwordSuccess && (
+              <InlineNotice tone="success" title="Password updated">
+                {passwordSuccess}
+              </InlineNotice>
+            )}
+
+            <div>
+              <label htmlFor="old-password" className="field-label">
+                Current password
+              </label>
+              <input
+                id="old-password"
+                type="password"
+                required
+                value={oldPassword}
+                onChange={(event) => setOldPassword(event.target.value)}
+                className="field-input"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="new-password" className="field-label">
+                New password
+              </label>
+              <input
+                id="new-password"
+                type="password"
+                minLength={8}
+                required
+                value={newPassword}
+                onChange={(event) => setNewPassword(event.target.value)}
+                className="field-input"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="confirm-password" className="field-label">
+                Confirm new password
+              </label>
+              <input
+                id="confirm-password"
+                type="password"
+                minLength={8}
+                required
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+                className="field-input"
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              <Button type="submit" isLoading={isPasswordSaving}>
+                Update password
+              </Button>
+              <StatusPill tone="neutral">Session aware</StatusPill>
+            </div>
+          </form>
+        </Panel>
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-[1.15fr,0.85fr]">
+        <Panel className="p-6 sm:p-7">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <Laptop2 className="h-4 w-4 text-primary" />
+                <div className="metric-label">Sessions</div>
+              </div>
+              <h2 className="mt-3 font-display text-3xl font-semibold text-contrast">Active devices</h2>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                Review and revoke active sessions without wrapping the whole page in a single card.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => void handleRevokeAllSessions(true)}
+                isLoading={isRevokingAll}
+              >
+                Revoke others
+              </Button>
+              <Button
+                type="button"
+                variant="danger"
+                size="sm"
+                onClick={() => void handleRevokeAllSessions(false)}
+                isLoading={isRevokingAll}
+              >
+                Revoke all
+              </Button>
+            </div>
           </div>
 
-          <div className="pt-2">
-            <Button type="submit" isLoading={isProfileSaving}>
-              Save profile
-            </Button>
-          </div>
-        </form>
+          <div className="mt-6 space-y-4">
+            {sessionsError && (
+              <InlineNotice tone="error" title="Session action failed">
+                {sessionsError}
+              </InlineNotice>
+            )}
+            {sessionsSuccess && (
+              <InlineNotice tone="success" title="Session update">
+                {sessionsSuccess}
+              </InlineNotice>
+            )}
 
-        <form
-          onSubmit={handlePasswordSubmit}
-          className="rounded-2xl border border-border bg-surface p-6 shadow-sm space-y-4"
-        >
-          <div className="flex items-center gap-2">
-            <KeyRound className="h-5 w-5 text-gray-500" />
-            <h2 className="text-lg font-semibold text-contrast">Change password</h2>
-          </div>
+            {sortedSessions.length === 0 ? (
+              <Panel className="p-8 text-center" muted>
+                <Laptop2 className="mx-auto h-8 w-8 text-muted-foreground" />
+                <h3 className="mt-4 font-display text-2xl font-semibold text-contrast">No active sessions</h3>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  Sessions will appear here once you sign in from a device.
+                </p>
+              </Panel>
+            ) : (
+              sortedSessions.map((session) => {
+                const isCurrentSession = session.session_id === currentSessionId;
 
-          {passwordError && (
-            <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {passwordError}
-            </p>
-          )}
-          {passwordSuccess && (
-            <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4" />
-              {passwordSuccess}
-            </p>
-          )}
-
-          <div>
-            <label htmlFor="old-password" className="block text-sm font-medium text-gray-700 mb-1.5">
-              Current password
-            </label>
-            <input
-              id="old-password"
-              type="password"
-              required
-              value={oldPassword}
-              onChange={(event) => setOldPassword(event.target.value)}
-              className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="new-password" className="block text-sm font-medium text-gray-700 mb-1.5">
-              New password
-            </label>
-            <input
-              id="new-password"
-              type="password"
-              minLength={8}
-              required
-              value={newPassword}
-              onChange={(event) => setNewPassword(event.target.value)}
-              className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700 mb-1.5">
-              Confirm new password
-            </label>
-            <input
-              id="confirm-password"
-              type="password"
-              minLength={8}
-              required
-              value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
-              className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
-            />
-          </div>
-
-          <div className="pt-2">
-            <Button type="submit" isLoading={isPasswordSaving}>
-              Update password
-            </Button>
-          </div>
-        </form>
-      </section>
-
-      <section className="rounded-2xl border border-border bg-surface p-6 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <Laptop2 className="h-5 w-5 text-gray-500" />
-            <h2 className="text-lg font-semibold text-contrast">Active sessions</h2>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => void refreshSessions()}
-              isLoading={isSessionsRefreshing}
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => void handleRevokeAllSessions(true)}
-              isLoading={isRevokingAll}
-            >
-              Revoke Others
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => void handleRevokeAllSessions(false)}
-              isLoading={isRevokingAll}
-            >
-              Revoke All
-            </Button>
-          </div>
-        </div>
-
-        {sessionsError && (
-          <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-            {sessionsError}
-          </p>
-        )}
-        {sessionsSuccess && (
-          <p className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4" />
-            {sessionsSuccess}
-          </p>
-        )}
-
-        <div className="mt-4 space-y-3">
-          {sortedSessions.length === 0 ? (
-            <p className="text-sm text-gray-500">No active sessions found.</p>
-          ) : (
-            sortedSessions.map((session) => {
-              const isCurrentSession = session.session_id === currentSessionId;
-              return (
-                <div
-                  key={session.session_id}
-                  className="rounded-xl border border-border px-4 py-3 bg-background/60"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-medium text-contrast">
-                          {truncateSessionId(session.session_id)}
-                        </span>
-                        {isCurrentSession && (
-                          <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-semibold text-blue-700">
-                            Current
+                return (
+                  <div key={session.session_id} className="rounded-[24px] border border-border bg-surface/75 p-4 shadow-soft">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-semibold text-contrast">
+                            {truncateSessionId(session.session_id)}
                           </span>
-                        )}
+                          {isCurrentSession && <StatusPill tone="accent">Current session</StatusPill>}
+                        </div>
+                        <p className="mt-2 break-all text-sm leading-6 text-muted-foreground">
+                          {session.user_agent || "Unknown device"}
+                        </p>
                       </div>
-                      <div className="text-xs text-gray-500 mt-1 break-all">
-                        {session.user_agent || "Unknown device"}
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={isCurrentSession ? "ghost" : "outline"}
+                        isLoading={revokingSessionId === session.session_id}
+                        onClick={() => void handleRevokeSession(session.session_id)}
+                      >
+                        {isCurrentSession ? "Log out this device" : "Revoke"}
+                      </Button>
+                    </div>
+
+                    <div className="mt-4 grid gap-3 text-xs uppercase tracking-[0.14em] text-muted-foreground sm:grid-cols-2 xl:grid-cols-4">
+                      <div>
+                        <div className="metric-label">IP</div>
+                        <div className="mt-2 text-[0.76rem] text-contrast">{session.ip_address || "Unknown"}</div>
+                      </div>
+                      <div>
+                        <div className="metric-label">Created</div>
+                        <div className="mt-2 text-[0.76rem] text-contrast">{formatDateTime(session.created_at)}</div>
+                      </div>
+                      <div>
+                        <div className="metric-label">Last activity</div>
+                        <div className="mt-2 text-[0.76rem] text-contrast">{formatDateTime(session.last_activity)}</div>
+                      </div>
+                      <div>
+                        <div className="metric-label">Expires</div>
+                        <div className="mt-2 text-[0.76rem] text-contrast">{formatDateTime(session.expires_at)}</div>
                       </div>
                     </div>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant={isCurrentSession ? "ghost" : "outline"}
-                      isLoading={revokingSessionId === session.session_id}
-                      onClick={() => void handleRevokeSession(session.session_id)}
-                    >
-                      {isCurrentSession ? "Log Out This Device" : "Revoke"}
-                    </Button>
                   </div>
-
-                  <div className="mt-3 grid gap-2 text-xs text-gray-500 sm:grid-cols-2 lg:grid-cols-4">
-                    <div>IP: {session.ip_address || "Unknown"}</div>
-                    <div>Created: {formatDateTime(session.created_at)}</div>
-                    <div>Last activity: {formatDateTime(session.last_activity)}</div>
-                    <div>Expires: {formatDateTime(session.expires_at)}</div>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </section>
-
-      <section className="rounded-2xl border border-red-200 bg-red-50/70 p-6 shadow-sm">
-        <div className="flex items-start gap-3">
-          <div className="rounded-lg bg-red-100 p-2 text-red-700">
-            <Trash2 className="h-5 w-5" />
+                );
+              })
+            )}
           </div>
-          <div className="flex-1">
-            <h2 className="text-lg font-semibold text-red-800">Delete account</h2>
-            <p className="text-sm text-red-700 mt-1">
-              This permanently deactivates your account and revokes all active sessions.
-            </p>
+        </Panel>
+
+        <Panel className="p-6 sm:p-7" tone="danger">
+          <div className="flex items-start gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-danger/12 text-danger">
+              <Trash2 className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="metric-label text-danger">Danger zone</div>
+              <h2 className="mt-3 font-display text-3xl font-semibold text-contrast">Delete account</h2>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                This permanently deactivates your account and revokes all active sessions.
+              </p>
+            </div>
           </div>
-        </div>
 
-        {deleteError && (
-          <p className="mt-4 rounded-lg border border-red-200 bg-white px-3 py-2 text-sm text-red-700 flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4" />
-            {deleteError}
-          </p>
-        )}
+          <div className="mt-8 space-y-5">
+            {deleteError && (
+              <InlineNotice tone="error" title="Delete account failed">
+                {deleteError}
+              </InlineNotice>
+            )}
 
-        <div className="mt-4">
-          <label htmlFor="delete-confirmation" className="block text-sm font-medium text-red-800 mb-1.5">
-            Type "{DELETE_CONFIRMATION_TEXT}" to confirm
-          </label>
-          <input
-            id="delete-confirmation"
-            type="text"
-            value={deleteConfirmation}
-            onChange={(event) => setDeleteConfirmation(event.target.value)}
-            className="block w-full max-w-sm rounded-lg border border-red-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-red-500 focus:ring-2 focus:ring-red-500/30"
-          />
-        </div>
+            <div>
+              <label htmlFor="delete-confirmation" className="field-label">
+                Type "{DELETE_CONFIRMATION_TEXT}" to confirm
+              </label>
+              <input
+                id="delete-confirmation"
+                type="text"
+                value={deleteConfirmation}
+                onChange={(event) => setDeleteConfirmation(event.target.value)}
+                className="field-input"
+              />
+            </div>
 
-        <div className="mt-4">
-          <Button
-            type="button"
-            variant="ghost"
-            className="text-red-700 hover:text-red-700 hover:bg-red-100"
-            onClick={() => void handleDeleteAccount()}
-            isLoading={isDeletingAccount}
-          >
-            Delete Account
-          </Button>
-        </div>
-      </section>
-    </div>
+            <div className="rounded-[20px] border border-danger/18 bg-danger/8 px-4 py-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="mt-0.5 h-4 w-4 text-danger" />
+                <p className="text-sm leading-6 text-muted-foreground">
+                  This cannot be undone. Your progress, sessions, and account access will be removed.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <Button
+                type="button"
+                variant="danger"
+                onClick={() => void handleDeleteAccount()}
+                isLoading={isDeletingAccount}
+              >
+                Delete account
+              </Button>
+              <StatusPill tone="danger">Permanent action</StatusPill>
+            </div>
+          </div>
+        </Panel>
+      </div>
+    </WorkspaceFrame>
   );
 };
