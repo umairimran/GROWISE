@@ -1,11 +1,11 @@
 import { FC, FormEvent, useMemo, useState } from "react";
-import { ArrowLeft, CheckCircle2, KeyRound } from "lucide-react";
+import { ArrowRight, CheckCircle2, KeyRound, ShieldCheck } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import Beams from "../components/Beams";
 import { Button } from "../components/Button";
 import { ApiHttpError } from "../api/http";
 import { authService } from "../api/services/auth";
-import { useTheme } from "../providers/ThemeProvider";
+import { AuthShell } from "../components/auth-layout";
+import { Panel, StatusPill } from "../components/ui";
 
 const toErrorMessage = (error: unknown, fallback: string): string => {
   if (error instanceof ApiHttpError) {
@@ -21,7 +21,6 @@ const toErrorMessage = (error: unknown, fallback: string): string => {
 
 export const ResetPassword: FC = () => {
   const navigate = useNavigate();
-  const { theme } = useTheme();
   const [searchParams] = useSearchParams();
   const initialToken = useMemo(() => searchParams.get("token") ?? "", [searchParams]);
 
@@ -76,62 +75,51 @@ export const ResetPassword: FC = () => {
   };
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center p-4 bg-background font-sans overflow-hidden">
-      {theme === "dark" && (
-        <div className="absolute inset-0 z-0">
-          <Beams
-            beamWidth={2}
-            beamHeight={15}
-            beamNumber={12}
-            lightColor="#ffffff"
-            speed={2}
-            noiseIntensity={1.75}
-            scale={0.2}
-            rotation={0}
-          />
+    <AuthShell
+      title={<>Set your new password.</>}
+      description={<>Finish the recovery flow with a secure new password.</>}
+      sideTitle="Set your new password"
+      sideDescription="Enter the token from your email and choose a new password."
+      onBack={() => navigate("/login")}
+      footnote={
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusPill tone="neutral">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            Token required
+          </StatusPill>
+          <button onClick={() => navigate("/forgot-password")} className="font-semibold text-primary hover:underline">
+            Request a new token
+          </button>
         </div>
-      )}
-
-      <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-900/30 rounded-full mix-blend-screen filter blur-[80px] animate-blob" />
-        <div className="absolute top-0 right-1/4 w-96 h-96 bg-indigo-900/30 rounded-full mix-blend-screen filter blur-[80px] animate-blob delay-2000" />
-        <div className="absolute -bottom-32 left-1/3 w-96 h-96 bg-teal-900/30 rounded-full mix-blend-screen filter blur-[80px] animate-blob delay-4000" />
-      </div>
-
-      <div className="w-full max-w-md bg-surface/80 dark:bg-black/45 backdrop-blur-md border border-border shadow-2xl rounded-2xl p-8 sm:p-10 relative z-10 animate-fade-in-up">
-        <button
-          onClick={() => navigate("/login")}
-          className="flex items-center text-gray-500 dark:text-gray-400 hover:text-contrast transition-colors text-sm font-medium mb-6"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to login
-        </button>
-
-        <div className="mb-6">
-          <h1 className="font-serif text-3xl font-bold text-contrast tracking-tight mb-2">
-            Confirm password reset
-          </h1>
-          <p className="text-gray-400 text-sm">
-            Paste your reset token and choose a secure new password.
-          </p>
-        </div>
-
-        {errorMessage && (
-          <p className="mb-4 rounded-lg border border-red-800 bg-red-900/25 px-3 py-2 text-sm text-red-200">
-            {errorMessage}
-          </p>
-        )}
-
-        {successMessage && (
-          <div className="mb-4 rounded-lg border border-emerald-800 bg-emerald-900/25 px-3 py-2 text-sm text-emerald-200 flex items-start gap-2">
-            <CheckCircle2 className="h-4 w-4 mt-0.5 flex-shrink-0" />
-            <span>{successMessage}</span>
+      }
+    >
+      {successMessage ? (
+        <Panel className="p-6 text-center">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-success/10 text-success">
+            <CheckCircle2 className="h-7 w-7" />
           </div>
-        )}
+          <h2 className="mt-5 font-display text-3xl font-semibold text-contrast">
+            Password reset complete
+          </h2>
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">{successMessage}</p>
+          <div className="mt-6">
+            <Button onClick={() => navigate("/login")} size="lg">
+              Go to login
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </Panel>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {errorMessage && (
+            <div className="status-banner" data-tone="error">
+              <ShieldCheck className="mt-0.5 h-4 w-4 text-danger" />
+              <p className="text-sm leading-6 text-contrast">{errorMessage}</p>
+            </div>
+          )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="reset-token" className="block text-sm font-medium text-contrast/90 mb-1.5">
+            <label htmlFor="reset-token" className="field-label">
               Reset token
             </label>
             <textarea
@@ -139,19 +127,17 @@ export const ResetPassword: FC = () => {
               required
               value={resetToken}
               onChange={(event) => setResetToken(event.target.value)}
-              className="block w-full min-h-[96px] px-3 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-surface text-contrast placeholder-gray-500 transition-all outline-none"
+              className="field-textarea"
               placeholder="Paste reset token"
             />
           </div>
 
           <div>
-            <label htmlFor="new-password" className="block text-sm font-medium text-contrast/90 mb-1.5">
+            <label htmlFor="new-password" className="field-label">
               New password
             </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <KeyRound className="h-4 w-4 text-gray-400" />
-              </div>
+            <div className="field-shell has-icon">
+              <KeyRound className="h-4 w-4" />
               <input
                 id="new-password"
                 type="password"
@@ -159,16 +145,14 @@ export const ResetPassword: FC = () => {
                 required
                 value={newPassword}
                 onChange={(event) => setNewPassword(event.target.value)}
-                className="block w-full pl-10 pr-3 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-surface text-contrast placeholder-gray-500 transition-all outline-none"
+                className="field-input"
+                placeholder="At least 8 characters"
               />
             </div>
           </div>
 
           <div>
-            <label
-              htmlFor="confirm-new-password"
-              className="block text-sm font-medium text-contrast/90 mb-1.5"
-            >
+            <label htmlFor="confirm-new-password" className="field-label">
               Confirm new password
             </label>
             <input
@@ -178,24 +162,17 @@ export const ResetPassword: FC = () => {
               required
               value={confirmPassword}
               onChange={(event) => setConfirmPassword(event.target.value)}
-              className="block w-full px-3 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-surface text-contrast placeholder-gray-500 transition-all outline-none"
+              className="field-input"
+              placeholder="Repeat the new password"
             />
           </div>
 
-          <Button type="submit" isLoading={isLoading} className="w-full bg-blue-600 hover:bg-blue-500 border-none">
+          <Button type="submit" isLoading={isLoading} className="w-full" size="lg">
             Reset password
+            <ArrowRight className="h-4 w-4" />
           </Button>
         </form>
-
-        <div className="mt-6 text-center">
-          <button
-            onClick={() => navigate("/forgot-password")}
-            className="text-sm text-blue-400 hover:text-blue-300 font-medium hover:underline"
-          >
-            Request a new token
-          </button>
-        </div>
-      </div>
-    </div>
+      )}
+    </AuthShell>
   );
 };
