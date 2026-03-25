@@ -1,150 +1,237 @@
-import { useState, FC } from 'react';
-import { ArrowLeft, HardDrive } from 'lucide-react';
-import { BlogCard, BlogPost } from '../components/BlogCard';
+import { FC, useMemo, useState } from "react";
+import { ArrowLeft, CalendarDays, FileText, Flame, Sparkles } from "lucide-react";
+import { Button } from "../components/Button";
+import { MarketingCard, MarketingPost } from "../components/marketing-card";
+import { MarketingHero, MarketingSection, PillRow } from "../components/marketing-layout";
+import { Panel, StatusPill } from "../components/ui";
 
 interface BlogPageProps {
   onBack: () => void;
 }
 
-const INITIAL_BLOG_POSTS: BlogPost[] = [
-    {
-        id: '1',
-        title: "Introducing the 50-minute Adaptive Assessment",
-        category: "Feature",
-        description: "We've rebuilt our core engine. Learn how our new adaptive logic reduces test time by 40% while increasing knowledge map accuracy.",
-        date: "Oct 24, 2024",
-        authorName: "Sarah Chen",
-        authorAvatar: "SC",
-        gradient: "linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)"
-    },
-    {
-        id: '2',
-        title: "How our AI generates Python curriculums",
-        category: "Engineering",
-        description: "A deep dive into the prompt engineering and DAG (Directed Acyclic Graph) structures we use to ensure learning paths make sense.",
-        date: "Oct 12, 2024",
-        authorName: "David Kim",
-        authorAvatar: "DK",
-        gradient: "linear-gradient(135deg, #FDF4FF 0%, #FAE8FF 100%)"
-    },
-    {
-        id: '3',
-        title: "New Feature: Real-world Validator Scenarios",
-        category: "Feature",
-        description: "Theory isn't enough. We are rolling out 50+ new 'Boss Fight' scenarios that simulate actual tickets from top tech companies.",
-        date: "Sep 28, 2024",
-        authorName: "Marcus J.",
-        authorAvatar: "MJ",
-        gradient: "linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)"
-    },
-    {
-        id: '4',
-        title: "Understanding the Knowledge Graph",
-        category: "Education",
-        description: "What does a 70% mastery in 'React Hooks' actually mean? We explain the math behind our confidence scores.",
-        date: "Sep 15, 2024",
-        authorName: "Elena R.",
-        authorAvatar: "ER",
-        gradient: "linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)"
-    },
-    {
-        id: '5',
-        title: "Scaling Supabase for 1M+ Events",
-        category: "Engineering",
-        description: "Lessons learned from scaling our telemetry ingestion pipeline using Supabase and PostgreSQL partitioning.",
-        date: "Aug 30, 2024",
-        authorName: "David Kim",
-        authorAvatar: "DK",
-        gradient: "linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)"
-    },
-    {
-        id: '6',
-        title: "The Future of AI Tutors",
-        category: "Announcements",
-        description: "Our roadmap for 2025: Voice interaction, IDE plugins, and team collaboration features.",
-        date: "Aug 10, 2024",
-        authorName: "Sarah Chen",
-        authorAvatar: "SC",
-        gradient: "linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%)"
-    }
+const INITIAL_BLOG_POSTS: MarketingPost[] = [
+  {
+    id: "1",
+    title: "Introducing the 50-minute Adaptive Assessment",
+    category: "Feature",
+    description:
+      "We rebuilt the core engine to reduce wasted time and improve the quality of the learning path that follows.",
+    date: "Oct 24, 2024",
+    authorName: "Sarah Chen",
+    authorAvatar: "SC",
+    gradient: "linear-gradient(135deg, rgba(24,94,79,0.16), rgba(255,255,255,0.8))",
+  },
+  {
+    id: "2",
+    title: "How the curriculum generator keeps context tight",
+    category: "Engineering",
+    description:
+      "A look at the flow that turns assessment gaps into a readable learning path instead of a generic checklist.",
+    date: "Oct 12, 2024",
+    authorName: "David Kim",
+    authorAvatar: "DK",
+    gradient: "linear-gradient(135deg, rgba(59,130,246,0.18), rgba(255,255,255,0.75))",
+  },
+  {
+    id: "3",
+    title: "Validator scenarios that feel like real work",
+    category: "Feature",
+    description:
+      "Why the interview-style path is a better proof layer than a static quiz and how it connects to progress reporting.",
+    date: "Sep 28, 2024",
+    authorName: "Marcus J.",
+    authorAvatar: "MJ",
+    gradient: "linear-gradient(135deg, rgba(16,185,129,0.18), rgba(255,255,255,0.78))",
+  },
+  {
+    id: "4",
+    title: "Understanding the knowledge map",
+    category: "Education",
+    description:
+      "What a confidence score means, how to read it, and why it should change the way people study.",
+    date: "Sep 15, 2024",
+    authorName: "Elena R.",
+    authorAvatar: "ER",
+    gradient: "linear-gradient(135deg, rgba(245,158,11,0.16), rgba(255,255,255,0.76))",
+  },
+  {
+    id: "5",
+    title: "Scaling the product without losing clarity",
+    category: "Engineering",
+    description:
+      "Lessons from keeping dense dashboards fast, legible, and consistent across route transitions.",
+    date: "Aug 30, 2024",
+    authorName: "David Kim",
+    authorAvatar: "DK",
+    gradient: "linear-gradient(135deg, rgba(15,23,42,0.12), rgba(255,255,255,0.8))",
+  },
+  {
+    id: "6",
+    title: "What an AI tutor should feel like",
+    category: "Announcements",
+    description:
+      "A product update on the pieces that matter most: trust, hierarchy, and keeping the interface quiet.",
+    date: "Aug 10, 2024",
+    authorName: "Sarah Chen",
+    authorAvatar: "SC",
+    gradient: "linear-gradient(135deg, rgba(99,102,241,0.16), rgba(255,255,255,0.78))",
+  },
 ];
 
 const FILTERS = ["All", "Feature", "Engineering", "Education", "Announcements"];
 
 export const Blog: FC<BlogPageProps> = ({ onBack }) => {
   const [activeFilter, setActiveFilter] = useState("All");
-  const [posts] = useState<BlogPost[]>(INITIAL_BLOG_POSTS);
+  const [posts] = useState<MarketingPost[]>(INITIAL_BLOG_POSTS);
 
-  const filteredPosts = activeFilter === "All" 
-    ? posts 
-    : posts.filter(post => post.category === activeFilter);
+  const filteredPosts = useMemo(
+    () => (activeFilter === "All" ? posts : posts.filter((post) => post.category === activeFilter)),
+    [activeFilter, posts],
+  );
 
   return (
-    <div className="min-h-screen bg-background font-sans">
-      {/* Navbar Placeholder / Back Button */}
-      <div className="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
-         <button 
-            onClick={onBack}
-            className="flex items-center text-gray-500 hover:text-contrast transition-colors group text-sm font-medium"
-         >
-            <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-            Back to Home
-         </button>
-         
-         <div className="flex items-center text-xs text-green-600 bg-green-50 px-3 py-1.5 rounded-full border border-green-100">
-            <HardDrive className="h-3 w-3 mr-2" />
-            Static assets loaded
-         </div>
-      </div>
-
-      <div className="max-w-6xl mx-auto px-6 pb-20">
-        
-        {/* Header Section */}
-        <div className="py-16 text-center max-w-3xl mx-auto">
-            <h1 className="font-display text-4xl md:text-6xl font-bold text-contrast mb-6 tracking-tight leading-[1.1]">
-                Insights and updates from the Cycle team
-            </h1>
-            <p className="text-xl text-gray-500 leading-relaxed">
-                New features, bug fixes, and learning resources to help you grow faster.
-            </p>
-        </div>
-
-        {/* Filter Bar */}
-        <div className="flex flex-wrap justify-center gap-2 mb-16">
-            {FILTERS.map(filter => (
-                <button
-                    key={filter}
-                    onClick={() => setActiveFilter(filter)}
-                    className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 border ${
-                        activeFilter === filter
-                        ? 'bg-contrast text-white border-contrast shadow-lg'
-                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                    }`}
-                >
-                    {filter}
-                </button>
-            ))}
-        </div>
-
-        {/* Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredPosts.map((post, index) => (
-                <BlogCard key={post.id} post={post} index={index} />
-            ))}
-        </div>
-
-        {filteredPosts.length === 0 && (
-            <div className="text-center py-20 text-gray-400">
-                No posts found for this category.
+    <div className="pt-16">
+      <MarketingHero
+        badge={
+          <StatusPill tone="accent">
+            <Sparkles className="h-3.5 w-3.5" />
+            Product notes
+          </StatusPill>
+        }
+        title={<>Insights from the Grow Wise team.</>}
+        description={
+          <>
+            Updates, engineering notes, and product decisions written to match the rest of the
+            experience.
+          </>
+        }
+        primaryAction={
+          <Button size="lg" onClick={onBack}>
+            <ArrowLeft className="h-4 w-4" />
+            Back home
+          </Button>
+        }
+        secondaryAction={
+          <Button size="lg" variant="outline" onClick={onBack}>
+            Home
+          </Button>
+        }
+        stats={[
+          { label: "Articles", value: "6" },
+          { label: "Focus", value: "Product + engineering" },
+          { label: "Cadence", value: "Occasional" },
+          { label: "Format", value: "Short-form" },
+        ]}
+      >
+        <div className="space-y-4">
+          <div className="rail-card">
+            <div className="metric-label">Current issue</div>
+            <div className="mt-2 text-2xl font-semibold text-contrast">
+              Why the UI now feels like one product.
             </div>
-        )}
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Public pages, auth, and the learner workspace now share one surface system and one
+              hierarchy.
+            </p>
+          </div>
+          <PillRow items={["Feature notes", "Engineering", "Education", "Announcements"]} />
+        </div>
+      </MarketingHero>
 
-      </div>
-      
-      {/* Simple Footer */}
-      <div className="border-t border-border py-12 text-center text-gray-400 text-sm bg-white">
-          <p>&copy; 2024 Grow Wise Inc.</p>
-      </div>
+      <MarketingSection
+        eyebrow="Filters"
+        title="Read by topic."
+        description="The filter bar stays lightweight so the page remains editorial instead of turning into a dense tool."
+      >
+        <div className="flex flex-wrap gap-2">
+          {FILTERS.map((filter) => (
+            <button
+              key={filter}
+              onClick={() => setActiveFilter(filter)}
+              className={`rounded-full border px-4 py-2 text-sm font-semibold transition-all ${
+                activeFilter === filter
+                  ? "border-primary bg-primary text-white shadow-soft"
+                  : "border-border bg-surface/80 text-muted-foreground hover:border-primary/30 hover:text-contrast"
+              }`}
+            >
+              {filter}
+            </button>
+          ))}
+        </div>
+      </MarketingSection>
+
+      <MarketingSection
+        eyebrow="Latest"
+        title="A calmer layout for updates."
+        description="The articles now feel like a product release stream rather than a placeholder blog."
+      >
+        {filteredPosts.length === 0 ? (
+          <Panel className="p-10 text-center">
+            <FileText className="mx-auto h-10 w-10 text-muted-foreground" />
+            <h3 className="mt-4 font-display text-2xl font-semibold text-contrast">
+              No posts found
+            </h3>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Pick a different filter to see a matching set of updates.
+            </p>
+          </Panel>
+        ) : (
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {filteredPosts.map((post, index) => (
+              <MarketingCard key={post.id} post={post} index={index} />
+            ))}
+          </div>
+        )}
+      </MarketingSection>
+
+      <section className="page-section pb-12">
+        <div className="page-shell">
+          <div className="grid gap-5 lg:grid-cols-[0.9fr,1.1fr]">
+            <Panel className="p-6">
+              <div className="flex items-center gap-2">
+                <CalendarDays className="h-5 w-5 text-primary" />
+                <h2 className="font-display text-2xl font-semibold text-contrast">Editorial cadence</h2>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                Updates are intentionally sparse. The goal is to communicate product changes, not
+                create noise.
+              </p>
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                {[
+                  "Assessment engine changes",
+                  "Validator and reporting work",
+                  "UI consistency notes",
+                  "Onboarding and auth refinements",
+                ].map((item) => (
+                  <div key={item} className="metric-strip">
+                    <div className="metric-label">Focus area</div>
+                    <div className="mt-2 text-base font-semibold text-contrast">{item}</div>
+                  </div>
+                ))}
+              </div>
+            </Panel>
+
+            <Panel className="p-6">
+              <div className="flex items-center gap-2">
+                <Flame className="h-5 w-5 text-warning" />
+                <h2 className="font-display text-2xl font-semibold text-contrast">What this page is for</h2>
+              </div>
+              <div className="mt-4 space-y-3">
+                {[
+                  "Surface the product’s direction without relying on marketing filler.",
+                  "Keep the update feed aligned with the same design system as the app.",
+                  "Provide a clean place for future release notes and implementation writeups.",
+                ].map((item) => (
+                  <div key={item} className="flex items-start gap-3">
+                    <Sparkles className="mt-0.5 h-4 w-4 text-primary" />
+                    <p className="text-sm leading-6 text-muted-foreground">{item}</p>
+                  </div>
+                ))}
+              </div>
+            </Panel>
+          </div>
+        </div>
+      </section>
     </div>
   );
 };
