@@ -1,12 +1,21 @@
 import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { useParams } from "react-router-dom";
-import { AlertCircle, Clock, LogOut, RefreshCw, X } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowRight,
+  Clock3,
+  LogOut,
+  RefreshCw,
+  ShieldCheck,
+  X,
+} from "lucide-react";
 import { parseDecimalOr } from "../api/adapters/numeric";
 import { assessmentService } from "../api/services/assessment";
 import { tracksService } from "../api/services/tracks";
 import { ApiHttpError } from "../api/http";
 import { Button } from "../components/Button";
+import { Panel, StatusPill } from "../components/ui";
 import { AssessmentResult, type ComprehensiveReport } from "../types";
 import type { components } from "../api/generated/openapi";
 
@@ -105,13 +114,9 @@ const toAssessmentResult = ({
 }): AssessmentResult => {
   const score = Math.round(parseDecimalOr(result.overall_score, 0));
 
-  // Prefer evaluated_responses from complete (batch-evaluated) — has scores; submittedResponses may not
   const responsesByQuestion =
-    result.evaluated_responses?.length &&
-    result.evaluated_responses.some((r) => r.ai_score != null)
-      ? Object.fromEntries(
-          result.evaluated_responses.map((r) => [r.question_id, r])
-        )
+    result.evaluated_responses?.length && result.evaluated_responses.some((response) => response.ai_score != null)
+      ? Object.fromEntries(result.evaluated_responses.map((response) => [response.question_id, response]))
       : submittedResponses;
 
   const scoredQuestions = questions
@@ -162,6 +167,28 @@ const toAssessmentResult = ({
   };
 };
 
+const formatTime = (seconds: number): string => {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${minutes}:${remainingSeconds < 10 ? "0" : ""}${remainingSeconds}`;
+};
+
+const difficultyTone = (difficulty: string): "success" | "accent" | "warning" | "danger" => {
+  if (difficulty === "low") {
+    return "success";
+  }
+
+  if (difficulty === "medium") {
+    return "accent";
+  }
+
+  if (difficulty === "high") {
+    return "warning";
+  }
+
+  return "danger";
+};
+
 export const Assessment: FC<AssessmentProps> = ({ onComplete, onExit }) => {
   const { sessionId: sessionIdParam } = useParams<{ sessionId: string }>();
   const sessionId = Number(sessionIdParam);
@@ -185,8 +212,8 @@ export const Assessment: FC<AssessmentProps> = ({ onComplete, onExit }) => {
     () => parseQuestionBody(currentQuestion?.question_text ?? ""),
     [currentQuestion?.question_text],
   );
-
   const isMcqWithOptions = currentQuestion?.question_type === "mcq" && parsedQuestion.options.length > 0;
+  const progressValue = questions.length > 0 ? ((currentQuestionIndex + 1) / questions.length) * 100 : 0;
 
   const loadSessionData = useCallback(async () => {
     if (!hasValidSessionId) {
@@ -340,267 +367,243 @@ export const Assessment: FC<AssessmentProps> = ({ onComplete, onExit }) => {
     }
   };
 
-  const formatTime = (seconds: number): string => {
-    const minutes = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${minutes}:${secs < 10 ? "0" : ""}${secs}`;
-  };
-
-  const difficultyClass = (difficulty: string) => {
-    switch (difficulty) {
-      case "low":
-        return "bg-green-900/30 text-green-400 border-green-800";
-      case "medium":
-        return "bg-blue-900/30 text-blue-400 border-blue-800";
-      case "high":
-        return "bg-yellow-900/30 text-yellow-400 border-yellow-800";
-      default:
-        return "bg-purple-900/30 text-purple-400 border-purple-800";
-    }
-  };
-
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-background text-center p-4">
-        <div className="animate-spin h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full mb-6" />
-        <p className="font-display text-2xl md:text-3xl font-bold text-contrast animate-pulse-slow">
-          Loading assessment session...
-        </p>
-        <p className="text-gray-500 mt-2">Fetching your server-generated questions.</p>
+      <div className="min-h-screen bg-background pt-20">
+        <div className="page-shell py-10">
+          <Panel className="p-10 text-center">
+            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            <p className="mt-4 text-lg font-semibold text-contrast">Loading assessment session...</p>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Fetching the server-generated questions for this track.
+            </p>
+          </Panel>
+        </div>
       </div>
     );
   }
 
   if (!currentQuestion) {
     return (
-      <div className="min-h-screen bg-background text-contrast flex flex-col items-center justify-center p-6 text-center">
-        <AlertCircle className="h-10 w-10 text-red-400 mb-4" />
-        <h2 className="text-2xl font-bold mb-3">Unable to Load Assessment</h2>
-        <p className="text-gray-400 mb-6">
-          {errorMessage || "No questions were found for this session. Please start again."}
-        </p>
-        <div className="flex flex-wrap items-center justify-center gap-3">
-          <Button
-            variant="outline"
-            onClick={() => {
-              void loadSessionData();
-            }}
-          >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Retry Load
-          </Button>
-          <Button onClick={onExit}>Back to Track Selection</Button>
+      <div className="min-h-screen bg-background pt-20">
+        <div className="page-shell py-10">
+          <Panel className="p-10 text-center">
+            <AlertCircle className="mx-auto h-10 w-10 text-danger" />
+            <h2 className="mt-4 font-display text-3xl font-semibold text-contrast">
+              Unable to load assessment
+            </h2>
+            <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-muted-foreground">
+              {errorMessage || "No questions were found for this session. Please start again."}
+            </p>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <Button variant="outline" onClick={() => void loadSessionData()}>
+                <RefreshCw className="h-4 w-4" />
+                Retry load
+              </Button>
+              <Button onClick={onExit}>Back to track selection</Button>
+            </div>
+          </Panel>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="relative min-h-screen bg-background flex flex-col items-center justify-start md:justify-center pt-20 md:pt-0 p-0 md:p-4 font-sans text-contrast overflow-x-hidden overflow-y-auto">
-      <div
-        className="absolute inset-0 z-0 opacity-10 pointer-events-none"
-        style={{
-          backgroundImage:
-            "linear-gradient(#333 1px, transparent 1px), linear-gradient(90deg, #333 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
-        }}
-      />
-
-      <div className="absolute top-4 right-4 md:top-6 md:right-6 z-20">
-        <button
-          onClick={() => setShowExitModal(true)}
-          className="text-gray-400 hover:text-red-400 transition-colors flex items-center text-sm font-medium bg-black/40 backdrop-blur rounded-full px-3 py-1 md:bg-transparent md:p-0 border md:border-none border-gray-800"
-        >
-          <LogOut className="h-4 w-4 mr-2" />
-          Quit
-        </button>
-      </div>
-
-      <div className="w-full md:max-w-3xl bg-surface md:rounded-2xl shadow-2xl border-0 md:border border-border flex flex-col relative z-10 md:min-h-[500px]">
-        <div className="bg-surface px-6 py-4 border-b border-border flex justify-between items-center sticky top-0 z-30">
-          <div className="flex items-center space-x-3 text-contrast">
-            <div className="bg-neutral-800 p-2 rounded-lg text-gray-300">
-              <Clock className="h-5 w-5" />
-            </div>
-            <span className="font-mono font-bold text-lg">{formatTime(timeLeft)}</span>
-          </div>
-          <div className="flex flex-col items-end mr-8 md:mr-0">
-            <div className="text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wider">
-              Q {currentQuestionIndex + 1} / {questions.length}
-            </div>
-            <div className="flex gap-1 mt-1">
-              {questions.map((_, index) => (
-                <div
-                  key={index}
-                  className={`h-1.5 w-1.5 md:w-2 rounded-full ${
-                    index <= currentQuestionIndex ? "bg-blue-500" : "bg-neutral-800"
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="p-6 md:p-12 flex-1 flex flex-col pb-32 md:pb-12">
-          <div className="mb-4 flex flex-wrap items-center gap-2 md:gap-3">
-            <span
-              className={`inline-block px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full border ${difficultyClass(
-                currentQuestion.difficulty,
-              )}`}
-            >
-              {currentQuestion.difficulty}
-            </span>
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider border border-gray-800 px-2 py-1 rounded-full truncate max-w-[200px]">
-              {track?.track_name || `Track #${session?.track_id ?? ""}`}
-            </span>
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider border border-gray-800 px-2 py-1 rounded-full">
-              {currentQuestion.question_type}
-            </span>
-          </div>
-
-          {errorMessage && (
-            <div className="mb-6 rounded-xl border border-red-900/60 bg-red-900/20 text-red-200 px-4 py-3 flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
-              <span className="text-sm flex-1">{errorMessage}</span>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="text-red-100 hover:text-white hover:bg-red-900/30"
-                onClick={() => {
-                  void loadSessionData();
-                }}
-                disabled={isSubmittingAnswer || Boolean(statusMessage)}
-              >
-                Retry
-              </Button>
-            </div>
-          )}
-
-          <div className="mb-6 md:mb-8">
-            <div className="max-w-none text-contrast">
-              <ReactMarkdown
-                components={{
-                  p: ({ node, ...props }) => (
-                    <p className="text-lg md:text-xl font-medium text-gray-200 leading-relaxed mb-6" {...props} />
-                  ),
-                  code: ({ node, className, children, ...props }: any) => (
-                    <code
-                      className="font-mono text-sm md:text-base bg-neutral-800 text-pink-400 px-1.5 py-0.5 rounded border border-neutral-700 break-words"
-                      {...props}
-                    >
-                      {children}
-                    </code>
-                  ),
-                  pre: ({ node, ...props }) => (
-                    <pre
-                      className="bg-neutral-900/50 p-4 rounded-lg overflow-x-auto text-sm mb-4 border border-neutral-800 text-gray-300"
-                      {...props}
-                    />
-                  ),
-                }}
-              >
-                {parsedQuestion.prompt}
-              </ReactMarkdown>
-            </div>
-          </div>
-
-          <div className="flex-1">
-            {isMcqWithOptions ? (
-              <div className="space-y-3 md:space-y-4 pb-20 md:pb-0">
-                {parsedQuestion.options.map((option, index) => (
-                  <button
-                    key={`${currentQuestion.question_id}-${index}`}
-                    onClick={() => {
-                      void submitCurrentAnswer(option);
-                    }}
-                    disabled={statusMessage !== null || isSubmittingAnswer}
-                    className="w-full text-left p-4 md:p-5 rounded-xl border border-neutral-700 bg-neutral-800 hover:bg-neutral-700 hover:border-neutral-500 transition-all group relative overflow-hidden active:bg-blue-900/40 disabled:opacity-60"
-                  >
-                    <div className="flex items-start md:items-center relative z-10">
-                      <span className="flex-shrink-0 h-8 w-8 rounded-lg bg-neutral-700 flex items-center justify-center text-sm font-bold text-gray-400 mr-4 group-hover:bg-blue-600 group-hover:text-white transition-colors mt-0.5 md:mt-0">
-                        {String.fromCharCode(65 + index)}
-                      </span>
-                      <span className="text-base md:text-lg text-gray-300 group-hover:text-white font-medium leading-tight">
-                        {option}
-                      </span>
-                    </div>
-                  </button>
-                ))}
+    <div className="min-h-screen bg-background pt-20">
+      <div className="page-shell py-6 sm:py-8">
+        <div className="grid gap-6 xl:grid-cols-[0.34fr,0.66fr]">
+          <div className="space-y-6">
+            <Panel className="p-6 sm:sticky sm:top-24">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <StatusPill tone="accent">Assessment live</StatusPill>
+                  <h1 className="mt-4 font-display text-3xl font-semibold text-contrast">
+                    {track?.track_name || `Track #${session?.track_id ?? ""}`}
+                  </h1>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                    Stay focused. Each answer is submitted directly to the assessment session.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowExitModal(true)}
+                  className="inline-flex items-center gap-2 rounded-full border border-border bg-surface/75 px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-contrast"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Exit
+                </button>
               </div>
-            ) : (
-              <div className="space-y-4 animate-fade-in pb-20 md:pb-0">
-                <p className="text-sm text-gray-400 mb-2 font-medium">Type your answer:</p>
-                <textarea
-                  className="w-full min-h-[120px] max-h-[280px] p-4 border border-neutral-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-y bg-neutral-800 text-white placeholder-gray-500 text-base md:text-lg font-sans transition-all"
-                  placeholder="Write your response..."
-                  value={freeTextAnswer}
-                  onChange={(event) => setFreeTextAnswer(event.target.value)}
-                  disabled={statusMessage !== null || isSubmittingAnswer}
-                />
-                <div className="flex justify-end md:block">
-                  <Button
-                    onClick={() => {
-                      void submitCurrentAnswer(freeTextAnswer);
-                    }}
-                    disabled={!freeTextAnswer.trim() || statusMessage !== null || isSubmittingAnswer}
-                    size="lg"
-                    className="bg-blue-600 hover:bg-blue-500 text-white border-none"
-                  >
-                    Submit Answer
-                  </Button>
+
+              <div className="mt-6 rounded-[24px] border border-border bg-surface/70 p-4">
+                <div className="flex items-center justify-between">
+                  <div className="metric-label">Time remaining</div>
+                  <div className="inline-flex items-center gap-2 text-lg font-semibold text-contrast">
+                    <Clock3 className="h-4 w-4 text-primary" />
+                    {formatTime(timeLeft)}
+                  </div>
+                </div>
+                <div className="mt-4 h-2 overflow-hidden rounded-full bg-contrast/8">
+                  <div
+                    className="h-full rounded-full bg-primary transition-all duration-300"
+                    style={{ width: `${progressValue}%` }}
+                  />
+                </div>
+                <div className="mt-3 flex items-center justify-between text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                  <span>
+                    Question {currentQuestionIndex + 1} / {questions.length}
+                  </span>
+                  <span>{Math.round(progressValue)}%</span>
                 </div>
               </div>
+
+              <div className="mt-6 space-y-3">
+                <StatusPill tone={difficultyTone(currentQuestion.difficulty)}>
+                  Difficulty: {currentQuestion.difficulty}
+                </StatusPill>
+                <StatusPill tone="neutral">Type: {currentQuestion.question_type}</StatusPill>
+                <StatusPill tone="neutral">
+                  {questions.length - currentQuestionIndex - 1} questions after this
+                </StatusPill>
+              </div>
+
+              <div className="mt-6 rounded-[24px] border border-border bg-surface/55 p-4">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4 text-primary" />
+                  <div className="font-semibold text-contrast">Answering guidance</div>
+                </div>
+                <ul className="mt-3 space-y-2 text-sm leading-6 text-muted-foreground">
+                  <li>Answer directly and keep your reasoning tight.</li>
+                  <li>Multiple-choice submissions advance immediately.</li>
+                  <li>Free-text answers should be specific enough to evaluate.</li>
+                </ul>
+              </div>
+            </Panel>
+          </div>
+
+          <div className="space-y-6">
+            {errorMessage && (
+              <div className="status-banner" data-tone="error">
+                <AlertCircle className="mt-0.5 h-4 w-4 text-danger" />
+                <span className="text-sm leading-6 text-contrast">{errorMessage}</span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => void loadSessionData()}
+                  disabled={isSubmittingAnswer || Boolean(statusMessage)}
+                >
+                  Retry
+                </Button>
+              </div>
             )}
+
+            <Panel className="p-6 sm:p-8">
+              <div className="flex flex-wrap items-center gap-2">
+                <StatusPill tone="accent">Question {currentQuestionIndex + 1}</StatusPill>
+                <StatusPill tone={difficultyTone(currentQuestion.difficulty)}>
+                  {currentQuestion.difficulty}
+                </StatusPill>
+                <StatusPill tone="neutral">{currentQuestion.question_type}</StatusPill>
+              </div>
+
+              <div className="mt-6">
+                <div className="markdown-content text-lg sm:text-xl">
+                  <ReactMarkdown>{parsedQuestion.prompt}</ReactMarkdown>
+                </div>
+              </div>
+
+              <div className="mt-8">
+                {isMcqWithOptions ? (
+                  <div className="space-y-3">
+                    {parsedQuestion.options.map((option, index) => (
+                      <button
+                        key={`${currentQuestion.question_id}-${index}`}
+                        type="button"
+                        onClick={() => void submitCurrentAnswer(option)}
+                        disabled={statusMessage !== null || isSubmittingAnswer}
+                        className="group flex w-full items-start gap-4 rounded-[24px] border border-border bg-surface/70 px-4 py-4 text-left transition-all hover:border-primary/25 hover:bg-surface disabled:cursor-not-allowed disabled:opacity-60 sm:px-5"
+                      >
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-sm font-semibold text-primary transition-colors group-hover:bg-primary group-hover:text-white">
+                          {String.fromCharCode(65 + index)}
+                        </div>
+                        <div className="pt-1 text-base leading-7 text-contrast">{option}</div>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <label htmlFor="assessment-answer" className="field-label">
+                      Your answer
+                    </label>
+                    <textarea
+                      id="assessment-answer"
+                      className="field-textarea min-h-[220px]"
+                      placeholder="Write your response..."
+                      value={freeTextAnswer}
+                      onChange={(event) => setFreeTextAnswer(event.target.value)}
+                      disabled={statusMessage !== null || isSubmittingAnswer}
+                    />
+                    <div className="flex justify-end">
+                      <Button
+                        onClick={() => void submitCurrentAnswer(freeTextAnswer)}
+                        disabled={!freeTextAnswer.trim() || statusMessage !== null || isSubmittingAnswer}
+                        size="lg"
+                      >
+                        Submit answer
+                        <ArrowRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Panel>
           </div>
         </div>
       </div>
 
       {statusMessage && (
-        <div className="fixed inset-0 z-50 backdrop-blur-md bg-black/60 flex flex-col items-center justify-center animate-fade-in px-4">
-          <div className="flex flex-col items-center max-w-md text-center p-4">
-            <div className="relative mb-8">
-              <div className="absolute inset-0 bg-blue-600 rounded-full blur-2xl opacity-30 animate-pulse" />
-              <div className="h-16 w-16 md:h-20 md:w-20 border-[6px] border-blue-500 border-t-transparent rounded-full animate-spin relative z-10" />
-            </div>
-            <p className="font-display text-2xl md:text-3xl font-bold text-white animate-pulse-slow">
-              {statusMessage}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/85 px-4 backdrop-blur-md">
+          <Panel className="max-w-md p-8 text-center">
+            <div className="mx-auto h-14 w-14 animate-spin rounded-full border-[6px] border-primary border-t-transparent" />
+            <p className="mt-5 font-display text-3xl font-semibold text-contrast">{statusMessage}</p>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              The session is being updated and scored on the backend.
             </p>
-          </div>
+          </Panel>
         </div>
       )}
 
       {showExitModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-surface rounded-2xl p-6 md:p-8 max-w-md w-full shadow-2xl border border-border">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="font-display text-xl md:text-2xl font-bold text-contrast">Quit Assessment?</h3>
-              <button onClick={() => setShowExitModal(false)} className="text-gray-500 hover:text-gray-300">
-                <X className="h-6 w-6" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 px-4 backdrop-blur-sm">
+          <Panel className="max-w-md p-6 sm:p-7">
+            <div className="flex items-center justify-between gap-4">
+              <h3 className="font-display text-3xl font-semibold text-contrast">Exit assessment?</h3>
+              <button
+                type="button"
+                onClick={() => setShowExitModal(false)}
+                className="rounded-full border border-border bg-surface/70 p-2 text-muted-foreground transition-colors hover:text-contrast"
+              >
+                <X className="h-4 w-4" />
               </button>
             </div>
-            <p className="text-gray-400 mb-8 text-sm md:text-base">
-              Your assessment session will remain on the server, but unfinished answers will not be submitted.
+            <p className="mt-4 text-sm leading-6 text-muted-foreground">
+              Your session stays on the server, but unfinished answers will not be submitted.
             </p>
-            <div className="flex flex-col md:flex-row gap-4">
-              <Button
-                variant="outline"
-                onClick={() => setShowExitModal(false)}
-                className="flex-1 h-12 order-2 md:order-1 border-neutral-700 text-gray-300 hover:bg-neutral-800 hover:text-white"
-              >
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <Button variant="outline" onClick={() => setShowExitModal(false)} className="flex-1">
                 Resume
               </Button>
               <Button
-                variant="primary"
+                variant="danger"
                 onClick={() => {
                   setShowExitModal(false);
                   onExit();
                 }}
-                className="flex-1 bg-red-600 hover:bg-red-700 h-12 border-none order-1 md:order-2 text-white"
+                className="flex-1"
               >
                 Exit
               </Button>
             </div>
-          </div>
+          </Panel>
         </div>
       )}
     </div>
