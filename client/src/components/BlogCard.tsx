@@ -66,7 +66,7 @@ export const BlogCard: FC<BlogCardProps> = ({ post, index }) => {
 
       {/* Content */}
       <div className="p-6 flex flex-col flex-1">
-        <h3 className="font-display text-xl font-semibold text-contrast mb-3 leading-tight group-hover:text-accent transition-colors">
+        <h3 className="font-display text-xl font-semibold text-contrast mb-3 leading-tight group-hover:text-primary transition-colors">
           {post.title}
         </h3>
         <p className="text-gray-600 text-sm leading-relaxed mb-6 flex-1">
