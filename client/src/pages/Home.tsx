@@ -1,8 +1,25 @@
-import { FC } from 'react';
-import { ArrowRight, CheckCircle, Zap, Target, BookOpen, Star } from 'lucide-react';
-import { Button } from '../components/Button';
-import { User } from '../types';
-import Cubes from '../components/Cubes';
+import { FC, useEffect, useState } from "react";
+import {
+  ArrowRight,
+  BarChart3,
+  BookOpen,
+  CheckCircle2,
+  Layers3,
+  ShieldCheck,
+  Sparkles,
+  Target,
+  Zap,
+} from "lucide-react";
+import { Button } from "../components/Button";
+import Threads from "../components/Threads";
+import { User } from "../types";
+import {
+  MarketingHero,
+  MarketingSection,
+  PillRow,
+} from "../components/marketing-layout";
+import { Panel, StatusPill } from "../components/ui";
+import { useTheme } from "../providers/ThemeProvider";
 
 interface HomeProps {
   onStart: () => void;
@@ -16,287 +33,406 @@ interface HomeProps {
 }
 
 const testimonials = [
-  { name: "Sarah Chen", role: "Senior Frontend Dev", quote: "I skipped 40 hours of basic React tutorials. Grow Wise took me straight to Concurrency and Suspense." },
-  { name: "Marcus J.", role: "Backend Engineer", quote: "The validator is brutal. It flagged my O(n^2) sort immediately. Exactly the feedback I needed." },
-  { name: "Elena R.", role: "Full Stack Dev", quote: "Finally, a course that respects my time. The adaptive assessment is scary accurate." },
-  { name: "David Kim", role: "CTO @ Startup", quote: "We use this to screen candidates now. The knowledge graph is better than any resume." },
-  { name: "James T.", role: "DevOps Engineer", quote: "The infrastructure modules generated were spot on. No fluff, just hard skills." },
-  { name: "Priya P.", role: "Data Scientist", quote: "Loved how it adapted to my Python knowledge and focused purely on advanced pandas optimization." }
+  {
+    name: "Sarah Chen",
+    role: "Senior Frontend Dev",
+    quote:
+      "I skipped 40 hours of basic React tutorials. Grow Wise took me straight to Concurrency and Suspense.",
+  },
+  {
+    name: "Marcus J.",
+    role: "Backend Engineer",
+    quote:
+      "The validator is brutal. It flagged my O(n^2) sort immediately. Exactly the feedback I needed.",
+  },
+  {
+    name: "Elena R.",
+    role: "Full Stack Dev",
+    quote:
+      "Finally, a course that respects my time. The adaptive assessment is scary accurate.",
+  },
 ];
 
-export const Home: FC<HomeProps> = ({ onStart, user, onDashboardClick, onChooseTrackClick, onBlogClick, onDemoClick }) => {
+const featureRows = [
+  {
+    icon: Target,
+    title: "Adaptive assessment",
+    description:
+      "A focused evaluation that maps where you are strong, where you are brittle, and what to skip.",
+  },
+  {
+    icon: BookOpen,
+    title: "Precision curriculum",
+    description:
+      "Learning paths are generated around your gaps, not a generic syllabus that treats everyone the same.",
+  },
+  {
+    icon: Zap,
+    title: "Validator workflow",
+    description:
+      "Interview-style scenarios turn knowledge into proof, with a cleaner route to progress analysis.",
+  },
+];
+
+const stats = [
+  { label: "Assessment length", value: "50 min" },
+  { label: "Core workflow", value: "4 stages" },
+  { label: "Experience", value: "Personalized per learner" },
+  { label: "Learning mode", value: "Adaptive" },
+];
+
+export const Home: FC<HomeProps> = ({
+  onStart,
+  onLoginClick,
+  user,
+  onDashboardClick,
+  onChooseTrackClick,
+  onBlogClick,
+  onDemoClick,
+}) => {
+  const { theme } = useTheme();
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+      setIsDark(theme === "dark");
+      return;
+    }
+
+    if (theme === "dark") {
+      setIsDark(true);
+      return;
+    }
+
+    if (theme === "light") {
+      setIsDark(false);
+      return;
+    }
+
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const syncTheme = () => setIsDark(mediaQuery.matches);
+
+    syncTheme();
+    mediaQuery.addEventListener("change", syncTheme);
+    return () => mediaQuery.removeEventListener("change", syncTheme);
+  }, [theme]);
+
+  const primaryAction = user ? (
+    <Button size="lg" onClick={onDashboardClick} className="min-w-44">
+      Go to dashboard
+      <ArrowRight className="h-4 w-4" />
+    </Button>
+  ) : (
+    <Button size="lg" onClick={onStart} className="min-w-44">
+      Start free assessment →
+    </Button>
+  );
+
+  const secondaryAction = user ? (
+    <Button size="lg" variant="outline" onClick={onChooseTrackClick}>
+      Choose track
+    </Button>
+  ) : (
+    <Button size="lg" variant="outline" onClick={onDemoClick}>
+      View product tour
+    </Button>
+  );
 
   return (
-    <div className="font-sans overflow-x-hidden pt-16">
-
-      {/* --- HERO SECTION --- */}
-      <section className="relative pt-20 pb-20 px-4 sm:px-6 lg:px-8 text-center max-w-7xl mx-auto min-h-[80vh] flex flex-col justify-center items-center overflow-hidden">
-
-        {/* Animated Cubes Background */}
-        <div className="absolute inset-0 -z-10 flex items-center justify-center overflow-hidden">
-          <div className="absolute inset-0 z-10" style={{ background: 'radial-gradient(circle at center, transparent 30%, rgb(var(--background)) 80%)' }}></div>
-
-          <div className="opacity-80 scale-110 transform">
-            <Cubes
-              gridSize={8}
-              maxAngle={25}
-              radius={5}
-              borderStyle="1px solid rgba(200, 200, 200, 0.4)"
-              faceColor="rgba(255, 255, 255, 0.4)"
-              rippleColor="#3B82F6"
-              rippleSpeed={1.5}
-              autoAnimate={true}
-              rippleOnClick={true}
-            />
-          </div>
-        </div>
-
-        <div className="relative z-20 animate-fade-in-up">
-          <div className="inline-flex items-center px-3 py-1 rounded-full border border-blue-200 bg-white/80 dark:bg-black/50 backdrop-blur-sm text-blue-700 dark:text-blue-400 text-xs font-medium mb-6 animate-fade-in-up delay-100 shadow-sm">
-            <Zap className="w-3 h-3 mr-2" />
-            AI-Powered Skill Validation v2.0
-          </div>
-
-          <h1 className="font-serif text-4xl sm:text-5xl md:text-8xl font-medium text-contrast mb-8 leading-[1.1] tracking-tight animate-fade-in-up delay-200 drop-shadow-sm">
-            The End of <br />
-            <span className="text-gray-400">Cookie-Cutter Courses.</span>
-          </h1>
-
-          <p className="text-lg md:text-2xl text-gray-600 dark:text-gray-400 mb-12 max-w-2xl mx-auto leading-relaxed animate-fade-in-up delay-300 px-4">
-            Stop relearning what you already know. Our AI assesses your actual skill level, then generates a custom curriculum just to fill the gaps.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up delay-400 w-full sm:w-auto px-4">
-            {user ? (
-              <>
-                <Button size="lg" onClick={onDashboardClick} className="w-full sm:w-auto shadow-xl shadow-blue-500/20 hover:shadow-blue-500/30 hover:scale-105 transition-all duration-300 text-lg h-14 px-8">
-                  Go to Dashboard <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-                <Button size="lg" variant="secondary" onClick={onChooseTrackClick} className="w-full sm:w-auto h-14 px-8 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 transition-all duration-300">
-                  Choose Track
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button size="lg" onClick={onStart} className="w-full sm:w-auto shadow-xl shadow-blue-500/20 hover:shadow-blue-500/30 hover:scale-105 transition-all duration-300 text-lg h-14 px-8">
-                  Take Free Assessment <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-                <Button size="lg" variant="secondary" onClick={onDemoClick} className="w-full sm:w-auto h-14 px-8 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 transition-all duration-300">
-                  View Demo
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* --- FEATURES SECTION --- */}
-      <section className="py-16 md:py-24 px-4 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {[
-            {
-              icon: Target,
-              color: 'text-accent',
-              bg: 'bg-blue-50 dark:bg-blue-900/20',
-              title: 'Adaptive Assessment',
-              desc: 'A 50-minute rigorous exam that adapts to your answers. We find exactly where your knowledge breaks down.'
-            },
-            {
-              icon: BookOpen,
-              color: 'text-purple-600 dark:text-purple-400',
-              bg: 'bg-purple-50 dark:bg-purple-900/20',
-              title: 'Precision Curriculum',
-              desc: 'Gemini 1.5 Pro generates a unique syllabus. If you know Loops, we skip them. If you do not know Recursion, we teach it.'
-            },
-            {
-              icon: Zap,
-              color: 'text-green-600 dark:text-green-400',
-              bg: 'bg-green-50 dark:bg-green-900/20',
-              title: 'Real-World Validator',
-              desc: 'Prove your skills in a simulated work scenario. The AI acts as your Senior Dev and grades your code quality.'
-            }
-          ].map((feature, i) => (
-            <div key={i} className={`bg-surface p-8 rounded-3xl border border-border shadow-soft flex flex-col h-full hover:scale-[1.02] hover:shadow-lg transition-all duration-500 opacity-0 animate-fade-in-up`} style={{ animationDelay: `${(i + 1) * 200}ms` }}>
-              <div className={`h-14 w-14 ${feature.bg} rounded-2xl flex items-center justify-center ${feature.color} mb-6`}>
-                <feature.icon className="h-7 w-7" />
+    <div className="pt-16">
+      <MarketingHero
+        badge={
+          <StatusPill tone="accent">
+            <Sparkles className="h-3.5 w-3.5" />
+            AI-powered skill validation
+          </StatusPill>
+        }
+        title={
+          <>
+            The learning product for people who do not need another generic course.
+          </>
+        }
+        description={
+          <>
+            Grow Wise maps what you already know, fills only the real gaps, and keeps every step
+            sharp, readable, and purposeful.
+          </>
+        }
+        background={
+          isDark ? (
+            <>
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(84,201,170,0.14),transparent_24%),radial-gradient(circle_at_80%_20%,rgba(84,201,170,0.08),transparent_18%),linear-gradient(180deg,rgba(8,12,18,0.12),rgba(8,12,18,0.5))]" />
+              <div className="absolute inset-x-0 top-0 h-full min-h-[600px] opacity-75 [mask-image:linear-gradient(180deg,rgba(0,0,0,0.95),rgba(0,0,0,0.6),transparent)]">
+                <Threads
+                  amplitude={1}
+                  distance={0}
+                  enableMouseInteraction
+                />
               </div>
-              <h3 className="font-serif text-2xl font-medium mb-3 text-contrast">{feature.title}</h3>
-              <p className="text-gray-600 dark:text-gray-400 flex-1 leading-relaxed">
-                {feature.desc}
-              </p>
+              <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(11,16,23,0.9)_0%,rgba(11,16,23,0.55)_42%,rgba(11,16,23,0.3)_100%)]" />
+            </>
+          ) : null
+        }
+        primaryAction={primaryAction}
+        secondaryAction={secondaryAction}
+        actionsFooter={
+          !user ? (
+            <p className="text-xs text-muted-foreground">No account required · Takes under 10 minutes</p>
+          ) : null
+        }
+        stats={stats}
+      >
+        <div className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="metric-strip">
+              <div className="metric-label">Assessment</div>
+              <div className="metric-value text-[1.85rem]">Adaptive</div>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">Adapts difficulty based on your responses</p>
             </div>
+            <div className="metric-strip">
+              <div className="metric-label">Validator</div>
+              <div className="metric-value text-[1.85rem]">Scenario-led</div>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">Real-world problems, not textbook questions</p>
+            </div>
+          </div>
+          <PillRow items={["Curated tracks", "Progress analysis", "Mentor chat", "Picks up where you left off"]} />
+        </div>
+      </MarketingHero>
+
+      <MarketingSection
+        eyebrow="Core signals"
+        title="Three tools. One coherent system."
+        description="Assessment, curriculum, and validation — designed to work together."
+      >
+        <div className="grid gap-5 md:grid-cols-3">
+          {featureRows.map((feature, index) => {
+            const Icon = feature.icon;
+            return (
+              <Panel key={feature.title} className="p-6">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <Icon className="h-5 w-5" />
+                </div>
+                <h3 className="mt-5 font-display text-2xl font-semibold text-contrast">
+                  {feature.title}
+                </h3>
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">{feature.description}</p>
+                <div className="mt-5 flex items-center gap-2 text-sm font-semibold text-primary">
+                  <span className="uppercase tracking-[0.18em]">0{index + 1}</span>
+                  <span className="h-px flex-1 bg-border" />
+                </div>
+              </Panel>
+            );
+          })}
+        </div>
+      </MarketingSection>
+
+      <MarketingSection
+        eyebrow="Proof"
+        title="How it works"
+        description="From assessment to learning path to validation — a clear, connected flow."
+      >
+        <div className="grid gap-6 lg:grid-cols-[1.1fr,0.9fr]">
+          <Panel className="p-6">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <div className="metric-label">Product flow</div>
+                <h3 className="mt-2 font-display text-2xl font-semibold text-contrast">
+                  From assessment to learning path
+                </h3>
+              </div>
+              <StatusPill tone="neutral">
+                <BarChart3 className="h-3.5 w-3.5" />
+                Structured
+              </StatusPill>
+            </div>
+            <div className="mt-6 grid gap-4 sm:grid-cols-3">
+              {[
+                "Assess what matters",
+                "Generate the right path",
+                "Validate in context",
+              ].map((item, index) => (
+                <div key={item} className="metric-strip">
+                  <div className="text-2xl font-bold text-primary">0{index + 1}</div>
+                  <div className="metric-label mt-1">Step {index + 1}</div>
+                  <div className="mt-2 text-base font-semibold text-contrast">{item}</div>
+                </div>
+              ))}
+            </div>
+          </Panel>
+
+          <Panel className="p-6">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-primary" />
+              <h3 className="font-display text-2xl font-semibold text-contrast">Signals</h3>
+            </div>
+            <div className="mt-5 space-y-3">
+              {[
+                "Public pages and your personal workspace feel connected but distinct.",
+                "Every interaction feels part of one coherent product.",
+                "Works beautifully on any device, in any lighting.",
+              ].map((item) => (
+                <div key={item} className="flex items-start gap-3">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 text-success" />
+                  <p className="text-sm leading-6 text-muted-foreground">{item}</p>
+                </div>
+              ))}
+            </div>
+          </Panel>
+        </div>
+      </MarketingSection>
+
+      <MarketingSection
+        eyebrow="What people say"
+        title="Short, direct feedback from builders."
+        description="The product should feel credible before a user ever enters the app."
+      >
+        <div className="grid gap-5 md:grid-cols-3">
+          {testimonials.map((item) => (
+            <Panel key={item.name} className="p-6">
+              <p className="text-lg leading-8 text-contrast">"{item.quote}"</p>
+              <div className="mt-6 flex items-center gap-3 border-t border-border pt-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-contrast text-background font-bold">
+                  {item.name[0]}
+                </div>
+                <div>
+                  <div className="font-semibold text-contrast">{item.name}</div>
+                  <div className="text-sm text-muted-foreground">{item.role}</div>
+                </div>
+              </div>
+            </Panel>
           ))}
         </div>
+      </MarketingSection>
+
+      <MarketingSection
+        eyebrow="Pricing"
+        title="Start free. Upgrade when you're ready."
+        description="Transparent pricing. No surprises."
+      >
+        <div className="grid gap-5 lg:grid-cols-3">
+          {[
+            {
+              name: "Starter",
+              price: "$0",
+              period: "",
+              note: "Start building your learning path — no credit card needed.",
+              items: ["1 assessment / month", "Public profile", "Core dashboard"],
+              featured: false,
+              buttonText: "Start free",
+              buttonAction: user ? onDashboardClick : onStart,
+            },
+            {
+              name: "Pro",
+              price: "$15",
+              period: "/month",
+              note: "For users who want the full adaptive learning loop.",
+              items: ["Unlimited assessments", "AI curriculum generation", "Validator access", "Mentor chat"],
+              featured: true,
+              buttonText: "Get started",
+              buttonAction: user ? onDashboardClick : onStart,
+            },
+            {
+              name: "Team",
+              price: "$99",
+              period: "/seat",
+              note: "For groups that need a shared skill baseline and tracking.",
+              items: ["Team dashboards", "Custom tracks", "Admin controls", "Priority support", "Custom assessments"],
+              featured: false,
+              buttonText: "Contact us",
+              buttonAction: user ? onDashboardClick : onStart,
+            },
+          ].map((tier) => (
+            <Panel
+              key={tier.name}
+              className={tier.featured ? "border-primary/20 bg-primary/5 p-6 shadow-halo" : "p-6"}
+            >
+              <div className="flex items-center justify-between gap-4">
+                <StatusPill tone={tier.featured ? "accent" : "neutral"}>{tier.name}</StatusPill>
+                {tier.featured ? <StatusPill tone="success">Most used</StatusPill> : null}
+              </div>
+              <div className="mt-5 flex items-end gap-2">
+                <div className="font-display text-5xl font-semibold text-contrast">{tier.price}</div>
+                {tier.period ? <div className="pb-1 text-sm text-muted-foreground">{tier.period}</div> : null}
+              </div>
+              <p className="mt-4 text-sm leading-6 text-muted-foreground">{tier.note}</p>
+              <div className="mt-6 space-y-3">
+                {tier.items.map((item) => (
+                  <div key={item} className="flex items-center gap-2 text-sm text-contrast">
+                    <CheckCircle2 className="h-4 w-4 text-success" />
+                    {item}
+                  </div>
+                ))}
+              </div>
+              <div className="mt-6">
+                <Button
+                  variant={tier.featured ? "primary" : "outline"}
+                  className="w-full"
+                  onClick={tier.buttonAction}
+                >
+                  {tier.buttonText}
+                </Button>
+              </div>
+            </Panel>
+          ))}
+        </div>
+      </MarketingSection>
+
+      <section className="page-section-cta py-10 sm:py-14">
+        <div className="page-shell">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+              <div className="max-w-2xl">
+                <div className="section-label">Get started</div>
+                <h2 className="mt-4 font-display text-5xl font-bold tracking-[-0.04em] text-contrast sm:text-6xl">
+                  Stop relearning. Start growing.
+                </h2>
+                <p className="mt-4 max-w-xl text-sm leading-6 text-muted-foreground">
+                  Your time is too valuable for generic courses. Let Grow Wise build the path that
+                  actually moves you forward.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                {user ? (
+                  <Button size="lg" onClick={onDashboardClick}>
+                    Open dashboard
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button size="lg" onClick={onStart}>
+                    Begin assessment →
+                  </Button>
+                )}
+              </div>
+            </div>
+        </div>
       </section>
 
-      {/* --- TESTIMONIALS SECTION --- */}
-      <section id="testimonials" className="py-24 md:py-32 bg-surface border-t border-border overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 mb-16 opacity-0 animate-fade-in-up delay-200">
-          <h2 className="font-serif text-3xl md:text-5xl font-medium text-center text-contrast">Loved by Builders</h2>
-        </div>
-
-        {/* Marquee Container */}
-        <div className="relative w-full overflow-hidden opacity-0 animate-fade-in-up delay-300">
-          <div className="flex w-max animate-scroll">
-            {[...testimonials, ...testimonials, ...testimonials].map((t, i) => (
-              <div key={i} className="w-[300px] md:w-[450px] bg-background p-8 md:p-10 rounded-3xl border border-border shadow-sm mx-4 md:mx-6 hover:border-accent/30 transition-colors flex-shrink-0">
-                <div className="flex items-center space-x-1 mb-6 text-amber-400">
-                  {[1, 2, 3, 4, 5].map(s => <Star key={s} className="h-4 w-4 fill-current" />)}
-                </div>
-                <p className="text-lg md:text-xl text-gray-800 dark:text-gray-200 font-medium mb-8 leading-relaxed font-serif whitespace-normal">"{t.quote}"</p>
-                <div className="flex items-center">
-                  <div className="h-12 w-12 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center font-bold text-gray-500 dark:text-gray-300 mr-4">
-                    {t.name[0]}
-                  </div>
-                  <div>
-                    <div className="font-bold text-contrast text-lg">{t.name}</div>
-                    <div className="text-sm text-gray-500">{t.role}</div>
-                  </div>
+      <footer className="border-t border-border/70 bg-surface/45">
+        <div className="page-shell flex flex-col gap-6 px-1 py-8 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-2xl space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                <Layers3 className="h-4 w-4" />
+              </div>
+              <div>
+                <div className="font-display text-2xl font-semibold text-contrast">Grow Wise</div>
+                <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  Mastery, minus the redundancy
                 </div>
               </div>
-            ))}
-          </div>
-          <div className="absolute top-0 left-0 h-full w-16 md:w-32 bg-gradient-to-r from-surface to-transparent pointer-events-none z-10"></div>
-          <div className="absolute top-0 right-0 h-full w-16 md:w-32 bg-gradient-to-l from-surface to-transparent pointer-events-none z-10"></div>
-        </div>
-      </section>
-
-      {/* --- PRICING SECTION --- */}
-      <section id="pricing" className="py-24 md:py-32 px-4 max-w-7xl mx-auto">
-        <h2 className="font-serif text-3xl md:text-5xl font-medium text-center mb-16 md:mb-20 text-contrast opacity-0 animate-fade-in-up">Simple, Flat Pricing</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
-
-          {/* Free Tier */}
-          <div className="bg-white dark:bg-slate-900 p-8 md:p-10 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col hover:shadow-xl transition-all duration-300 opacity-0 animate-fade-in-up delay-200 group order-2 md:order-1">
-            <div className="mb-6">
-              <span className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-4 py-1.5 rounded-full text-xs font-bold tracking-wider uppercase group-hover:bg-gray-200 dark:group-hover:bg-gray-700 transition-colors">Starter</span>
             </div>
-            <div className="text-5xl font-serif font-bold mb-3 text-slate-900 dark:text-white">$0</div>
-            <p className="text-slate-600 dark:text-slate-400 mb-10 text-base">Forever free for basic assessments.</p>
-            <ul className="space-y-5 mb-10 flex-1">
-              <li className="flex items-start text-sm text-slate-600 dark:text-slate-400"><CheckCircle className="h-5 w-5 text-gray-400 dark:text-gray-500 mr-3 shrink-0" /> 1 Assessment / Month</li>
-              <li className="flex items-start text-sm text-slate-600 dark:text-slate-400"><CheckCircle className="h-5 w-5 text-gray-400 dark:text-gray-500 mr-3 shrink-0" /> Basic Knowledge Graph</li>
-              <li className="flex items-start text-sm text-slate-600 dark:text-slate-400"><CheckCircle className="h-5 w-5 text-gray-400 dark:text-gray-500 mr-3 shrink-0" /> Public Profile</li>
-            </ul>
-            <Button variant="secondary" className="w-full h-12" onClick={user ? onDashboardClick : onStart}>
-              {user ? "Go to Dashboard" : "Start Free"}
+            <p className="max-w-xl text-sm leading-6 text-muted-foreground">
+              Built for developers who value precision over volume.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button variant="ghost" onClick={onBlogClick}>
+              Blog
             </Button>
-          </div>
-
-          {/* Pro Tier */}
-          <div className="bg-slate-900 p-8 md:p-10 rounded-3xl border-2 border-blue-600 shadow-2xl shadow-blue-900/20 flex flex-col relative transform md:-translate-y-6 opacity-0 animate-fade-in-up delay-300 z-10 order-1 md:order-2">
-            <div className="absolute top-0 right-0 left-0 -mt-4 flex justify-center">
-              <span className="bg-blue-600 text-white text-[10px] font-bold px-4 py-1.5 rounded-full uppercase tracking-widest shadow-lg">Most Popular</span>
-            </div>
-            <div className="mb-6 mt-2">
-              <span className="bg-blue-900/40 text-blue-300 px-4 py-1.5 rounded-full text-xs font-bold tracking-wider uppercase">Pro</span>
-            </div>
-            <div className="text-5xl font-serif font-bold mb-3 text-white">$15<span className="text-xl text-gray-400 font-sans font-normal">/mo</span></div>
-            <p className="text-gray-300 mb-10 text-base">For serious developers bridging gaps.</p>
-            <ul className="space-y-5 mb-10 flex-1">
-              <li className="flex items-start text-sm text-gray-300"><CheckCircle className="h-5 w-5 text-blue-500 mr-3 shrink-0" /> Unlimited Assessments</li>
-              <li className="flex items-start text-sm text-gray-300"><CheckCircle className="h-5 w-5 text-blue-500 mr-3 shrink-0" /> <strong>AI Curriculum Generation</strong></li>
-              <li className="flex items-start text-sm text-gray-300"><CheckCircle className="h-5 w-5 text-blue-500 mr-3 shrink-0" /> Real-World Validator Project</li>
-              <li className="flex items-start text-sm text-gray-300"><CheckCircle className="h-5 w-5 text-blue-500 mr-3 shrink-0" /> AI Tutor Chat Access</li>
-            </ul>
-            <Button variant="primary" className="w-full h-12 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:scale-[1.02] transition-all" onClick={user ? onDashboardClick : onStart}>
-              {user ? "Go to Dashboard" : "Get Started"}
-            </Button>
-          </div>
-
-          {/* Enterprise Tier */}
-          <div className="bg-white dark:bg-slate-900 p-8 md:p-10 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col hover:shadow-xl transition-all duration-300 opacity-0 animate-fade-in-up delay-400 order-3">
-            <div className="mb-6">
-              <span className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-4 py-1.5 rounded-full text-xs font-bold tracking-wider uppercase">Team</span>
-            </div>
-            <div className="text-5xl font-serif font-bold mb-3 text-slate-900 dark:text-white">$99<span className="text-xl text-slate-500 dark:text-slate-400 font-sans font-normal">/seat</span></div>
-            <p className="text-slate-600 dark:text-slate-400 mb-10 text-base">Scale your engineering team.</p>
-            <ul className="space-y-5 mb-10 flex-1">
-              <li className="flex items-start text-sm text-slate-600 dark:text-slate-400"><CheckCircle className="h-5 w-5 text-gray-400 dark:text-gray-500 mr-3 shrink-0" /> Team Dashboards</li>
-              <li className="flex items-start text-sm text-slate-600 dark:text-slate-400"><CheckCircle className="h-5 w-5 text-gray-400 dark:text-gray-500 mr-3 shrink-0" /> Custom Skill Tracks</li>
-              <li className="flex items-start text-sm text-slate-600 dark:text-slate-400"><CheckCircle className="h-5 w-5 text-gray-400 dark:text-gray-500 mr-3 shrink-0" /> SSO & Admin Controls</li>
-            </ul>
-            <Button variant="secondary" className="w-full h-12">Contact Sales</Button>
-          </div>
-        </div>
-      </section>
-
-      {/* --- CTA SECTION --- */}
-      <section className="py-24 md:py-32 px-4 text-center bg-gray-50 dark:bg-gray-900/50 border-t border-border relative overflow-hidden">
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-accent rounded-full filter blur-[100px] animate-pulse-slow"></div>
-        </div>
-        <div className="relative z-10 opacity-0 animate-fade-in-up">
-          <h2 className="font-serif text-3xl md:text-6xl font-medium text-contrast mb-8 tracking-tight">Stop Relearning. Start Growing.</h2>
-          <p className="text-lg text-gray-600 dark:text-gray-400 mb-12 max-w-xl mx-auto">
-            Your time is your most valuable asset. Don't waste it on tutorials you don't need.
-          </p>
-          <Button size="lg" onClick={user ? onDashboardClick : onStart} className="shadow-2xl shadow-blue-500/30 transform hover:scale-110 transition-transform duration-300 h-16 px-10 text-lg w-full sm:w-auto">
-            {user ? (
-              <>Go to Dashboard <ArrowRight className="ml-2 h-6 w-6" /></>
-            ) : (
-              <>Start 50-min Assessment <ArrowRight className="ml-2 h-6 w-6" /></>
-            )}
-          </Button>
-        </div>
-      </section>
-
-      {/* --- FOOTER --- */}
-      <footer id="contact" className="flex flex-col md:flex-row min-h-[500px]">
-        {/* Left: Image (70%) */}
-        <div className="md:w-[70%] relative bg-gray-900 overflow-hidden min-h-[300px] flex items-center justify-center group order-2 md:order-1">
-          <div className="absolute inset-0 bg-gray-900 transition-transform duration-[20s] ease-linear group-hover:scale-110" style={{
-            backgroundImage: `radial-gradient(circle at 50% 50%, #2a2a2a 1px, transparent 1px)`,
-            backgroundSize: '40px 40px',
-            opacity: 0.5
-          }}></div>
-          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent"></div>
-
-          <div className="relative z-10 text-center">
-            <h1 className="font-serif text-6xl md:text-[12rem] font-bold text-white opacity-[0.03] tracking-tighter select-none leading-none animate-pulse-slow">
-              GROW
-            </h1>
-            <h1 className="font-serif text-6xl md:text-[12rem] font-bold text-white opacity-[0.03] tracking-tighter select-none leading-none -mt-4 md:-mt-10 animate-pulse-slow delay-700">
-              WISE
-            </h1>
-          </div>
-
-          <div className="absolute bottom-8 left-8 md:bottom-16 md:left-16 z-20">
-            <div className="font-serif text-2xl md:text-4xl font-bold text-white mb-2 md:mb-3">Grow Wise</div>
-            <p className="text-gray-400 max-w-md text-base md:text-xl">Mastery, minus the redundancy.</p>
-          </div>
-        </div>
-
-        {/* Right: Links (30%) */}
-        <div className="md:w-[30%] bg-surface text-contrast p-10 md:p-16 flex flex-col justify-between border-l border-border order-1 md:order-2">
-          <div className="grid grid-cols-2 gap-10">
-            <div className="opacity-0 animate-fade-in-up delay-200">
-              <h4 className="font-bold mb-6 md:mb-8 text-gray-500 text-xs uppercase tracking-[0.2em]">Platform</h4>
-              <ul className="space-y-4 md:space-y-5 text-sm text-gray-300">
-                <li><button className="hover:text-contrast transition-colors hover:underline decoration-accent underline-offset-4 text-left">Assessment Engine</button></li>
-                <li><button className="hover:text-contrast transition-colors hover:underline decoration-accent underline-offset-4 text-left">Curriculum AI</button></li>
-                <li><button className="hover:text-contrast transition-colors hover:underline decoration-accent underline-offset-4 text-left">Enterprise</button></li>
-              </ul>
-            </div>
-            <div className="opacity-0 animate-fade-in-up delay-300">
-              <h4 className="font-bold mb-6 md:mb-8 text-gray-500 text-xs uppercase tracking-[0.2em]">Company</h4>
-              <ul className="space-y-4 md:space-y-5 text-sm text-gray-300">
-                <li><button className="hover:text-contrast transition-colors hover:underline decoration-accent underline-offset-4 text-left">About</button></li>
-                <li><button onClick={onBlogClick} className="hover:text-contrast transition-colors hover:underline decoration-accent underline-offset-4 text-left">Blog</button></li>
-                <li><button className="hover:text-contrast transition-colors hover:underline decoration-accent underline-offset-4 text-left">Careers</button></li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="mt-12 md:mt-16 opacity-0 animate-fade-in-up delay-400">
-            <h4 className="font-bold mb-6 text-gray-500 text-xs uppercase tracking-[0.2em]">Stay Updated</h4>
-            <div className="flex gap-3">
-              <input type="email" placeholder="email@example.com" className="bg-background border border-border rounded-xl text-sm px-5 py-4 w-full focus:ring-1 focus:ring-accent text-contrast placeholder-gray-500 transition-all outline-none" />
-              <button className="bg-accent text-white px-5 py-4 rounded-xl font-medium hover:bg-blue-600 transition-colors transform hover:scale-105 active:scale-95">→</button>
-            </div>
-            <div className="mt-10 text-xs text-gray-600">
-              &copy; 2024 Grow Wise Inc. All rights reserved.
-            </div>
+            {!user && onLoginClick ? (
+              <Button variant="outline" onClick={onLoginClick}>
+                Login
+              </Button>
+            ) : null}
           </div>
         </div>
       </footer>
