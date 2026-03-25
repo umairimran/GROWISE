@@ -1,5 +1,6 @@
-import { useEffect, FC } from 'react';
-import { CheckCircle, X } from 'lucide-react';
+import { useEffect, FC } from "react";
+import { CheckCircle2, X } from "lucide-react";
+import { cn } from "./ui";
 
 interface ToastProps {
   message: string;
@@ -13,17 +14,22 @@ export const Toast: FC<ToastProps> = ({ message, onClose }) => {
   }, [onClose]);
 
   return (
-    <div className="fixed top-5 right-5 z-50 animate-fade-in-up">
-      <div className="bg-white border border-green-100 shadow-xl rounded-xl p-4 flex items-center space-x-3 pr-10 relative">
-        <div className="bg-green-100 p-1 rounded-full">
-            <CheckCircle className="h-5 w-5 text-green-600" />
+    <div className="fixed right-4 top-20 z-[80] animate-fade-in-up sm:right-6">
+      <div className="app-panel flex min-w-[280px] max-w-sm items-start gap-3 p-4 pr-11">
+        <div className="mt-0.5 rounded-full bg-success/12 p-1.5 text-success">
+            <CheckCircle2 className="h-5 w-5" />
         </div>
         <div className="flex flex-col">
-            <span className="font-bold text-gray-800 text-sm">Success</span>
-            <span className="text-gray-500 text-xs">{message}</span>
+            <span className="text-sm font-semibold text-contrast">Success</span>
+            <span className="text-sm text-muted-foreground">{message}</span>
         </div>
-        <button onClick={onClose} className="absolute right-3 top-3 text-gray-400 hover:text-gray-600">
-            <X className="h-3 w-3" />
+        <button
+          onClick={onClose}
+          className={cn(
+            "absolute right-3 top-3 rounded-full p-1 text-muted-foreground transition-colors hover:bg-contrast/5 hover:text-contrast",
+          )}
+        >
+            <X className="h-3.5 w-3.5" />
         </button>
       </div>
     </div>
