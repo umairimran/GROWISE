@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { Dashboard } from "../../src/pages/Dashboard";
 import type {
@@ -9,6 +9,7 @@ import type {
   ProgressDashboardSummary,
   ProgressTimelineAnalytics,
 } from "../../src/api/services/progress";
+import { renderWithRouter } from "../utils/renderWithRouter";
 
 const progressMocks = vi.hoisted(() => ({
   getDashboard: vi.fn(),
@@ -28,7 +29,7 @@ vi.mock("../../src/api/services/progress", () => ({
   },
 }));
 
-vi.mock("../../providers/ThemeProvider", () => ({
+vi.mock("../../src/providers/ThemeProvider", () => ({
   useTheme: () => ({
     theme: "light",
     setTheme: () => undefined,
@@ -137,13 +138,14 @@ describe("dashboard API rendering states", () => {
     progressMocks.getTimeline.mockResolvedValueOnce(timelineFixture);
     progressMocks.getAssessmentHistory.mockResolvedValueOnce(assessmentHistoryFixture);
 
-    render(
+    renderWithRouter(
       <Dashboard
         user={{ id: "99", name: "API Learner", email: "learner@growwise.test", isPro: false }}
         result={null}
         onOpenLearningPath={() => undefined}
         onStartAssessment={() => undefined}
       />,
+      { route: "/dashboard" },
     );
 
     await waitFor(() => {
@@ -152,9 +154,9 @@ describe("dashboard API rendering states", () => {
       expect(progressMocks.getAssessmentHistory).toHaveBeenCalledTimes(1);
     });
 
-    expect(screen.getByText(/API-backed progress overview/i)).toBeTruthy();
+    expect(screen.getByText(/Your learning progress/i)).toBeTruthy();
     expect(screen.getByText(/Completed attempts/i)).toBeTruthy();
-    expect(screen.getByText(/Assessment History/i)).toBeTruthy();
+    expect(screen.getByText(/Your Assessments/i)).toBeTruthy();
     expect(screen.getByTestId("area-chart")).toBeTruthy();
   });
 
@@ -182,21 +184,22 @@ describe("dashboard API rendering states", () => {
       improvement: null,
     } satisfies ProgressAssessmentHistory);
 
-    render(
+    renderWithRouter(
       <Dashboard
         user={{ id: "99", name: "API Learner", email: "learner@growwise.test", isPro: false }}
         result={null}
         onOpenLearningPath={() => undefined}
         onStartAssessment={() => undefined}
       />,
+      { route: "/dashboard" },
     );
 
     await waitFor(() => {
       expect(progressMocks.getDashboard).toHaveBeenCalledTimes(1);
     });
 
-    expect(screen.getByText(/No timeline activity yet/i)).toBeTruthy();
-    expect(screen.getByText(/No completed assessments yet/i)).toBeTruthy();
+    expect(screen.getByText(/Complete your first assessment to start tracking/i)).toBeTruthy();
+    expect(screen.getByText(/You haven't completed any assessments yet/i)).toBeTruthy();
     expect(screen.getByText(/Start Assessment/i)).toBeTruthy();
   });
 });
