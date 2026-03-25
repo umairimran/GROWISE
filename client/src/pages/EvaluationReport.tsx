@@ -11,7 +11,7 @@ import {
 } from "../api/services/evaluation";
 import { parseDecimal } from "../api/adapters/numeric";
 import { Button } from "../components/Button";
-import { useTheme } from "../providers/ThemeProvider";
+import { HeroBadge, Panel, WorkspaceFrame } from "../components/workspace";
 
 const toErrorMessage = (error: unknown, fallback: string): string => {
   if (error instanceof ApiHttpError) return error.message || fallback;
@@ -39,13 +39,6 @@ const sortDialogues = (dialogues: EvaluationDialogueResponse[]) =>
 export const EvaluationReport: FC = () => {
   const { evaluationId } = useParams<{ evaluationId: string }>();
   const navigate = useNavigate();
-  const { theme } = useTheme();
-  const systemPrefersDark =
-    typeof window !== "undefined" &&
-    typeof window.matchMedia === "function" &&
-    window.matchMedia("(prefers-color-scheme: dark)").matches;
-  const isDark = theme === "dark" || (theme === "system" && systemPrefersDark);
-
   const [session, setSession] = useState<EvaluationSessionResponse | null>(null);
   const [result, setResult] = useState<EvaluationResultResponse | null>(null);
   const [dialogues, setDialogues] = useState<EvaluationDialogueResponse[]>([]);
@@ -99,7 +92,7 @@ export const EvaluationReport: FC = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
         <div className="h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm text-gray-500 dark:text-gray-400">Loading evaluation report...</p>
+        <p className="text-sm text-muted-foreground">Loading evaluation report...</p>
       </div>
     );
   }
@@ -119,26 +112,29 @@ export const EvaluationReport: FC = () => {
   }
 
   return (
-    <div className="max-w-3xl mx-auto py-6 px-4 space-y-6">
-      <div className="flex items-center justify-between gap-4">
+    <WorkspaceFrame
+      label={<HeroBadge text="Report" />}
+      title="Evaluation report"
+      description={`Session #${session.evaluation_id} · Path #${session.path_id}`}
+      actions={
         <Button variant="ghost" size="sm" onClick={() => navigate("/validator")} className="gap-2">
           <ArrowLeft className="h-4 w-4" />
           Back to Validator
         </Button>
-      </div>
+      }
+      className="py-4"
+    >
 
       <div
-        className={`rounded-2xl border p-6 shadow-sm ${
-          isDark ? "bg-zinc-900/50 border-zinc-700/80" : "bg-white border-gray-200/80"
-        }`}
+        className="app-panel rounded-2xl p-6"
       >
         <div className="flex items-center gap-3 mb-6">
           <CheckCircle className="h-8 w-8 text-emerald-500 shrink-0" />
           <div>
-            <h1 className="font-serif text-xl font-bold text-slate-900 dark:text-white">
+            <h1 className="font-display text-xl font-bold text-contrast">
               Evaluation Report
             </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-muted-foreground">
               Session #{session.evaluation_id} · Path #{session.path_id} ·{" "}
               {session.completed_at ? formatDateTime(session.completed_at) : "Completed"}
             </p>
@@ -147,35 +143,29 @@ export const EvaluationReport: FC = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <div
-            className={`rounded-xl p-4 ${
-              isDark ? "bg-zinc-800/80 border border-zinc-700/60" : "bg-gray-50 border border-gray-200/80"
-            }`}
+            className="app-panel app-panel-muted rounded-xl p-4"
           >
-            <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
+            <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
               Reasoning
             </div>
-            <div className="text-2xl font-bold text-slate-900 dark:text-white">
+            <div className="text-2xl font-bold text-contrast">
               {formatScore(result.reasoning_score)}
             </div>
           </div>
           <div
-            className={`rounded-xl p-4 ${
-              isDark ? "bg-zinc-800/80 border border-zinc-700/60" : "bg-gray-50 border border-gray-200/80"
-            }`}
+            className="app-panel app-panel-muted rounded-xl p-4"
           >
-            <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
+            <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
               Problem Solving
             </div>
-            <div className="text-2xl font-bold text-slate-900 dark:text-white">
+            <div className="text-2xl font-bold text-contrast">
               {formatScore(result.problem_solving)}
             </div>
           </div>
           <div
-            className={`rounded-xl p-4 ${
-              isDark ? "bg-zinc-800/80 border border-zinc-700/60" : "bg-gray-50 border border-gray-200/80"
-            }`}
+            className="app-panel app-panel-muted rounded-xl p-4"
           >
-            <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
+            <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
               Readiness
             </div>
             <div className={`text-xl font-bold uppercase ${readinessColor(result.readiness_level)}`}>
@@ -185,13 +175,11 @@ export const EvaluationReport: FC = () => {
         </div>
 
         <div className="mb-6">
-          <h2 className="text-sm font-semibold text-slate-700 dark:text-gray-300 uppercase tracking-wide mb-3">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
             AI Feedback
           </h2>
           <div
-            className={`prose prose-sm max-w-none rounded-xl p-5 ${
-              isDark ? "bg-zinc-800/50 text-zinc-200 prose-invert" : "bg-gray-50 text-gray-800"
-            }`}
+            className="app-panel app-panel-muted prose prose-sm dark:prose-invert max-w-none rounded-xl p-5"
           >
             <ReactMarkdown>{result.final_feedback}</ReactMarkdown>
           </div>
@@ -212,11 +200,9 @@ export const EvaluationReport: FC = () => {
 
       {dialogues.length > 0 && (
         <div
-          className={`rounded-2xl border p-6 shadow-sm ${
-            isDark ? "bg-zinc-900/50 border-zinc-700/80" : "bg-white border-gray-200/80"
-          }`}
+          className="app-panel rounded-2xl p-6"
         >
-          <h2 className="font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+          <h2 className="font-semibold text-contrast mb-4 flex items-center gap-2">
             <MessageSquare className="h-5 w-5 text-blue-500" />
             Conversation
           </h2>
@@ -226,23 +212,17 @@ export const EvaluationReport: FC = () => {
               return (
               <div
                 key={d.sequence_no}
-                className={`rounded-xl p-4 ${
+                className={`rounded-xl p-4 border border-border ${
                   isAi
-                    ? isDark
-                      ? "bg-blue-950/20 border border-blue-800/40"
-                      : "bg-blue-50 border border-blue-200/80"
-                    : isDark
-                      ? "bg-zinc-800/60 border border-zinc-700/60"
-                      : "bg-gray-50 border border-gray-200/80"
+                    ? "bg-blue-50 dark:bg-blue-950/20"
+                    : "app-panel-muted"
                 }`}
               >
-                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 uppercase">
+                <div className="text-xs font-medium text-muted-foreground mb-2 uppercase">
                   {isAi ? "AI Interviewer" : "You"}
                 </div>
                 <div
-                  className={`prose prose-sm max-w-none ${
-                    isDark ? "prose-invert text-zinc-200" : "text-gray-800"
-                  }`}
+                  className="prose prose-sm dark:prose-invert max-w-none"
                 >
                   <ReactMarkdown>{d.message_text}</ReactMarkdown>
                 </div>
@@ -252,6 +232,6 @@ export const EvaluationReport: FC = () => {
           </div>
         </div>
       )}
-    </div>
+    </WorkspaceFrame>
   );
 };
