@@ -1,12 +1,20 @@
 import { FC, FormEvent, useState } from "react";
-import { ArrowLeft, Mail, Lock, User as UserIcon, AlertCircle, CheckCircle } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowRight,
+  CheckCircle2,
+  Mail,
+  Lock,
+  User as UserIcon,
+  ShieldCheck,
+} from "lucide-react";
 import { Button } from "../components/Button";
-import Beams from "../components/Beams";
-import { useTheme } from "../providers/ThemeProvider";
 import { authService } from "../api/services/auth";
 import { ApiHttpError } from "../api/http";
 import { User } from "../types";
 import type { components } from "../api/generated/openapi";
+import { AuthShell } from "../components/auth-layout";
+import { Panel, StatusPill } from "../components/ui";
 
 interface SignupProps {
   onSignupSuccess: (user: User) => void;
@@ -29,7 +37,6 @@ export const Signup: FC<SignupProps> = ({ onSignupSuccess, onBack, onGoToLogin }
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
-  const { theme } = useTheme();
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -81,238 +88,160 @@ export const Signup: FC<SignupProps> = ({ onSignupSuccess, onBack, onGoToLogin }
 
   if (successMsg) {
     return (
-      <div className="min-h-screen relative flex items-center justify-center p-4 bg-background font-sans overflow-hidden">
-        {theme === "dark" && (
-          <div className="absolute inset-0 z-0">
-            <Beams
-              beamWidth={2}
-              beamHeight={15}
-              beamNumber={12}
-              lightColor="#ffffff"
-              speed={2}
-              noiseIntensity={1.75}
-              scale={0.2}
-              rotation={0}
-            />
+      <AuthShell
+        title={<>Account created.</>}
+        description={<>Your profile is ready. Continue to sign in and start your first assessment.</>}
+        sideTitle="Account ready"
+        sideDescription="The signup step now ends in a clean confirmation state instead of a giant standalone card."
+        onBack={onBack}
+        footnote={
+          <button onClick={onGoToLogin} className="text-sm font-semibold text-primary hover:underline">
+            Proceed to login
+          </button>
+        }
+      >
+        <Panel className="p-6 text-center">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-success/10 text-success">
+            <CheckCircle2 className="h-7 w-7" />
           </div>
-        )}
-        <div className="w-full max-w-md bg-surface border border-green-900/40 shadow-xl rounded-2xl p-10 text-center animate-fade-in-up">
-          <div className="mx-auto w-16 h-16 bg-green-900/20 rounded-full flex items-center justify-center mb-6 text-green-500">
-            <CheckCircle className="w-8 h-8" />
-          </div>
-          <h2 className="font-serif text-2xl font-bold text-contrast mb-4">Account created</h2>
-          <p className="text-gray-400 mb-8 leading-relaxed">
-            {successMsg} <strong>{email}</strong>.
+          <h2 className="mt-5 font-display text-3xl font-semibold text-contrast">Account created</h2>
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">
+            {successMsg} <span className="font-semibold text-contrast">{email}</span>
           </p>
-          <Button onClick={onGoToLogin} className="w-full bg-blue-600 hover:bg-blue-700 text-white border-none">
-            Proceed to Login
-          </Button>
-        </div>
-      </div>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <Button onClick={onGoToLogin} size="lg">
+              Proceed to login
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </Panel>
+      </AuthShell>
     );
   }
 
   return (
-    <div className="min-h-screen w-full bg-background relative flex items-center justify-center p-4 overflow-hidden font-sans">
-      {theme === "dark" && (
-        <div className="absolute inset-0 z-0">
-          <Beams
-            beamWidth={2}
-            beamHeight={15}
-            beamNumber={12}
-            lightColor="#ffffff"
-            speed={2}
-            noiseIntensity={1.75}
-            scale={0.2}
-            rotation={0}
-          />
+    <AuthShell
+      title={<>Join Grow Wise.</>}
+      description={
+        <>
+          Create an account to get a personalized assessment, learning path, and evaluation flow.
+        </>
+      }
+      sideTitle="Create your account"
+      sideDescription="Start your first assessment in minutes. No credit card required."
+      sidePoints={[
+        "Start with an assessment instead of a generic onboarding maze.",
+        "Terms acceptance and password constraints are visible and direct.",
+        "Success messaging gives you a clean transition into login.",
+      ]}
+      onBack={onBack}
+      footnote={
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusPill tone="neutral">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            Protected signup
+          </StatusPill>
+          <span>Already have an account?</span>
+          <button onClick={onGoToLogin} className="font-semibold text-primary hover:underline">
+            Log in
+          </button>
         </div>
-      )}
-
-      <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-900/30 rounded-full mix-blend-screen filter blur-[80px] animate-blob" />
-        <div className="absolute top-0 right-1/4 w-96 h-96 bg-purple-900/30 rounded-full mix-blend-screen filter blur-[80px] animate-blob delay-2000" />
-        <div className="absolute -bottom-32 left-1/3 w-96 h-96 bg-indigo-900/30 rounded-full mix-blend-screen filter blur-[80px] animate-blob delay-4000" />
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20" />
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: "radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px)",
-            backgroundSize: "40px 40px",
-            opacity: 0.2,
-          }}
-        />
-      </div>
-
-      <div className="absolute top-6 left-6 z-20">
-        <button
-          onClick={onBack}
-          className="flex items-center text-gray-500 dark:text-gray-400 hover:text-contrast transition-colors group text-sm font-medium"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-          Back
-        </button>
-      </div>
-
-      <div className="w-full max-w-md bg-surface/80 dark:bg-black/40 backdrop-blur-md border border-border shadow-2xl rounded-2xl p-8 sm:p-10 relative z-10 animate-fade-in-up">
-        <div className="text-center mb-8">
-          <h1 className="font-serif text-3xl font-bold text-contrast tracking-tight mb-2">Join Grow Wise</h1>
-          <p className="text-gray-400">Start bridging your knowledge gaps today.</p>
-        </div>
-
+      }
+    >
+      <form onSubmit={handleSubmit} className="space-y-5">
         {errorMsg && (
-          <div className="mb-6 p-3 bg-red-900/20 border border-red-800 text-red-200 text-sm rounded-lg flex items-center text-left">
-            <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0 text-red-400" />
-            <span>{errorMsg}</span>
+          <div className="status-banner" data-tone="error">
+            <AlertCircle className="mt-0.5 h-4 w-4 text-danger" />
+            <p className="text-sm leading-6 text-contrast">{errorMsg}</p>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-200 mb-1.5" htmlFor="fullname">
-              Full Name
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <UserIcon className="h-4 w-4 text-gray-400" />
-              </div>
-              <input
-                type="text"
-                id="fullname"
-                required
-                className="block w-full pl-10 pr-3 py-2.5 border border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-neutral-800 text-white placeholder-gray-500 transition-all outline-none"
-                placeholder="John Doe"
-                value={fullName}
-                onChange={(event) => setFullName(event.target.value)}
-              />
-            </div>
+        <div>
+          <label className="field-label" htmlFor="fullname">
+            Full name
+          </label>
+          <div className="field-shell has-icon">
+            <UserIcon className="h-4 w-4" />
+            <input
+              type="text"
+              id="fullname"
+              required
+              className="field-input"
+              placeholder="John Doe"
+              value={fullName}
+              onChange={(event) => setFullName(event.target.value)}
+            />
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-200 mb-1.5" htmlFor="email">
-              Email address
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Mail className="h-4 w-4 text-gray-400" />
-              </div>
-              <input
-                type="email"
-                id="email"
-                required
-                className="block w-full pl-10 pr-3 py-2.5 border border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-neutral-800 text-white placeholder-gray-500 transition-all outline-none"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-200 mb-1.5" htmlFor="password">
-              Password
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Lock className="h-4 w-4 text-gray-400" />
-              </div>
-              <input
-                type="password"
-                id="password"
-                required
-                minLength={8}
-                className="block w-full pl-10 pr-3 py-2.5 border border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-neutral-800 text-white placeholder-gray-500 transition-all outline-none"
-                placeholder="********"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="flex items-start">
-            <div className="flex items-center h-5">
-              <input
-                id="terms"
-                name="terms"
-                type="checkbox"
-                required
-                checked={agreedToTerms}
-                onChange={(event) => setAgreedToTerms(event.target.checked)}
-                className="h-4 w-4 text-blue-600 bg-neutral-800 border-neutral-600 rounded focus:ring-blue-500 cursor-pointer accent-blue-600"
-              />
-            </div>
-            <div className="ml-3 text-sm">
-              <label htmlFor="terms" className="font-medium text-gray-400">
-                I agree to the{" "}
-                <a href="#" className="text-blue-400 underline hover:text-blue-300">
-                  Terms and Conditions
-                </a>{" "}
-                and{" "}
-                <a href="#" className="text-blue-400 underline hover:text-blue-300">
-                  Privacy Policy
-                </a>
-                .
-              </label>
-            </div>
-          </div>
-
-          <Button
-            type="submit"
-            isLoading={isLoading}
-            disabled={!agreedToTerms}
-            className="w-full bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/20 h-11 mt-2 disabled:opacity-50 disabled:cursor-not-allowed border-none"
-          >
-            Create Account
-          </Button>
-        </form>
-
-        <div className="mt-6">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-neutral-700" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-transparent text-gray-500">Or continue with</span>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleGoogleSignup}
-            disabled={!agreedToTerms}
-            className="mt-6 w-full flex items-center justify-center gap-3 px-4 py-2.5 border border-neutral-700 rounded-lg shadow-sm bg-neutral-800 text-sm font-medium text-white hover:bg-neutral-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <svg className="h-5 w-5" viewBox="0 0 24 24">
-              <path
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                fill="#4285F4"
-              />
-              <path
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                fill="#34A853"
-              />
-              <path
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                fill="#FBBC05"
-              />
-              <path
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                fill="#EA4335"
-              />
-            </svg>
-            Sign up with Google
-          </button>
         </div>
 
-        <div className="mt-6 text-center">
-          <p className="text-sm text-gray-400">
-            Already have an account?{" "}
-            <button onClick={onGoToLogin} className="text-blue-500 font-semibold hover:text-blue-400 hover:underline">
-              Log in
-            </button>
+        <div>
+          <label className="field-label" htmlFor="email">
+            Email address
+          </label>
+          <div className="field-shell has-icon">
+            <Mail className="h-4 w-4" />
+            <input
+              type="email"
+              id="email"
+              required
+              className="field-input"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="field-label" htmlFor="password">
+            Password
+          </label>
+          <div className="field-shell has-icon">
+            <Lock className="h-4 w-4" />
+            <input
+              type="password"
+              id="password"
+              required
+              minLength={8}
+              className="field-input"
+              placeholder="At least 8 characters"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+            />
+          </div>
+          <p className="mt-2 text-xs leading-5 text-muted-foreground">
+            Passwords must be at least 8 characters. Use a strong, unique password.
           </p>
         </div>
-      </div>
-    </div>
+
+        <div className="flex items-start gap-3 rounded-xl border border-border bg-surface/90 p-4">
+          <input
+            id="terms"
+            name="terms"
+            type="checkbox"
+            required
+            checked={agreedToTerms}
+            onChange={(event) => setAgreedToTerms(event.target.checked)}
+            className="mt-1 h-4 w-4 rounded border-border accent-primary"
+          />
+          <label htmlFor="terms" className="text-sm leading-6 text-muted-foreground">
+            I agree to the{" "}
+            <a href="#" className="font-semibold text-primary hover:underline">
+              Terms and Conditions
+            </a>{" "}
+            and{" "}
+            <a href="#" className="font-semibold text-primary hover:underline">
+              Privacy Policy
+            </a>
+            .
+          </label>
+        </div>
+
+        <Button type="submit" isLoading={isLoading} disabled={!agreedToTerms} className="w-full" size="lg">
+          Create account
+        </Button>
+      </form>
+
+    </AuthShell>
   );
 };
