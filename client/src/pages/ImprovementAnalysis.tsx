@@ -27,6 +27,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ApiHttpError } from "../api/http";
 import { progressService, type ImprovementAnalysis } from "../api/services/progress";
 import { Button } from "../components/Button";
+import { Panel } from "../components/workspace";
 import { useTheme } from "../providers/ThemeProvider";
 
 const toErrorMessage = (error: unknown, fallback: string): string => {
@@ -107,7 +108,7 @@ export const ImprovementAnalysis: FC = () => {
           <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center animate-pulse shadow-lg shadow-blue-500/25 mx-auto">
             <TrendingUp className="h-7 w-7 text-white" />
           </div>
-          <p className="mt-6 text-gray-500 dark:text-gray-400 font-medium">Loading your progress analysis...</p>
+          <p className="mt-6 text-muted-foreground font-medium">Loading your progress analysis...</p>
         </div>
       </div>
     );
@@ -122,7 +123,7 @@ export const ImprovementAnalysis: FC = () => {
         </Button>
         <div className="rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 px-4 py-6 text-center">
           <p className="text-red-700 dark:text-red-300">{errorMessage || "No data available."}</p>
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-2 text-sm text-muted-foreground">
             Complete your learning path and AI evaluation to see your improvement analysis.
           </p>
           <Button className="mt-4" onClick={() => navigate("/course")}>
@@ -159,10 +160,10 @@ export const ImprovementAnalysis: FC = () => {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
           </Button>
-          <h1 className="font-serif text-2xl sm:text-3xl font-bold text-contrast tracking-tight">
+          <h1 className="font-display text-2xl sm:text-3xl font-bold text-contrast tracking-tight">
             Your Progress Analysis
           </h1>
-          <p className="mt-1 text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-muted-foreground">
             {data.trackName ? `${data.trackName} · ` : ""}Path #{data.pathId}
           </p>
         </div>
@@ -205,11 +206,9 @@ export const ImprovementAnalysis: FC = () => {
             (report.stage_names && report.stage_names.length > 0) ||
             (data.afterContext?.stagesSummary && data.afterContext.stagesSummary.length > 0)) && (
             <div
-              className={`rounded-2xl border p-4 ${
-                isDark ? "bg-zinc-900/40 border-zinc-700/80" : "bg-gray-50/80 border-gray-200/80"
-              }`}
+              className="app-panel rounded-2xl p-4"
             >
-              <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 Content you followed
                 {data.trackName && (
                   <span className="normal-case font-bold text-contrast ml-1.5">· {data.trackName}</span>
@@ -217,7 +216,7 @@ export const ImprovementAnalysis: FC = () => {
               </h3>
               {report.stage_names && report.stage_names.length > 0 && (
                 <p className="text-sm text-contrast mb-1.5">
-                  <span className="text-gray-500 dark:text-gray-400">Stages: </span>
+                  <span className="text-muted-foreground">Stages: </span>
                   {report.stage_names.join(" → ")}
                 </p>
               )}
@@ -240,7 +239,7 @@ export const ImprovementAnalysis: FC = () => {
                   <div key={i} className="text-sm text-contrast mt-1">
                     <span className="font-medium">{(s as { stage_name?: string }).stage_name}</span>
                     {(s as { content_titles?: string[] }).content_titles?.length ? (
-                      <span className="text-gray-500 dark:text-gray-400 ml-1">
+                      <span className="text-muted-foreground ml-1">
                         ({(s as { content_titles?: string[] }).content_titles!.length} items)
                       </span>
                     ) : null}
@@ -299,30 +298,28 @@ export const ImprovementAnalysis: FC = () => {
 
           {report.dashboard_metrics && report.dashboard_metrics.length > 0 && (
             <div>
-              <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
                 Enhanced metrics (from AI evaluation & assessment)
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
                 {report.dashboard_metrics.map((m) => (
                   <div
                     key={m.id}
-                    className={`rounded-xl border p-4 flex flex-col ${
-                      isDark ? "bg-zinc-900/60 border-zinc-700/80" : "bg-white border-gray-200/80"
-                    }`}
+                    className="app-panel rounded-xl p-4 flex flex-col"
                     title={m.subtitle || undefined}
                   >
                     <div className="flex items-center justify-between gap-1">
-                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">{m.label}</span>
+                      <span className="text-xs font-medium text-muted-foreground truncate">{m.label}</span>
                       {trendIcon(m.trend)}
                     </div>
                     <div className="mt-1 text-xl font-bold text-contrast">{formatMetricValue(m)}</div>
                     {m.subtitle && (
-                      <div className="mt-1 text-[11px] text-gray-500 dark:text-gray-400 line-clamp-2" title={m.subtitle}>
+                      <div className="mt-1 text-[11px] text-muted-foreground line-clamp-2" title={m.subtitle}>
                         {m.subtitle}
                       </div>
                     )}
                     {m.before_value != null && m.after_value != null && (
-                      <div className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
+                      <div className="mt-1 text-[11px] text-muted-foreground">
                         {m.before_value} → {m.after_value}
                       </div>
                     )}
@@ -335,16 +332,14 @@ export const ImprovementAnalysis: FC = () => {
           {/* AI-based charts from DB data */}
           {report.chart_data && (report.chart_data.score_progression?.length || report.chart_data.time_spent_by_stage?.length || report.chart_data.dimension_scores?.length || report.chart_data.activity_timeline?.length) && (
             <div className="space-y-6">
-              <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
                 Progress dashboard — AI evaluation scores & your data
               </h3>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {report.chart_data.score_progression && report.chart_data.score_progression.length > 0 && (
                   <div
-                    className={`rounded-2xl border p-5 ${
-                      isDark ? "bg-zinc-900/50 border-zinc-700/80" : "bg-white border-gray-200/80"
-                    }`}
+                    className="app-panel rounded-2xl p-5"
                   >
                     <h4 className="font-semibold text-contrast mb-4">Score progression (assessment → AI evaluation)</h4>
                     <ResponsiveContainer width="100%" height={220}>
@@ -376,9 +371,7 @@ export const ImprovementAnalysis: FC = () => {
 
                 {report.chart_data.time_spent_by_stage && report.chart_data.time_spent_by_stage.length > 0 && (
                   <div
-                    className={`rounded-2xl border p-5 ${
-                      isDark ? "bg-zinc-900/50 border-zinc-700/80" : "bg-white border-gray-200/80"
-                    }`}
+                    className="app-panel rounded-2xl p-5"
                   >
                     <h4 className="font-semibold text-contrast mb-4">Time spent by stage (min)</h4>
                     <ResponsiveContainer width="100%" height={220}>
@@ -413,9 +406,7 @@ export const ImprovementAnalysis: FC = () => {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {report.chart_data.dimension_scores && report.chart_data.dimension_scores.length > 0 && (
                   <div
-                    className={`rounded-2xl border p-5 ${
-                      isDark ? "bg-zinc-900/50 border-zinc-700/80" : "bg-white border-gray-200/80"
-                    }`}
+                    className="app-panel rounded-2xl p-5"
                   >
                     <h4 className="font-semibold text-contrast mb-4">Assessment dimensions (before AI evaluation)</h4>
                     <ResponsiveContainer width="100%" height={240}>
@@ -442,9 +433,7 @@ export const ImprovementAnalysis: FC = () => {
 
                 {report.chart_data.activity_timeline && report.chart_data.activity_timeline.length > 0 && (
                   <div
-                    className={`rounded-2xl border p-5 ${
-                      isDark ? "bg-zinc-900/50 border-zinc-700/80" : "bg-white border-gray-200/80"
-                    }`}
+                    className="app-panel rounded-2xl p-5"
                   >
                     <h4 className="font-semibold text-contrast mb-4">Activity timeline (assessment → path → AI evaluation)</h4>
                     <div className="space-y-2 max-h-[240px] overflow-y-auto pr-1">
@@ -455,7 +444,7 @@ export const ImprovementAnalysis: FC = () => {
                             isDark ? "bg-zinc-800/60" : "bg-gray-50"
                           }`}
                         >
-                          <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">
+                          <span className="text-xs text-muted-foreground shrink-0">
                             {new Date(a.date).toLocaleDateString(undefined, {
                               month: "short",
                               day: "numeric",
@@ -482,7 +471,7 @@ export const ImprovementAnalysis: FC = () => {
 
           {report.story_sections && report.story_sections.length > 0 && (
             <div>
-              <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">
                 Your progress story
                 {data.trackName && (
                   <span className="normal-case font-bold text-contrast ml-1.5">· {data.trackName}</span>
@@ -512,9 +501,7 @@ export const ImprovementAnalysis: FC = () => {
                       )}
                     </div>
                     <div
-                      className={`flex-1 rounded-xl border p-4 pb-6 ${
-                        isDark ? "bg-zinc-900/50 border-zinc-700/80" : "bg-white border-gray-200/80"
-                      }`}
+                      className="flex-1 app-panel rounded-xl p-4 pb-6"
                     >
                       <h4 className="font-semibold text-contrast">{section.title}</h4>
                       <div
@@ -534,9 +521,7 @@ export const ImprovementAnalysis: FC = () => {
           {(report.before_summary?.strengths?.length || report.before_summary?.gaps?.length) && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div
-                className={`rounded-2xl border p-5 ${
-                  isDark ? "bg-zinc-900/50 border-zinc-700/80" : "bg-white border-gray-200/80"
-                }`}
+                className="app-panel rounded-2xl p-5"
               >
                 <h4 className="font-semibold text-contrast mb-2">Before AI evaluation: strengths & gaps</h4>
                 {report.before_summary.strengths?.length ? (
@@ -555,9 +540,7 @@ export const ImprovementAnalysis: FC = () => {
                 ) : null}
               </div>
               <div
-                className={`rounded-2xl border p-5 ${
-                  isDark ? "bg-zinc-900/50 border-zinc-700/80" : "bg-white border-gray-200/80"
-                }`}
+                className="app-panel rounded-2xl p-5"
               >
                 <h4 className="font-semibold text-contrast mb-2">After AI evaluation: improvements & focus</h4>
                 {report.after_summary?.improvements?.length ? (
@@ -584,9 +567,7 @@ export const ImprovementAnalysis: FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* BEFORE */}
         <div
-          className={`rounded-2xl border p-6 ${
-            isDark ? "bg-zinc-900/50 border-zinc-700/80" : "bg-white border-gray-200/80"
-          }`}
+          className="app-panel rounded-2xl p-6"
         >
           <div className="flex items-center gap-2 mb-4">
             <div className="w-10 h-10 rounded-xl bg-gray-200 dark:bg-zinc-700 flex items-center justify-center">
@@ -594,20 +575,20 @@ export const ImprovementAnalysis: FC = () => {
             </div>
             <h2 className="font-semibold text-contrast">Where You Started</h2>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3">
             {data.trackName ? `${data.trackName} · ` : ""}Initial assessment
           </p>
           <div className="space-y-3">
             <div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">Overall score</div>
+              <div className="text-xs text-muted-foreground">Overall score</div>
               <div className="text-2xl font-bold text-contrast">{formatScore(data.before.score)}</div>
             </div>
             <div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">Detected level</div>
+              <div className="text-xs text-muted-foreground">Detected level</div>
               <div className="font-semibold text-contrast">{formatLevel(data.before.level)}</div>
             </div>
             {hasBeforeContext && (
-              <div className="pt-2 border-t border-gray-200 dark:border-zinc-700">
+              <div className="pt-2 border-t border-border">
                 <button
                   type="button"
                   onClick={() => setIsBeforeContextExpanded(!isBeforeContextExpanded)}
@@ -624,7 +605,7 @@ export const ImprovementAnalysis: FC = () => {
                           isDark ? "bg-zinc-800/80 border border-zinc-700/60" : "bg-gray-50 border border-gray-200/80"
                         }`}
                       >
-                        <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">
+                        <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
                           {item.dimension || "General"}
                           {item.score != null && (
                             <span className="ml-2">Score: {(item.score * 100).toFixed(0)}%</span>
@@ -633,7 +614,7 @@ export const ImprovementAnalysis: FC = () => {
                         <p className="font-medium text-contrast mb-1">{item.questionText}</p>
                         <p className="text-gray-600 dark:text-gray-300 whitespace-pre-wrap">{item.userAnswer}</p>
                         {item.aiExplanation && (
-                          <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400 italic">{item.aiExplanation}</p>
+                          <p className="mt-1.5 text-xs text-muted-foreground italic">{item.aiExplanation}</p>
                         )}
                       </div>
                     ))}
@@ -662,7 +643,7 @@ export const ImprovementAnalysis: FC = () => {
                   {data.improvementPercentage >= 0 ? "+" : ""}
                   {data.improvementPercentage.toFixed(1)}%
                 </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">
+                <div className="text-xs text-muted-foreground">
                   {data.improvementPercentage >= 0 ? "Change" : "Change"}
                 </div>
                 <div className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 max-w-[80px] mx-auto">
@@ -675,9 +656,7 @@ export const ImprovementAnalysis: FC = () => {
 
         {/* AFTER */}
         <div
-          className={`rounded-2xl border p-6 ${
-            isDark ? "bg-zinc-900/50 border-zinc-700/80" : "bg-white border-gray-200/80"
-          }`}
+          className="app-panel rounded-2xl p-6"
         >
           <div className="flex items-center gap-2 mb-4">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
@@ -685,35 +664,35 @@ export const ImprovementAnalysis: FC = () => {
             </div>
             <h2 className="font-semibold text-contrast">Where You Are Now</h2>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3">
             {data.trackName ? `${data.trackName} · AI evaluation` : "AI Interview Evaluation"}
           </p>
           {hasAfter && data.after ? (
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                  <div className="text-xs text-muted-foreground">
                     Reasoning{data.trackName ? ` (${data.trackName})` : ""}
                   </div>
                   <div className="text-xl font-bold text-contrast">{formatScore(data.after.reasoningScore)}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                  <div className="text-xs text-muted-foreground">
                     Problem solving{data.trackName ? ` (${data.trackName})` : ""}
                   </div>
                   <div className="text-xl font-bold text-contrast">{formatScore(data.after.problemSolving)}</div>
                 </div>
               </div>
               <div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">Readiness Level</div>
+                <div className="text-xs text-muted-foreground">Readiness Level</div>
                 <div className={`font-bold uppercase ${readinessColor(data.after.readinessLevel)}`}>
                   {formatLevel(data.after.readinessLevel)}
                 </div>
               </div>
               {hasAfterContext && data.afterContext && (
-                <div className={`pt-2 border-t ${isDark ? "border-zinc-700" : "border-gray-200"}`}>
+                <div className="pt-2 border-t border-border">
                   {data.afterContext.stagesSummary && data.afterContext.stagesSummary.length > 0 && (
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Stages completed</div>
+                    <div className="text-xs text-muted-foreground mb-1">Stages completed</div>
                   )}
                   <ul className="text-sm text-contrast space-y-0.5">
                     {data.afterContext.stagesSummary?.slice(0, 5).map((s, i) => (
@@ -734,7 +713,7 @@ export const ImprovementAnalysis: FC = () => {
               )}
             </div>
           ) : (
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-muted-foreground">
               Complete an AI evaluation interview to see your progress.
             </p>
           )}
@@ -761,12 +740,10 @@ export const ImprovementAnalysis: FC = () => {
       {/* Detailed Progress Analysis (before vs after, AI-generated) */}
       {hasDetailedAnalysis && (
         <div
-          className={`rounded-2xl border p-6 ${
-            isDark ? "bg-zinc-900/50 border-zinc-700/80" : "bg-white border-gray-200/80"
-          }`}
+          className="app-panel rounded-2xl p-6"
         >
           <h3 className="font-semibold text-contrast mb-3">Detailed Progress Analysis</h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+          <p className="text-xs text-muted-foreground mb-4">
             Before the platform (initial assessment) → After completing the path and AI evaluation. Context-rich comparison from your stored data.
           </p>
           <div
@@ -782,9 +759,7 @@ export const ImprovementAnalysis: FC = () => {
       {/* Evaluation feedback (short summary from the AI interviewer) */}
       {data.finalFeedback && !hasDetailedAnalysis && (
         <div
-          className={`rounded-2xl border p-6 ${
-            isDark ? "bg-zinc-900/50 border-zinc-700/80" : "bg-white border-gray-200/80"
-          }`}
+          className="app-panel rounded-2xl p-6"
         >
           <h3 className="font-semibold text-contrast mb-3">AI evaluation feedback</h3>
           <div
@@ -798,9 +773,7 @@ export const ImprovementAnalysis: FC = () => {
       )}
       {data.finalFeedback && hasDetailedAnalysis && (
         <div
-          className={`rounded-2xl border p-4 ${
-            isDark ? "bg-zinc-900/30 border-zinc-700/60" : "bg-gray-50 border-gray-200/80"
-          }`}
+          className="app-panel rounded-2xl p-4"
         >
           <h3 className="font-semibold text-contrast text-sm mb-2">From your AI evaluation interview</h3>
           <div
@@ -816,9 +789,7 @@ export const ImprovementAnalysis: FC = () => {
       {/* Full Chat Transcript */}
       {hasDialogue && (
         <div
-          className={`rounded-2xl border overflow-hidden ${
-            isDark ? "bg-zinc-900/50 border-zinc-700/80" : "bg-white border-gray-200/80"
-          }`}
+          className="app-panel rounded-2xl overflow-hidden"
         >
           <button
             onClick={() => setIsChatExpanded(!isChatExpanded)}
@@ -864,7 +835,7 @@ export const ImprovementAnalysis: FC = () => {
                     >
                       <div
                         className={`text-[11px] font-medium uppercase tracking-wider mb-1.5 ${
-                          isUser ? "text-blue-100" : "text-gray-500 dark:text-gray-400"
+                          isUser ? "text-blue-100" : "text-muted-foreground"
                         }`}
                       >
                         {isUser ? "You" : "AI Interviewer"}
