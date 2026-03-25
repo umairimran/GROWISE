@@ -21,6 +21,7 @@ import { contentService } from "../api/services/content";
 import { learningService } from "../api/services/learning";
 import { progressService, type PathCompletionReport } from "../api/services/progress";
 import { Button } from "../components/Button";
+import { HeroBadge, Panel, WorkspaceFrame } from "../components/workspace";
 
 type LearningPathResponse = components["schemas"]["LearningPathResponse"];
 type LearningPathStageResponse = components["schemas"]["LearningPathStageResponse"];
@@ -391,38 +392,38 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
 
   if (isLoadingPath) {
     return (
-      <div className="bg-white dark:bg-[#111111] rounded-2xl border border-gray-200 dark:border-zinc-700 shadow-soft p-10 text-center">
+      <Panel className="p-10 text-center">
         <div className="mx-auto h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-sm text-gray-500 dark:text-gray-400">Loading your latest learning path...</p>
-      </div>
+        <p className="text-sm text-muted-foreground">Loading your latest learning path...</p>
+      </Panel>
     );
   }
 
   if (isNoPath) {
     return (
-      <div className="bg-white dark:bg-[#111111] rounded-2xl border border-gray-200 dark:border-zinc-700 shadow-soft p-8 lg:p-10 text-center">
+      <Panel className="p-8 lg:p-10 text-center">
         <div className="mx-auto h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 flex items-center justify-center mb-4">
           <BookOpen className="h-6 w-6" />
         </div>
-        <h2 className="font-serif text-2xl font-semibold text-slate-900 dark:text-white mb-3">
+        <h2 className="font-display text-2xl font-semibold text-contrast mb-3">
           No Learning Path Found
         </h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+        <p className="text-sm text-muted-foreground mb-6">
           Complete an assessment first so the backend can generate your personalized stages.
         </p>
         <Button onClick={onStartAssessment}>Start Assessment</Button>
-      </div>
+      </Panel>
     );
   }
 
   return (
-    <div className="flex flex-col gap-6 pb-10">
+    <WorkspaceFrame label={<HeroBadge text="Learning path" />} title="Learning Path" className="pb-10">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="font-serif text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">
+          <h1 className="font-display text-2xl lg:text-3xl font-bold text-contrast">
             Learning Path
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             {targetTrackName ? (
               <>
                 Track: <span className="font-medium text-contrast">{targetTrackName}</span> · Path #
@@ -487,25 +488,25 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
           onClick={() => setIsReportModalOpen(false)}
         >
-          <div
-            className="bg-white dark:bg-[#111111] rounded-2xl border border-gray-200 dark:border-zinc-700 shadow-xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col"
+          <Panel
+            className="shadow-xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-zinc-700">
-              <h2 className="font-serif text-lg font-semibold text-slate-900 dark:text-white">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+              <h2 className="font-display text-lg font-semibold text-contrast">
                 Path Completion Report
               </h2>
               <button
                 type="button"
                 onClick={() => setIsReportModalOpen(false)}
-                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-500 dark:text-gray-400"
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 text-muted-foreground"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
               <div className="prose prose-sm dark:prose-invert max-w-none">
-                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
                   Learning Summary
                 </h3>
                 <div className="mt-2 text-slate-700 dark:text-gray-300 whitespace-pre-wrap">
@@ -513,14 +514,14 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
                 </div>
               </div>
             </div>
-          </div>
+          </Panel>
         </div>
       )}
 
       <div className="grid grid-cols-1 xl:grid-cols-[1.8fr,1fr] gap-6">
         <div className="flex flex-col gap-6">
-          <div className="bg-white dark:bg-[#111111] rounded-2xl border border-gray-200 dark:border-zinc-700 shadow-soft p-4">
-            <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3">
+          <Panel className="p-4">
+            <div className="text-xs uppercase tracking-wide text-muted-foreground mb-3">
               Stages
             </div>
             <div className="flex flex-wrap gap-2">
@@ -532,7 +533,7 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
                     className={`px-3 py-2 rounded-lg border text-sm transition-colors ${
                       isActive
                         ? "border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300"
-                        : "border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-900"
+                        : "border-border text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-900"
                     }`}
                     onClick={() => setActiveStageId(stage.stage_id)}
                   >
@@ -541,15 +542,15 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
                 );
               })}
             </div>
-          </div>
+          </Panel>
 
-          <div className="bg-white dark:bg-[#111111] rounded-2xl border border-gray-200 dark:border-zinc-700 shadow-soft p-5">
+          <Panel className="p-5">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
               <div>
-                <h2 className="font-serif text-lg font-medium text-slate-900 dark:text-white">
+                <h2 className="font-display text-lg font-medium text-contrast">
                   {activeStage?.stage_name ?? "Stage"}
                 </h2>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Focus: {activeStage?.focus_area ?? "N/A"}
                 </p>
               </div>
@@ -562,37 +563,37 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
             </div>
 
             {stageProgress && (
-              <div className="rounded-xl border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900/40 px-4 py-3 text-sm mb-4">
+              <div className="rounded-xl border bg-surface border-border px-4 py-3 text-sm mb-4">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <div>
-                    <div className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
                       Completion
                     </div>
-                    <div className="font-semibold text-slate-900 dark:text-white">
+                    <div className="font-semibold text-contrast">
                       {stageProgress.completion_percentage}%
                     </div>
                   </div>
                   <div>
-                    <div className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
                       Completed
                     </div>
-                    <div className="font-semibold text-slate-900 dark:text-white">
+                    <div className="font-semibold text-contrast">
                       {stageProgress.completed_items}/{stageProgress.total_content_items}
                     </div>
                   </div>
                   <div>
-                    <div className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
                       Time Spent
                     </div>
-                    <div className="font-semibold text-slate-900 dark:text-white">
+                    <div className="font-semibold text-contrast">
                       {stageProgress.total_time_spent_minutes}m
                     </div>
                   </div>
                   <div>
-                    <div className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
                       Remaining
                     </div>
-                    <div className="font-semibold text-slate-900 dark:text-white">
+                    <div className="font-semibold text-contrast">
                       {stageProgress.estimated_time_remaining}m
                     </div>
                   </div>
@@ -603,11 +604,11 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
             {isLoadingStage ? (
               <div className="py-10 text-center">
                 <div className="mx-auto h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3" />
-                <p className="text-sm text-gray-500 dark:text-gray-400">Loading stage experience...</p>
+                <p className="text-sm text-muted-foreground">Loading stage experience...</p>
               </div>
             ) : !activeStage ? (
-              <div className="rounded-xl border border-dashed border-gray-200 dark:border-zinc-700 p-8 text-center">
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+              <div className="rounded-xl border border-dashed border-border p-8 text-center">
+                <p className="text-sm text-muted-foreground">
                   This learning path has no stages yet.
                 </p>
               </div>
@@ -623,24 +624,24 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
                   return (
                     <article
                       key={content.content_id}
-                      className="rounded-xl border border-gray-200 dark:border-zinc-700 p-4 bg-white/90 dark:bg-zinc-900/30"
+                      className="rounded-xl border border-border p-4 bg-white/90 dark:bg-zinc-900/30"
                     >
                       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3 mb-3">
                         <div className="min-w-0">
-                          <h3 className="font-medium text-slate-900 dark:text-white">{content.title}</h3>
+                          <h3 className="font-medium text-contrast">{content.title}</h3>
                           <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
                             {content.description}
                           </p>
                         </div>
                         <div className="flex flex-wrap gap-2 text-[11px]">
-                          <span className="px-2 py-1 rounded-full border border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-gray-300">
+                          <span className="px-2 py-1 rounded-full border border-border text-gray-600 dark:text-gray-300">
                             {content.content_type}
                           </span>
-                          <span className="px-2 py-1 rounded-full border border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-gray-300">
+                          <span className="px-2 py-1 rounded-full border border-border text-gray-600 dark:text-gray-300">
                             {content.difficulty_level}
                           </span>
                           {content.estimated_duration !== null && content.estimated_duration !== undefined && (
-                            <span className="px-2 py-1 rounded-full border border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-gray-300 flex items-center gap-1">
+                            <span className="px-2 py-1 rounded-full border border-border text-gray-600 dark:text-gray-300 flex items-center gap-1">
                               <Clock3 className="h-3 w-3" />
                               {content.estimated_duration}m
                             </span>
@@ -649,12 +650,12 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
                       </div>
 
                       {content.content_text && (
-                        <div className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900 px-4 py-3 prose prose-sm text-gray-800 dark:text-gray-100 dark:prose-invert max-w-none">
+                        <div className="rounded-lg border bg-surface border-border px-4 py-3 prose prose-sm text-gray-800 dark:text-gray-100 dark:prose-invert max-w-none">
                           <ReactMarkdown>{content.content_text}</ReactMarkdown>
                         </div>
                       )}
 
-                      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                         <span>Order #{content.order_index}</span>
                         <span>·</span>
                         <span>Added {formatDateTime(content.created_at)}</span>
@@ -690,7 +691,7 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
                         </div>
                       )}
 
-                      <div className="mt-4 rounded-lg border border-gray-200 dark:border-zinc-700 px-3 py-2 text-xs text-gray-600 dark:text-gray-300">
+                      <div className="mt-4 rounded-lg border border-border px-3 py-2 text-xs text-gray-600 dark:text-gray-300">
                         <div className="flex items-center justify-between gap-3">
                           <span className="font-medium">{progressLabel(contentProgress)}</span>
                           {contentProgress && (
@@ -742,8 +743,8 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
                 })}
               </div>
             ) : (
-              <div className="rounded-xl border border-dashed border-gray-200 dark:border-zinc-700 p-8 text-center">
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+              <div className="rounded-xl border border-dashed border-border p-8 text-center">
+                <p className="text-sm text-muted-foreground mb-4">
                   No content has been generated for this stage yet.
                 </p>
                 <Button onClick={handleGenerateContent} isLoading={isGeneratingContent}>
@@ -752,17 +753,17 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
                 </Button>
               </div>
             )}
-          </div>
+          </Panel>
         </div>
 
-        <div className="bg-white dark:bg-[#111111] rounded-2xl border border-gray-200 dark:border-zinc-700 shadow-soft flex flex-col min-h-[620px] max-h-[calc(100vh-160px)]">
-          <div className="px-4 py-3 border-b border-gray-200 dark:border-zinc-700 flex items-center gap-2">
+        <Panel className="flex flex-col min-h-[620px] max-h-[calc(100vh-160px)]">
+          <div className="px-4 py-3 border-b border-border flex items-center gap-2">
             <div className="h-8 w-8 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 flex items-center justify-center">
               <MessageSquare className="h-4 w-4" />
             </div>
             <div>
-              <div className="text-sm font-medium text-slate-900 dark:text-white">Mentor Chat</div>
-              <div className="text-[11px] text-gray-500 dark:text-gray-400">
+              <div className="text-sm font-medium text-contrast">Mentor Chat</div>
+              <div className="text-[11px] text-muted-foreground">
                 {chatSession ? `Session #${chatSession.chat_id}` : "Loading session..."}
               </div>
             </div>
@@ -773,7 +774,7 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
             className="flex-1 overflow-y-auto p-4 space-y-3"
           >
             {messages.length === 0 ? (
-              <div className="h-full flex items-center justify-center text-sm text-gray-500 dark:text-gray-400 text-center">
+              <div className="h-full flex items-center justify-center text-sm text-muted-foreground text-center">
                 Start the conversation for this stage to get mentor guidance.
               </div>
             ) : (
@@ -804,17 +805,17 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
               })
             )}
             {isSendingMessage && (
-              <div className="text-xs text-gray-500 dark:text-gray-400">Mentor is responding...</div>
+              <div className="text-xs text-muted-foreground">Mentor is responding...</div>
             )}
           </div>
 
-          <div className="p-4 border-t border-gray-200 dark:border-zinc-700">
+          <div className="p-4 border-t border-border">
             <form onSubmit={handleSendMessage} className="flex items-center gap-2">
               <input
                 value={chatInput}
                 onChange={(event) => setChatInput(event.target.value)}
                 placeholder="Ask about this stage..."
-                className="flex-1 h-10 px-3 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                className="flex-1 h-10 px-3 rounded-lg border bg-surface border-border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40"
                 disabled={!chatSession || isSendingMessage}
               />
               <Button
@@ -827,8 +828,8 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
               </Button>
             </form>
           </div>
-        </div>
+        </Panel>
       </div>
-    </div>
+    </WorkspaceFrame>
   );
 };
