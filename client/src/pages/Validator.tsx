@@ -1,5 +1,5 @@
-import { FC, useCallback, useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { FC, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { UNSAFE_LocationContext, UNSAFE_NavigationContext } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import {
   AlertTriangle,
@@ -24,7 +24,7 @@ import {
 } from "../api/services/evaluation";
 import { progressService, type ProgressEvaluationHistory } from "../api/services/progress";
 import { Button } from "../components/Button";
-import { useTheme } from "../providers/ThemeProvider";
+import { WorkspaceFrame, Panel, InlineNotice, HeroBadge } from "../components/workspace";
 
 const MIN_DIALOGUES_TO_COMPLETE = 3;
 
@@ -67,21 +67,28 @@ const sortDialogues = (dialogues: EvaluationDialogueResponse[]): EvaluationDialo
   [...dialogues].sort((left, right) => left.sequence_no - right.sequence_no);
 
 export const Validator: FC = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { theme } = useTheme();
-  const systemPrefersDark =
-    typeof window !== "undefined" &&
-    typeof window.matchMedia === "function" &&
-    window.matchMedia("(prefers-color-scheme: dark)").matches;
-  const isDark = theme === "dark" || (theme === "system" && systemPrefersDark);
+  const navigationContext = useContext(UNSAFE_NavigationContext as any);
+  const locationContext = useContext(UNSAFE_LocationContext as any);
+  const navigator = navigationContext?.navigator;
+  const goTo = useCallback(
+    (to: string) => {
+      if (navigator?.push) {
+        navigator.push(to);
+        return;
+      }
+
+      window.location.assign(to);
+    },
+    [navigator],
+  );
+  const search = locationContext?.location?.search ?? window.location.search;
 
   const queryPathId = useMemo(() => {
-    const params = new URLSearchParams(location.search);
+    const params = new URLSearchParams(search);
     const raw = params.get("pathId");
     const parsed = raw ? Number(raw) : NaN;
     return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
-  }, [location.search]);
+  }, [search]);
 
   const [pathIdInput, setPathIdInput] = useState(() => (queryPathId ? String(queryPathId) : ""));
   const [draftResponse, setDraftResponse] = useState("");
@@ -234,7 +241,7 @@ export const Validator: FC = () => {
     const pathId = Number(pathIdInput);
 
     if (!Number.isInteger(pathId) || pathId <= 0) {
-      setErrorMessage("Enter a valid learning path ID to start a new evaluation session.");
+      setErrorMessage("Enter a valid track ID to start a new evaluation session.");
       return;
     }
 
@@ -348,7 +355,7 @@ export const Validator: FC = () => {
   }, [evaluationHistory]);
 
   const readinessColor = (level: string) => {
-    if (!level) return "text-gray-500 dark:text-gray-400";
+    if (!level) return "text-muted-foreground";
     const l = level.toLowerCase();
     if (l === "senior_ready") return "text-emerald-600 dark:text-emerald-400";
     if (l === "mid") return "text-blue-600 dark:text-blue-400";
@@ -365,8 +372,8 @@ export const Validator: FC = () => {
             </div>
             <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 blur-xl animate-pulse" />
           </div>
-          <p className="mt-6 text-gray-500 dark:text-gray-400 font-medium">Loading evaluation workspace...</p>
-          <p className="mt-1 text-sm text-gray-400 dark:text-gray-500">Preparing your AI interview experience</p>
+          <p className="mt-6 text-muted-foreground font-medium">Loading evaluation workspace...</p>
+          <p className="mt-1 text-sm text-muted-foreground">Preparing your skill evaluation workspace</p>
         </div>
       </div>
     );
@@ -375,14 +382,14 @@ export const Validator: FC = () => {
   return (
     <div className="h-auto lg:h-[calc(100vh-140px)] flex flex-col gap-6 pb-20 lg:pb-0">
       {/* Header */}
-      <header className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-50 via-white to-blue-50/50 dark:from-zinc-900 dark:via-zinc-900 dark:to-indigo-950/30 border border-gray-200/80 dark:border-zinc-700/80 p-6 shadow-sm">
+      <header className="app-panel relative overflow-hidden p-6">
         <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-blue-400/10 to-transparent dark:from-indigo-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
         <div className="relative flex flex-col sm:flex-row justify-between items-start gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200/50 dark:border-blue-800/50">
                 <Bot className="h-3 w-3" />
-                AI Interview
+                Skill Evaluation
               </span>
               {activeSession && (
                 <span
@@ -396,10 +403,10 @@ export const Validator: FC = () => {
                 </span>
               )}
             </div>
-            <h1 className="font-serif text-2xl sm:text-3xl font-bold text-contrast tracking-tight">
+            <h1 className="font-display text-2xl sm:text-3xl font-bold text-contrast tracking-tight">
               Skill Evaluation
             </h1>
-            <p className="mt-1 text-gray-500 dark:text-gray-400 text-sm">
+            <p className="mt-1 text-muted-foreground text-sm">
               AI interviewer with full context — your track, assessment, and learning journey.
             </p>
           </div>
@@ -414,7 +421,7 @@ export const Validator: FC = () => {
               <RefreshCw className={`h-4 w-4 mr-2 ${statusMessage ? "animate-spin" : ""}`} />
               Refresh
             </Button>
-            <div className="hidden sm:flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+            <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
               <Clock3 className="h-4 w-4" />
               <span>
                 {activeSession
@@ -428,45 +435,34 @@ export const Validator: FC = () => {
 
       {/* Error */}
       {errorMessage && (
-        <div className="rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 px-4 py-3 text-sm text-red-700 dark:text-red-300 flex items-center gap-3 shadow-sm">
-          <AlertTriangle className="h-5 w-5 shrink-0" />
-          <span className="flex-1">{errorMessage}</span>
-          <Button size="sm" variant="ghost" onClick={() => void handleRetryWorkspaceLoad()}>
-            Retry
-          </Button>
-        </div>
+        <InlineNotice tone="error" action={<Button size="sm" variant="ghost" onClick={() => void handleRetryWorkspaceLoad()}>Retry</Button>}>
+          {errorMessage}
+        </InlineNotice>
       )}
 
       {/* Status */}
       {statusMessage && (
-        <div className="rounded-xl border border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-950/30 px-4 py-3 text-sm text-blue-700 dark:text-blue-300 flex items-center gap-2">
-          <RefreshCw className="h-4 w-4 animate-spin shrink-0" />
-          <span>{statusMessage}</span>
-        </div>
+        <InlineNotice tone="info">
+          {statusMessage}
+        </InlineNotice>
       )}
 
       <div className="flex-1 grid grid-cols-1 xl:grid-cols-3 gap-6 min-h-0">
         {/* Main chat area */}
         <div className="xl:col-span-2 flex flex-col gap-4 min-h-0">
           <div
-            className={`flex-1 rounded-2xl border shadow-sm flex flex-col min-h-0 overflow-hidden ${
-              isDark
-                ? "bg-zinc-900/50 border-zinc-700/80"
-                : "bg-white border-gray-200/80"
-            }`}
+            className="app-panel flex-1 flex flex-col min-h-0 overflow-hidden"
           >
             {/* Chat header */}
             <div
-              className={`px-6 py-4 border-b flex items-center justify-between ${
-                isDark ? "border-zinc-700/80 bg-zinc-900/80" : "border-gray-200/80 bg-gray-50/80"
-              }`}
+              className="px-6 py-4 border-b border-border flex items-center justify-between bg-surface"
             >
               <span className="flex items-center gap-2 font-medium text-contrast">
                 <MessageSquare className="h-4 w-4 text-blue-500" />
-                Dialogue
+                Interview Session
               </span>
               {activeSession && (
-                <span className="text-xs text-gray-500 dark:text-gray-400">
+                <span className="text-xs text-muted-foreground">
                   {dialogueCount} message{dialogueCount !== 1 ? "s" : ""}
                   {activeSession.path_id && ` · Path #${activeSession.path_id}`}
                 </span>
@@ -480,9 +476,9 @@ export const Validator: FC = () => {
                   <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center mb-4">
                     <Bot className="h-8 w-8 text-blue-500" />
                   </div>
-                  <p className="text-gray-500 dark:text-gray-400 font-medium">No active session</p>
-                  <p className="mt-1 text-sm text-gray-400 dark:text-gray-500 max-w-xs">
-                    Enter a learning path ID and create a session to start your AI interview.
+                  <p className="text-muted-foreground font-medium">No active session</p>
+                  <p className="mt-1 text-sm text-muted-foreground max-w-xs">
+                    Select a track and create a session to begin.
                   </p>
                 </div>
               )}
@@ -492,8 +488,8 @@ export const Validator: FC = () => {
                   <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center mb-4 animate-pulse">
                     <Sparkles className="h-8 w-8 text-blue-500" />
                   </div>
-                  <p className="text-gray-500 dark:text-gray-400 font-medium">Session ready</p>
-                  <p className="mt-1 text-sm text-gray-400 dark:text-gray-500 max-w-xs">
+                  <p className="text-muted-foreground font-medium">Session ready</p>
+                  <p className="mt-1 text-sm text-muted-foreground max-w-xs">
                     The AI interviewer will send the first message. Check back shortly.
                   </p>
                 </div>
@@ -511,9 +507,7 @@ export const Validator: FC = () => {
                       className={`shrink-0 w-9 h-9 rounded-xl flex items-center justify-center ${
                         isUser
                           ? "bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md shadow-blue-500/25"
-                          : isDark
-                            ? "bg-zinc-700 text-zinc-300"
-                            : "bg-gray-200 text-gray-600"
+                          : "bg-surface border border-border text-muted-foreground"
                       }`}
                     >
                       {isUser ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
@@ -522,14 +516,12 @@ export const Validator: FC = () => {
                       className={`max-w-[85%] rounded-2xl px-4 py-3 ${
                         isUser
                           ? "bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md shadow-blue-500/20"
-                          : isDark
-                            ? "bg-zinc-800/80 border border-zinc-700/60 text-zinc-100"
-                            : "bg-gray-100 border border-gray-200/80 text-gray-900"
+                          : "bg-surface border border-border text-contrast"
                       }`}
                     >
                       <div
                         className={`text-[11px] font-medium uppercase tracking-wider mb-1.5 ${
-                          isUser ? "text-blue-100" : "text-gray-500 dark:text-gray-400"
+                          isUser ? "text-blue-100" : "text-muted-foreground"
                         }`}
                       >
                         {isUser ? "You" : "AI Interviewer"}
@@ -538,7 +530,7 @@ export const Validator: FC = () => {
                         className={`text-sm leading-relaxed prose prose-sm max-w-none ${
                           isUser
                             ? "text-white [&_*]:text-white"
-                            : "text-gray-800 dark:text-gray-200"
+                            : "text-contrast"
                         }`}
                       >
                         {isUser ? (
@@ -564,9 +556,7 @@ export const Validator: FC = () => {
 
             {/* Input area — always visible at bottom */}
             <div
-              className={`flex-shrink-0 border-t p-4 ${
-                isDark ? "border-zinc-700/80 bg-zinc-900/50" : "border-gray-200/80 bg-gray-50/50"
-              }`}
+              className="flex-shrink-0 border-t border-border p-4 bg-surface"
             >
               <label htmlFor="validator-reply" className="block text-sm font-medium text-contrast mb-2">
                 Your answer
@@ -588,17 +578,13 @@ export const Validator: FC = () => {
                     ? activeSession.status === "completed"
                       ? "This evaluation is completed. Start a new session to continue."
                       : "Type your response to the AI interviewer..."
-                    : "Create or open a session first."
+                    : "Start a session to begin your evaluation"
                 }
                 disabled={!canRespond}
-                className={`w-full min-h-[100px] p-4 text-sm rounded-xl resize-none transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 ${
-                  isDark
-                    ? "bg-zinc-800 border border-zinc-600 text-zinc-100 placeholder-zinc-500"
-                    : "bg-white border border-gray-200 text-gray-900 placeholder-gray-400"
-                }`}
+                className="w-full min-h-[100px] p-4 text-sm rounded-xl resize-none transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 bg-surface border border-border text-contrast placeholder-muted"
               />
               <div className="flex flex-wrap items-center gap-3 justify-between mt-3">
-                <div className="text-xs text-gray-500 dark:text-gray-400">
+                <div className="text-xs text-muted-foreground">
                   {activeSession && activeSession.status !== "completed" ? (
                     remainingDialogues > 0 ? (
                       <span>
@@ -609,16 +595,16 @@ export const Validator: FC = () => {
                         Ready to complete evaluation
                       </span>
                     )
-                  ) : (
+                  ) : activeSession?.status === "completed" ? (
                     <span>Responses are saved to your session</span>
-                  )}
+                  ) : null}
                 </div>
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setDraftResponse("")}
-                    disabled={!canRespond || draftResponse.length === 0}
+                    disabled={draftResponse.length === 0}
                   >
                     Clear
                   </Button>
@@ -640,13 +626,11 @@ export const Validator: FC = () => {
         <div className="flex flex-col gap-4 min-h-0">
           {/* Start session */}
           <div
-            className={`rounded-2xl border p-5 shadow-sm ${
-              isDark ? "bg-zinc-900/50 border-zinc-700/80" : "bg-white border-gray-200/80"
-            }`}
+            className="app-panel p-5"
           >
             <h2 className="font-semibold text-contrast mb-1">Start New Session</h2>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-              Enter your learning path ID to begin an AI interview.
+            <p className="text-xs text-muted-foreground mb-3">
+              Enter your learning track ID to begin an evaluation.
             </p>
             <input
               type="text"
@@ -654,12 +638,8 @@ export const Validator: FC = () => {
               pattern="[0-9]*"
               value={pathIdInput}
               onChange={(e) => setPathIdInput(e.target.value.replace(/\D/g, ""))}
-              placeholder="Path ID"
-              className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3 ${
-                isDark
-                  ? "bg-zinc-800 border-zinc-600 text-zinc-100 placeholder-zinc-500"
-                  : "bg-white border-gray-200 text-gray-900 placeholder-gray-400"
-              }`}
+              placeholder="Enter your track name or ID"
+              className="w-full border border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3 bg-surface text-contrast placeholder-muted"
             />
             <Button
               type="button"
@@ -675,15 +655,13 @@ export const Validator: FC = () => {
 
           {/* Result */}
           <div
-            className={`rounded-2xl border p-5 shadow-sm ${
-              isDark ? "bg-zinc-900/50 border-zinc-700/80" : "bg-white border-gray-200/80"
-            }`}
+            className="app-panel p-5"
           >
             <div className="flex items-center justify-between mb-3">
               <div>
                 <h2 className="font-semibold text-contrast">Evaluation Result</h2>
                 {activeSession && (
-                  <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
                     {activeSession.status === "completed"
                       ? `Session #${activeSession.evaluation_id} · Path #${activeSession.path_id ?? "—"}`
                       : "Complete the interview to see your result"}
@@ -700,47 +678,32 @@ export const Validator: FC = () => {
             {result ? (
               <div className="space-y-3 text-sm">
                 <div className="grid grid-cols-2 gap-2">
-                  <div
-                    className={`rounded-xl p-3 ${
-                      isDark ? "bg-zinc-800/80 border border-zinc-700/60" : "bg-gray-50 border border-gray-200/80"
-                    }`}
-                  >
-                    <div className="text-xs text-gray-500 dark:text-gray-400">Reasoning</div>
+                  <div className="rounded-xl p-3 bg-surface border border-border">
+                    <div className="text-xs text-muted-foreground">Reasoning</div>
                     <div className="font-bold text-contrast text-lg">{formatScore(result.reasoning_score)}</div>
                   </div>
-                  <div
-                    className={`rounded-xl p-3 ${
-                      isDark ? "bg-zinc-800/80 border border-zinc-700/60" : "bg-gray-50 border border-gray-200/80"
-                    }`}
-                  >
-                    <div className="text-xs text-gray-500 dark:text-gray-400">Problem Solving</div>
+                  <div className="rounded-xl p-3 bg-surface border border-border">
+                    <div className="text-xs text-muted-foreground">Problem Solving</div>
                     <div className="font-bold text-contrast text-lg">{formatScore(result.problem_solving)}</div>
                   </div>
                 </div>
-                <div
-                  className={`rounded-xl p-3 ${
-                    isDark ? "bg-zinc-800/80 border border-zinc-700/60" : "bg-gray-50 border border-gray-200/80"
-                  }`}
-                >
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Readiness</div>
+                <div className="rounded-xl p-3 bg-surface border border-border">
+                  <div className="text-xs text-muted-foreground">Readiness</div>
                   <div className={`font-bold uppercase ${readinessColor(result.readiness_level)}`}>
                     {result.readiness_level.replace(/_/g, " ")}
                   </div>
                 </div>
-                <div
-                  className={`prose prose-sm max-w-none rounded-xl p-3 ${
-                    isDark ? "bg-zinc-800/50 text-zinc-300" : "text-gray-700"
-                  }`}
-                >
+                <div className="prose prose-sm max-w-none rounded-xl p-3 bg-surface text-muted-foreground">
+
                   <ReactMarkdown>{result.final_feedback}</ReactMarkdown>
                 </div>
               </div>
             ) : (
               <div className="space-y-2 py-2">
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-sm text-muted-foreground">
                   {activeSession?.status === "in_progress"
-                    ? "Complete the interview and click &quot;Complete Evaluation&quot; to see your result."
-                    : "Select a completed session from &quot;My Sessions&quot; or &quot;Progress&quot; below to view your past evaluation results."}
+                    ? "Complete the interview and click \"Complete Evaluation\" to see your result."
+                    : "Select a completed session from \"My Sessions\" or \"Progress\" below to view your past evaluation results."}
                 </p>
               </div>
             )}
@@ -757,7 +720,7 @@ export const Validator: FC = () => {
               <div className="flex flex-col gap-2 mt-3">
                 <Button
                   variant="secondary"
-                  onClick={() => navigate(`/evaluation/${activeSession.evaluation_id}`)}
+                  onClick={() => goTo(`/evaluation/${activeSession.evaluation_id}`)}
                   className="w-full"
                 >
                   <MessageSquare className="h-4 w-4 mr-2" />
@@ -766,7 +729,7 @@ export const Validator: FC = () => {
                 {activeSession.path_id && (
                   <Button
                     variant="outline"
-                    onClick={() => navigate(`/improvement/${activeSession.path_id}`)}
+                    onClick={() => goTo(`/improvement/${activeSession.path_id}`)}
                     className="w-full"
                   >
                     <TrendingUp className="h-4 w-4 mr-2" />
@@ -779,15 +742,13 @@ export const Validator: FC = () => {
 
           {/* Sessions list */}
           <div
-            className={`rounded-2xl border p-5 flex-1 min-h-0 overflow-hidden flex flex-col ${
-              isDark ? "bg-zinc-900/50 border-zinc-700/80" : "bg-white border-gray-200/80"
-            }`}
+            className="app-panel p-5 flex-1 min-h-0 overflow-hidden flex flex-col"
           >
             <h2 className="font-semibold text-contrast mb-1">My Sessions</h2>
-            <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-3">Click a completed session to view result</p>
+            <p className="text-[11px] text-muted-foreground mb-3">Click a completed session to view result</p>
             <div className="space-y-2 overflow-y-auto flex-1 min-h-0 pr-1">
               {sessionsPreview.length === 0 ? (
-                <p className="text-sm text-gray-500 dark:text-gray-400">No sessions yet.</p>
+                <p className="text-sm text-muted-foreground">No sessions yet. Create one to get started.</p>
               ) : (
                 sessionsPreview.map((session) => (
                   <button
@@ -796,9 +757,7 @@ export const Validator: FC = () => {
                     className={`w-full text-left rounded-xl px-3 py-2.5 text-sm transition-all ${
                       activeSession?.evaluation_id === session.evaluation_id
                         ? "bg-blue-500/15 dark:bg-blue-500/20 border border-blue-500/40 text-blue-700 dark:text-blue-300"
-                        : isDark
-                          ? "border border-zinc-700/60 hover:bg-zinc-800/60 hover:border-zinc-600"
-                          : "border border-gray-200 hover:bg-gray-50 hover:border-gray-300"
+                        : "border border-border hover:bg-surface hover:border-border"
                     }`}
                   >
                     <div className="flex items-center justify-between">
@@ -813,7 +772,7 @@ export const Validator: FC = () => {
                         {session.status}
                       </span>
                     </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    <div className="text-xs text-muted-foreground mt-0.5">
                       Path #{session.path_id} · {formatDateTime(session.started_at)}
                     </div>
                   </button>
@@ -824,9 +783,7 @@ export const Validator: FC = () => {
 
           {/* History */}
           <div
-            className={`rounded-2xl border p-5 flex-1 min-h-0 overflow-hidden flex flex-col ${
-              isDark ? "bg-zinc-900/50 border-zinc-700/80" : "bg-white border-gray-200/80"
-            }`}
+            className="app-panel p-5 flex-1 min-h-0 overflow-hidden flex flex-col"
           >
             <h2 className="font-semibold text-contrast mb-3 flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-blue-500" />
@@ -834,27 +791,21 @@ export const Validator: FC = () => {
             </h2>
             {!evaluationHistory ? (
               <div className="space-y-3">
-                <p className="text-sm text-gray-500 dark:text-gray-400">History unavailable.</p>
+                <p className="text-sm text-muted-foreground">History unavailable.</p>
                 <Button size="sm" variant="outline" onClick={() => void handleRetryWorkspaceLoad()}>
                   Retry
                 </Button>
               </div>
             ) : (
               <div className="space-y-3 text-sm flex-1 min-h-0 overflow-y-auto">
-                <div
-                  className={`rounded-xl p-3 ${
-                    isDark ? "bg-zinc-800/80 border border-zinc-700/60" : "bg-gray-50 border border-gray-200/80"
-                  }`}
-                >
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Completed</div>
+                <div className="rounded-xl p-3 bg-surface border border-border">
+                  <div className="text-xs text-muted-foreground">Completed</div>
                   <div className="text-xl font-bold text-contrast">{evaluationHistory.totalEvaluations}</div>
                 </div>
 
                 {evaluationHistory.progression && (
                   <div
-                    className={`rounded-xl p-3 space-y-1 ${
-                      isDark ? "bg-emerald-950/30 border border-emerald-800/40" : "bg-emerald-50 border border-emerald-200/80"
-                    }`}
+                    className="rounded-xl p-3 space-y-1 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/40"
                   >
                     <div className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">Improvement</div>
                     <div className="text-xs text-emerald-600 dark:text-emerald-300">
@@ -873,11 +824,11 @@ export const Validator: FC = () => {
                 )}
 
                 <div className="space-y-2">
-                  <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                  <p className="text-[11px] text-muted-foreground">
                     Click a past evaluation to view full result →
                   </p>
                   {historyPreview.length === 0 ? (
-                    <p className="text-sm text-gray-500 dark:text-gray-400">No completed evaluations yet.</p>
+                    <p className="text-sm text-muted-foreground">No completed evaluations yet.</p>
                   ) : (
                     historyPreview.map((item) => (
                       <button
@@ -887,9 +838,7 @@ export const Validator: FC = () => {
                         className={`w-full text-left rounded-xl px-3 py-2.5 transition-colors ${
                           activeSession?.evaluation_id === item.evaluationId
                             ? "bg-blue-500/15 dark:bg-blue-500/20 border border-blue-500/40"
-                            : isDark
-                              ? "bg-zinc-800/60 border border-zinc-700/60 hover:bg-zinc-800/80 hover:border-zinc-600"
-                              : "bg-gray-50 border border-gray-200/80 hover:bg-gray-100 hover:border-gray-300"
+                            : "bg-surface border border-border hover:bg-surface hover:border-border"
                         }`}
                       >
                         <div className="flex items-center justify-between">
@@ -898,12 +847,12 @@ export const Validator: FC = () => {
                             {item.readinessLevel ?? "-"}
                           </span>
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">{item.trackName || "Unknown"}</div>
-                        <div className="text-xs text-gray-600 dark:text-gray-300 mt-1">
+                        <div className="text-xs text-muted-foreground">{item.trackName || "Unknown"}</div>
+                        <div className="text-xs text-muted-foreground mt-1">
                           R {formatScore(item.reasoningScore)} · PS {formatScore(item.problemSolvingScore)}
                         </div>
                         {item.finalFeedback && (
-                          <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1.5 line-clamp-2">
+                          <p className="text-[11px] text-muted-foreground mt-1.5 line-clamp-2">
                             {item.finalFeedback}
                           </p>
                         )}
