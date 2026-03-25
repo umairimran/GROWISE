@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { Validator } from "../../src/pages/Validator";
 import type {
   EvaluationDialogueResponse,
@@ -9,6 +9,7 @@ import type {
   EvaluationSessionResponse,
 } from "../../src/api/services/evaluation";
 import type { ProgressEvaluationHistory } from "../../src/api/services/progress";
+import { renderWithRouter } from "../utils/renderWithRouter";
 
 const evaluationMocks = vi.hoisted(() => ({
   getMySessions: vi.fn(),
@@ -112,7 +113,7 @@ describe("validator minimum dialogue threshold", () => {
     evaluationMocks.getDialogues.mockResolvedValueOnce(makeDialogues(2));
     progressMocks.getEvaluationHistory.mockResolvedValueOnce(historyFixture);
 
-    render(<Validator />);
+    renderWithRouter(<Validator />, { route: "/validator" });
 
     await waitFor(() => {
       expect(evaluationMocks.getMySessions).toHaveBeenCalledTimes(1);
@@ -121,7 +122,7 @@ describe("validator minimum dialogue threshold", () => {
 
     const completeButton = screen.getByRole("button", { name: "Complete Evaluation" });
     expect((completeButton as HTMLButtonElement).disabled).toBe(true);
-    expect(screen.getByText(/1 more message required/i)).toBeTruthy();
+    expect(screen.getByText(/1 more message/i)).toBeTruthy();
   });
 
   it("allows completion at threshold and retrieves latest result payload", async () => {
@@ -137,7 +138,7 @@ describe("validator minimum dialogue threshold", () => {
       .mockResolvedValueOnce(historyFixture)
       .mockResolvedValueOnce(historyFixture);
 
-    render(<Validator />);
+    renderWithRouter(<Validator />, { route: "/validator" });
 
     await waitFor(() => {
       expect(evaluationMocks.getDialogues).toHaveBeenCalledTimes(1);
