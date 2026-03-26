@@ -2,7 +2,7 @@ import { FC, ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
 import { Button } from "./Button";
-import { defaultProductBadge, learnerNavItems, productStatusItems } from "./navigation";
+import { defaultProductBadge, learnerNavItems } from "./navigation";
 import { Panel, StatusPill, cn } from "./ui";
 
 interface LayoutProps {
@@ -31,22 +31,20 @@ export const Layout: FC<LayoutProps> = ({ children, isSidebarOpen, onSidebarClos
       <div className="page-shell flex gap-6 py-5">
         <aside
           className={cn(
-            "fixed inset-y-16 left-0 z-50 w-[min(86vw,320px)] px-4 py-5 transition-transform duration-300 ease-out lg:static lg:inset-auto lg:z-auto lg:w-80 lg:translate-x-0 lg:px-0 lg:py-0",
+            "fixed inset-y-16 left-0 z-50 w-[min(86vw,280px)] px-4 py-5 transition-transform duration-300 ease-out lg:static lg:inset-auto lg:z-auto lg:w-64 lg:translate-x-0 lg:px-0 lg:py-0",
             isSidebarOpen ? "translate-x-0" : "-translate-x-full",
           )}
         >
-          <Panel className="flex h-[calc(100vh-104px)] flex-col gap-5 p-4 lg:sticky lg:top-[84px] lg:h-[calc(100vh-104px)]" muted>
-            <div className="space-y-4">
+          <Panel className="flex flex-col gap-5 p-4 lg:sticky lg:top-[84px]" muted>
+            <div className="space-y-3">
               <StatusPill tone="accent">
                 <BadgeIcon className="h-3.5 w-3.5" />
                 {badgeLabel}
               </StatusPill>
-              <div>
-                <h2 className="font-display text-2xl font-semibold text-contrast">Workspace</h2>
-              </div>
+              <h2 className="font-display text-xl font-semibold text-contrast">Workspace</h2>
             </div>
 
-            <nav className="panel-grid">
+            <nav className="flex flex-col gap-1.5">
               {primaryNavItems.map((item) => {
                 const Icon = item.icon;
                 const isActive =
@@ -60,45 +58,34 @@ export const Layout: FC<LayoutProps> = ({ children, isSidebarOpen, onSidebarClos
                       onSidebarClose?.();
                     }}
                     className={cn(
-                      "flex w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left text-sm font-medium transition-all",
+                      "flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left text-sm font-medium transition-all",
                       isActive
-                        ? "border-primary/20 bg-primary/10 text-primary shadow-soft"
-                        : "border-border bg-surface/70 text-muted-foreground hover:border-primary/20 hover:bg-primary/5 hover:text-contrast",
+                        ? "border-primary/25 bg-primary/10 text-primary"
+                        : "border-transparent text-muted-foreground hover:border-border hover:bg-surface/70 hover:text-contrast",
                     )}
                   >
                     <div
                       className={cn(
-                        "flex h-10 w-10 items-center justify-center rounded-2xl",
+                        "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
                         isActive ? "bg-primary text-white" : "bg-contrast/5 text-muted-foreground",
                       )}
                     >
-                      <Icon className="h-4.5 w-4.5" />
+                      <Icon className="h-4 w-4" />
                     </div>
-                    <div className="flex-1">
-                      <div>{item.label}</div>
-                      <div className="mt-0.5 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                    <div className="flex-1 min-w-0">
+                      <div className="truncate">{item.label}</div>
+                      <div className="mt-0.5 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
                         {item.path.replace("/", "") || "home"}
                       </div>
                     </div>
-                    <ArrowUpRight className="h-4 w-4 opacity-50" />
+                    <ArrowUpRight className="h-3.5 w-3.5 shrink-0 opacity-40" />
                   </button>
                 );
               })}
             </nav>
 
-            <div className="section-divider" />
-
-            <div className="panel-grid text-sm">
-              {productStatusItems.map((item) => (
-                <div key={item.label} className="metric-strip !p-4">
-                  <div className="metric-label">{item.label}</div>
-                  <div className="mt-1 text-base font-semibold text-contrast">{item.value}</div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-auto flex gap-2">
-              <Button size="sm" className="flex-1" onClick={() => navigate("/skills")}>
+            <div className="pt-2">
+              <Button size="sm" className="w-full" onClick={() => navigate("/skills")}>
                 Choose Track
               </Button>
             </div>
