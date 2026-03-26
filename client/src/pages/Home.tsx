@@ -161,7 +161,7 @@ export const Home: FC<HomeProps> = ({
         background={
           isDark ? (
             <>
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(84,201,170,0.14),transparent_24%),radial-gradient(circle_at_80%_20%,rgba(84,201,170,0.08),transparent_18%),linear-gradient(180deg,rgba(8,12,18,0.12),rgba(8,12,18,0.5))]" />
+              <div className="pointer-events-none absolute inset-0 bg-[rgba(8,12,18,0.35)]" />
               <div className="absolute inset-x-0 top-0 h-full min-h-[600px] opacity-75 [mask-image:linear-gradient(180deg,rgba(0,0,0,0.95),rgba(0,0,0,0.6),transparent)]">
                 <Threads
                   amplitude={1}
@@ -169,7 +169,7 @@ export const Home: FC<HomeProps> = ({
                   enableMouseInteraction
                 />
               </div>
-              <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(11,16,23,0.9)_0%,rgba(11,16,23,0.55)_42%,rgba(11,16,23,0.3)_100%)]" />
+              <div className="pointer-events-none absolute inset-0 bg-[rgba(11,16,23,0.7)]" />
             </>
           ) : null
         }
