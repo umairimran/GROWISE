@@ -19,7 +19,7 @@ const INITIAL_BLOG_POSTS: MarketingPost[] = [
     date: "Oct 24, 2024",
     authorName: "Sarah Chen",
     authorAvatar: "SC",
-    gradient: "linear-gradient(135deg, rgba(24,94,79,0.16), rgba(255,255,255,0.8))",
+    gradient: "rgba(24,94,79,0.12)",
   },
   {
     id: "2",
@@ -30,7 +30,7 @@ const INITIAL_BLOG_POSTS: MarketingPost[] = [
     date: "Oct 12, 2024",
     authorName: "David Kim",
     authorAvatar: "DK",
-    gradient: "linear-gradient(135deg, rgba(59,130,246,0.18), rgba(255,255,255,0.75))",
+    gradient: "rgba(59,130,246,0.15)",
   },
   {
     id: "3",
@@ -41,7 +41,7 @@ const INITIAL_BLOG_POSTS: MarketingPost[] = [
     date: "Sep 28, 2024",
     authorName: "Marcus J.",
     authorAvatar: "MJ",
-    gradient: "linear-gradient(135deg, rgba(16,185,129,0.18), rgba(255,255,255,0.78))",
+    gradient: "rgba(16,185,129,0.15)",
   },
   {
     id: "4",
@@ -52,7 +52,7 @@ const INITIAL_BLOG_POSTS: MarketingPost[] = [
     date: "Sep 15, 2024",
     authorName: "Elena R.",
     authorAvatar: "ER",
-    gradient: "linear-gradient(135deg, rgba(245,158,11,0.16), rgba(255,255,255,0.76))",
+    gradient: "rgba(245,158,11,0.13)",
   },
   {
     id: "5",
@@ -63,7 +63,7 @@ const INITIAL_BLOG_POSTS: MarketingPost[] = [
     date: "Aug 30, 2024",
     authorName: "David Kim",
     authorAvatar: "DK",
-    gradient: "linear-gradient(135deg, rgba(15,23,42,0.12), rgba(255,255,255,0.8))",
+    gradient: "rgba(15,23,42,0.10)",
   },
   {
     id: "6",
@@ -74,7 +74,7 @@ const INITIAL_BLOG_POSTS: MarketingPost[] = [
     date: "Aug 10, 2024",
     authorName: "Sarah Chen",
     authorAvatar: "SC",
-    gradient: "linear-gradient(135deg, rgba(99,102,241,0.16), rgba(255,255,255,0.78))",
+    gradient: "rgba(99,102,241,0.13)",
   },
 ];
 
