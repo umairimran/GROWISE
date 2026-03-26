@@ -85,7 +85,7 @@ export const MarketingHero: FC<HeroProps> = ({
           </div>
 
           <div className="relative">
-            <div className="absolute inset-0 rounded-[2rem] bg-gradient-to-br from-primary/20 via-transparent to-warning/10 blur-3xl" />
+            <div className="absolute inset-0 rounded-[2rem] bg-primary/15 blur-3xl" />
             <Panel className="relative p-5 sm:p-6">
               {children}
             </Panel>
