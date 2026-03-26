@@ -120,6 +120,7 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
   const [pathReport, setPathReport] = useState<PathCompletionReport | null>(null);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [courseTab, setCourseTab] = useState<"stages" | "content" | "info">("stages");
 
   const chatMessagesContainerRef = useRef<HTMLDivElement | null>(null);
   const activeStage = useMemo(
@@ -417,30 +418,20 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
   }
 
   return (
-    <WorkspaceFrame label={<HeroBadge text="Learning path" />} title="Learning Path" className="pb-10">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="font-display text-2xl lg:text-3xl font-bold text-contrast">
-            Learning Path
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {targetTrackName ? (
-              <>
-                Track: <span className="font-medium text-contrast">{targetTrackName}</span> · Path #
-                {path?.path_id ?? "N/A"} · {stages.length} stages
-              </>
-            ) : (
-              <>
-                Path #{path?.path_id ?? "N/A"} · {stages.length} stages
-              </>
-            )}
-          </p>
-        </div>
+    <WorkspaceFrame
+      title="Learning Path"
+      description={targetTrackName
+        ? `Track: ${targetTrackName} · Path #${path?.path_id ?? "N/A"} · ${stages.length} stages`
+        : `Path #${path?.path_id ?? "N/A"} · ${stages.length} stages`
+      }
+      actions={
         <Button variant="outline" size="sm" onClick={() => void loadLearningPath()}>
           <RefreshCw className="h-4 w-4 mr-2" />
           Refresh Path
         </Button>
-      </div>
+      }
+      className="pb-10"
+    >
 
       {errorMessage && (
         <div className="rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50 dark:bg-red-950/30 px-4 py-3 text-sm text-red-700 dark:text-red-300 flex items-start gap-3">
@@ -518,263 +509,28 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 xl:grid-cols-[1.8fr,1fr] gap-6">
-        <div className="flex flex-col gap-6">
-          <Panel className="p-4">
-            <div className="text-xs uppercase tracking-wide text-muted-foreground mb-3">
-              Stages
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {stages.map((stage) => {
-                const isActive = stage.stage_id === activeStageId;
-                return (
-                  <button
-                    key={stage.stage_id}
-                    className={`px-3 py-2 rounded-lg border text-sm transition-colors ${
-                      isActive
-                        ? "border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300"
-                        : "border-border text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-900"
-                    }`}
-                    onClick={() => setActiveStageId(stage.stage_id)}
-                  >
-                    {stage.stage_order}. {stage.stage_name}
-                  </button>
-                );
-              })}
-            </div>
-          </Panel>
-
-          <Panel className="p-5">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-              <div>
-                <h2 className="font-display text-lg font-medium text-contrast">
-                  {activeStage?.stage_name ?? "Stage"}
-                </h2>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Focus: {activeStage?.focus_area ?? "N/A"}
-                </p>
-              </div>
-              {activeStage && contentItems.length === 0 && (
-                <Button onClick={handleGenerateContent} isLoading={isGeneratingContent}>
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Generate Content
-                </Button>
-              )}
-            </div>
-
-            {stageProgress && (
-              <div className="rounded-xl border bg-surface border-border px-4 py-3 text-sm mb-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <div>
-                    <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                      Completion
-                    </div>
-                    <div className="font-semibold text-contrast">
-                      {stageProgress.completion_percentage}%
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                      Completed
-                    </div>
-                    <div className="font-semibold text-contrast">
-                      {stageProgress.completed_items}/{stageProgress.total_content_items}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                      Time Spent
-                    </div>
-                    <div className="font-semibold text-contrast">
-                      {stageProgress.total_time_spent_minutes}m
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                      Remaining
-                    </div>
-                    <div className="font-semibold text-contrast">
-                      {stageProgress.estimated_time_remaining}m
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {isLoadingStage ? (
-              <div className="py-10 text-center">
-                <div className="mx-auto h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3" />
-                <p className="text-sm text-muted-foreground">Loading stage experience...</p>
-              </div>
-            ) : !activeStage ? (
-              <div className="rounded-xl border border-dashed border-border p-8 text-center">
-                <p className="text-sm text-muted-foreground">
-                  This learning path has no stages yet.
-                </p>
-              </div>
-            ) : contentItems.length > 0 ? (
-              <div className="space-y-4">
-                {contentItems.map((content) => {
-                  const contentProgress = content.progress;
-                  const tags = parseTags(content.tags);
-                  const updateKey = `update-${content.content_id}`;
-                  const completeKey = `complete-${content.content_id}`;
-                  const startKey = `start-${content.content_id}`;
-
-                  return (
-                    <article
-                      key={content.content_id}
-                      className="rounded-xl border border-border p-4 bg-white/90 dark:bg-zinc-900/30"
-                    >
-                      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3 mb-3">
-                        <div className="min-w-0">
-                          <h3 className="font-medium text-contrast">{content.title}</h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                            {content.description}
-                          </p>
-                        </div>
-                        <div className="flex flex-wrap gap-2 text-[11px]">
-                          <span className="px-2 py-1 rounded-full border border-border text-gray-600 dark:text-gray-300">
-                            {content.content_type}
-                          </span>
-                          <span className="px-2 py-1 rounded-full border border-border text-gray-600 dark:text-gray-300">
-                            {content.difficulty_level}
-                          </span>
-                          {content.estimated_duration !== null && content.estimated_duration !== undefined && (
-                            <span className="px-2 py-1 rounded-full border border-border text-gray-600 dark:text-gray-300 flex items-center gap-1">
-                              <Clock3 className="h-3 w-3" />
-                              {content.estimated_duration}m
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {content.content_text && (
-                        <div className="rounded-lg border bg-surface border-border px-4 py-3 prose prose-sm text-gray-800 dark:text-gray-100 dark:prose-invert max-w-none">
-                          <ReactMarkdown>{content.content_text}</ReactMarkdown>
-                        </div>
-                      )}
-
-                      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                        <span>Order #{content.order_index}</span>
-                        <span>·</span>
-                        <span>Added {formatDateTime(content.created_at)}</span>
-                        {content.source_platform && (
-                          <>
-                            <span>·</span>
-                            <span>Source: {content.source_platform}</span>
-                          </>
-                        )}
-                      </div>
-
-                      {content.url && (
-                        <a
-                          href={content.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-block mt-2 text-sm text-blue-600 dark:text-blue-300 hover:underline"
-                        >
-                          Open resource
-                        </a>
-                      )}
-
-                      {tags.length > 0 && (
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {tags.map((tag) => (
-                            <span
-                              key={`${content.content_id}-${tag}`}
-                              className="text-[11px] px-2 py-1 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-900/40"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-
-                      <div className="mt-4 rounded-lg border border-border px-3 py-2 text-xs text-gray-600 dark:text-gray-300">
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="font-medium">{progressLabel(contentProgress)}</span>
-                          {contentProgress && (
-                            <span>{contentProgress.time_spent_minutes} minutes tracked</span>
-                          )}
-                        </div>
-                        {contentProgress?.is_completed && (
-                          <div className="mt-1 text-green-700 dark:text-green-300 flex items-center gap-1">
-                            <CheckCircle2 className="h-3.5 w-3.5" />
-                            Completed {formatDateTime(contentProgress.completed_at)}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {!contentProgress && (
-                          <Button
-                            size="sm"
-                            onClick={() => void handleStartProgress(content.content_id)}
-                            isLoading={activeContentActionKey === startKey}
-                          >
-                            Start Tracking
-                          </Button>
-                        )}
-
-                        {contentProgress && !contentProgress.is_completed && (
-                          <>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => void handleUpdateProgress(content.content_id, contentProgress)}
-                              isLoading={activeContentActionKey === updateKey}
-                            >
-                              Update (+25%, +10m)
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              onClick={() => void handleCompleteContent(content.content_id)}
-                              isLoading={activeContentActionKey === completeKey}
-                            >
-                              Mark Complete
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="rounded-xl border border-dashed border-border p-8 text-center">
-                <p className="text-sm text-muted-foreground mb-4">
-                  No content has been generated for this stage yet.
-                </p>
-                <Button onClick={handleGenerateContent} isLoading={isGeneratingContent}>
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Generate Stage Content
-                </Button>
-              </div>
-            )}
-          </Panel>
-        </div>
-
-        <Panel className="flex flex-col min-h-[620px] max-h-[calc(100vh-160px)]">
-          <div className="px-4 py-3 border-b border-border flex items-center gap-2">
-            <div className="h-8 w-8 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 flex items-center justify-center">
-              <MessageSquare className="h-4 w-4" />
+      {/* Main content: Chat center + Tabbed sidebar right */}
+      <div className="flex gap-4" style={{ height: "calc(100vh - 200px)", minHeight: "400px" }}>
+        {/* CENTER: Mentor Chat */}
+        <div className="flex-1 min-w-0 flex flex-col rounded-xl border border-border bg-card/90 shadow-sm overflow-hidden">
+          <div className="shrink-0 px-4 py-2.5 border-b border-border flex items-center gap-2 bg-violet-500/5">
+            <div className="h-7 w-7 rounded-lg bg-violet-500/15 text-violet-400 flex items-center justify-center">
+              <MessageSquare className="h-3.5 w-3.5" />
             </div>
             <div>
-              <div className="text-sm font-medium text-contrast">Mentor Chat</div>
-              <div className="text-[11px] text-muted-foreground">
-                {chatSession ? `Session #${chatSession.chat_id}` : "Loading session..."}
+              <div className="text-sm font-semibold text-contrast">Mentor Chat</div>
+              <div className="text-[10px] text-muted-foreground">
+                {chatSession ? `Session #${chatSession.chat_id}` : "Loading..."} · {activeStage?.stage_name ?? "Select a stage"}
               </div>
             </div>
           </div>
 
           <div
             ref={chatMessagesContainerRef}
-            className="flex-1 overflow-y-auto p-4 space-y-3"
+            className="flex-1 overflow-y-auto p-4 space-y-2"
           >
             {messages.length === 0 ? (
-              <div className="h-full flex items-center justify-center text-sm text-muted-foreground text-center">
+              <div className="h-full flex items-center justify-center text-sm text-muted-foreground text-center px-4">
                 Start the conversation for this stage to get mentor guidance.
               </div>
             ) : (
@@ -786,10 +542,10 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
                     className={`flex ${isUser ? "justify-end" : "justify-start"}`}
                   >
                     <div
-                      className={`max-w-[88%] rounded-2xl px-3 py-2 text-sm ${
+                      className={`max-w-[85%] rounded-xl px-3 py-1.5 text-sm ${
                         isUser
-                          ? "bg-blue-600 text-white rounded-br-none"
-                          : "bg-gray-100 dark:bg-zinc-800 text-gray-800 dark:text-gray-200 rounded-bl-none"
+                          ? "bg-violet-500 text-white"
+                          : "bg-surface border border-border text-contrast"
                       }`}
                     >
                       {isUser ? (
@@ -805,17 +561,20 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
               })
             )}
             {isSendingMessage && (
-              <div className="text-xs text-muted-foreground">Mentor is responding...</div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="h-4 w-4 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+                Mentor is responding...
+              </div>
             )}
           </div>
 
-          <div className="p-4 border-t border-border">
+          <div className="shrink-0 p-3 border-t border-border">
             <form onSubmit={handleSendMessage} className="flex items-center gap-2">
               <input
                 value={chatInput}
                 onChange={(event) => setChatInput(event.target.value)}
                 placeholder="Ask about this stage..."
-                className="flex-1 h-10 px-3 rounded-lg border bg-surface border-border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                className="flex-1 h-9 px-3 rounded-lg border bg-surface border-border text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-500/40"
                 disabled={!chatSession || isSendingMessage}
               />
               <Button
@@ -823,12 +582,249 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
                 size="sm"
                 disabled={!chatSession || !chatInput.trim()}
                 isLoading={isSendingMessage}
+                className="h-9"
               >
-                <Send className="h-4 w-4" />
+                <Send className="h-3.5 w-3.5" />
               </Button>
             </form>
           </div>
-        </Panel>
+        </div>
+
+        {/* RIGHT: Tabbed sidebar */}
+        <div className="shrink-0 w-[300px] min-h-0 flex flex-col rounded-xl border border-border bg-card/90 shadow-sm overflow-hidden">
+          {/* Tab bar */}
+          <div className="shrink-0 flex border-b border-border">
+            {([
+              { key: "stages" as const, label: "Stages", icon: BookOpen },
+              { key: "content" as const, label: "Content", icon: FileText },
+              { key: "info" as const, label: "Info", icon: TrendingUp },
+            ]).map((tab) => {
+              const Icon = tab.icon;
+              const isActive = courseTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setCourseTab(tab.key)}
+                  className={`flex-1 flex items-center justify-center gap-1 px-1 py-2 text-[10px] font-bold uppercase tracking-wide transition-colors ${
+                    isActive
+                      ? "text-violet-400 border-b-2 border-violet-500 bg-violet-500/5"
+                      : "text-muted-foreground hover:text-contrast hover:bg-surface/50 border-b-2 border-transparent"
+                  }`}
+                >
+                  <Icon className="h-3 w-3" />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Tab content */}
+          <div className="flex-1 overflow-y-auto p-3">
+            {/* Stages tab */}
+            {courseTab === "stages" && (
+              <div className="space-y-3">
+                <div className="flex flex-wrap gap-1.5">
+                  {stages.map((stage) => {
+                    const isActive = stage.stage_id === activeStageId;
+                    return (
+                      <button
+                        key={stage.stage_id}
+                        className={`px-2.5 py-1.5 rounded-lg border text-xs transition-colors ${
+                          isActive
+                            ? "border-violet-500/30 bg-violet-500/10 text-violet-400"
+                            : "border-border text-muted-foreground hover:bg-surface/50 hover:text-contrast"
+                        }`}
+                        onClick={() => setActiveStageId(stage.stage_id)}
+                      >
+                        {stage.stage_order}. {stage.stage_name}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {activeStage && (
+                  <div className="rounded-lg border border-border p-2.5">
+                    <div className="text-xs font-semibold text-contrast">{activeStage.stage_name}</div>
+                    <div className="text-[10px] text-muted-foreground mt-0.5">Focus: {activeStage.focus_area ?? "N/A"}</div>
+                  </div>
+                )}
+
+                {stageProgress && (
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <div className="rounded-lg border border-border p-2 text-center">
+                      <div className="text-[9px] uppercase tracking-wider text-muted-foreground">Completion</div>
+                      <div className="text-sm font-bold text-contrast">{stageProgress.completion_percentage}%</div>
+                    </div>
+                    <div className="rounded-lg border border-border p-2 text-center">
+                      <div className="text-[9px] uppercase tracking-wider text-muted-foreground">Items</div>
+                      <div className="text-sm font-bold text-contrast">{stageProgress.completed_items}/{stageProgress.total_content_items}</div>
+                    </div>
+                    <div className="rounded-lg border border-border p-2 text-center">
+                      <div className="text-[9px] uppercase tracking-wider text-muted-foreground">Time</div>
+                      <div className="text-sm font-bold text-contrast">{stageProgress.total_time_spent_minutes}m</div>
+                    </div>
+                    <div className="rounded-lg border border-border p-2 text-center">
+                      <div className="text-[9px] uppercase tracking-wider text-muted-foreground">Remaining</div>
+                      <div className="text-sm font-bold text-contrast">{stageProgress.estimated_time_remaining}m</div>
+                    </div>
+                  </div>
+                )}
+
+                {activeStage && contentItems.length === 0 && !isLoadingStage && (
+                  <Button onClick={handleGenerateContent} isLoading={isGeneratingContent} className="w-full" size="sm">
+                    <Sparkles className="h-3.5 w-3.5 mr-1" />
+                    Generate Content
+                  </Button>
+                )}
+
+                {isLoadingStage && (
+                  <div className="py-6 text-center">
+                    <div className="mx-auto h-6 w-6 border-3 border-violet-500 border-t-transparent rounded-full animate-spin mb-2" />
+                    <p className="text-[10px] text-muted-foreground">Loading stage...</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Content tab */}
+            {courseTab === "content" && (
+              <div className="space-y-2">
+                {isLoadingStage ? (
+                  <div className="py-6 text-center">
+                    <div className="mx-auto h-6 w-6 border-3 border-violet-500 border-t-transparent rounded-full animate-spin mb-2" />
+                    <p className="text-[10px] text-muted-foreground">Loading content...</p>
+                  </div>
+                ) : contentItems.length === 0 ? (
+                  <div className="text-center py-4">
+                    <p className="text-[11px] text-muted-foreground mb-2">No content for this stage yet.</p>
+                    {activeStage && (
+                      <Button onClick={handleGenerateContent} isLoading={isGeneratingContent} size="sm">
+                        <Sparkles className="h-3.5 w-3.5 mr-1" />
+                        Generate
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  contentItems.map((content) => {
+                    const contentProgress = content.progress;
+                    const tags = parseTags(content.tags);
+                    const updateKey = `update-${content.content_id}`;
+                    const completeKey = `complete-${content.content_id}`;
+                    const startKey = `start-${content.content_id}`;
+
+                    return (
+                      <article key={content.content_id} className="rounded-lg border border-border p-2.5">
+                        <div className="text-xs font-medium text-contrast">{content.title}</div>
+                        <div className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2">{content.description}</div>
+
+                        <div className="flex flex-wrap gap-1 mt-1.5">
+                          <span className="text-[9px] px-1.5 py-0.5 rounded border border-border text-muted-foreground">{content.content_type}</span>
+                          <span className="text-[9px] px-1.5 py-0.5 rounded border border-border text-muted-foreground">{content.difficulty_level}</span>
+                          {content.estimated_duration != null && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded border border-border text-muted-foreground flex items-center gap-0.5">
+                              <Clock3 className="h-2.5 w-2.5" />{content.estimated_duration}m
+                            </span>
+                          )}
+                        </div>
+
+                        {content.content_text && (
+                          <div className="mt-2 rounded border border-border bg-surface/50 p-2 text-[11px] prose prose-sm dark:prose-invert max-w-none max-h-[120px] overflow-y-auto">
+                            <ReactMarkdown>{content.content_text}</ReactMarkdown>
+                          </div>
+                        )}
+
+                        {content.url && (
+                          <a href={content.url} target="_blank" rel="noreferrer" className="inline-block mt-1 text-[10px] text-blue-400 hover:underline">
+                            Open resource
+                          </a>
+                        )}
+
+                        {tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1.5">
+                            {tags.map((tag) => (
+                              <span key={`${content.content_id}-${tag}`} className="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-900/20 text-blue-300 border border-blue-900/40">
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        <div className="mt-2 flex items-center justify-between text-[10px] text-muted-foreground">
+                          <span className="font-medium">{progressLabel(contentProgress)}</span>
+                          {contentProgress?.is_completed && <CheckCircle2 className="h-3 w-3 text-green-400" />}
+                        </div>
+
+                        <div className="mt-1.5 flex flex-wrap gap-1">
+                          {!contentProgress && (
+                            <Button size="sm" className="h-6 text-[10px] px-2" onClick={() => void handleStartProgress(content.content_id)} isLoading={activeContentActionKey === startKey}>
+                              Start
+                            </Button>
+                          )}
+                          {contentProgress && !contentProgress.is_completed && (
+                            <>
+                              <Button size="sm" variant="outline" className="h-6 text-[10px] px-2" onClick={() => void handleUpdateProgress(content.content_id, contentProgress)} isLoading={activeContentActionKey === updateKey}>
+                                +25%
+                              </Button>
+                              <Button size="sm" variant="secondary" className="h-6 text-[10px] px-2" onClick={() => void handleCompleteContent(content.content_id)} isLoading={activeContentActionKey === completeKey}>
+                                Complete
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </article>
+                    );
+                  })
+                )}
+              </div>
+            )}
+
+            {/* Info tab */}
+            {courseTab === "info" && (
+              <div className="space-y-3">
+                {pathProgress && (
+                  <div className="rounded-lg border border-border p-2.5">
+                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Path Progress</div>
+                    <div className="text-lg font-bold text-contrast">{pathProgress.overallCompletionPercentage}%</div>
+                    <div className="text-[10px] text-muted-foreground">{pathProgress.completedItems}/{pathProgress.totalContentItems} items completed</div>
+                    <div className="mt-2 h-1.5 rounded-full bg-contrast/8 overflow-hidden">
+                      <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${pathProgress.overallCompletionPercentage}%` }} />
+                    </div>
+                  </div>
+                )}
+
+                {isPathComplete && path && (
+                  <div className="rounded-lg border border-green-900/40 bg-green-950/20 p-2.5 space-y-2">
+                    <div className="flex items-center gap-1.5 text-green-300 text-xs font-medium">
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      Path Complete!
+                    </div>
+                    <Button size="sm" className="w-full h-7 text-[10px]" onClick={() => void handleGenerateOrViewReport()} isLoading={isGeneratingReport}>
+                      <FileText className="h-3 w-3 mr-1" />
+                      View Report
+                    </Button>
+                    <Button size="sm" variant="outline" className="w-full h-7 text-[10px]" onClick={() => navigate(`/improvement/${path.path_id}`)}>
+                      <TrendingUp className="h-3 w-3 mr-1" />
+                      Progress Analysis
+                    </Button>
+                    <Button size="sm" variant="secondary" className="w-full h-7 text-[10px]" onClick={() => navigate(`/validator?pathId=${path.path_id}`)}>
+                      Start AI Evaluation
+                    </Button>
+                  </div>
+                )}
+
+                <div className="rounded-lg border border-border p-2.5 text-[11px] text-muted-foreground space-y-1">
+                  <div>Path: <span className="text-contrast font-medium">#{path?.path_id ?? "N/A"}</span></div>
+                  {targetTrackName && <div>Track: <span className="text-contrast font-medium">{targetTrackName}</span></div>}
+                  <div>Stages: <span className="text-contrast font-medium">{stages.length}</span></div>
+                </div>
+
+                <Button size="sm" variant="outline" className="w-full" onClick={onStartAssessment}>
+                  Choose Different Track
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </WorkspaceFrame>
   );
