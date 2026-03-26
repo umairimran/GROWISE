@@ -41,7 +41,7 @@ export const MarketingCard: FC<MarketingCardProps> = ({ post, index }) => (
           transition={{ duration: 0.5 }}
         />
       ) : null}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-black/5 to-transparent" />
+      <div className="absolute inset-0 bg-black/20" />
       <div className="absolute left-4 top-4 rounded-full border border-white/20 bg-white/75 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-contrast backdrop-blur-md">
         {post.category}
       </div>
