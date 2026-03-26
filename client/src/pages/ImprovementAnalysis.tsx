@@ -105,7 +105,7 @@ export const ImprovementAnalysis: FC = () => {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center">
-          <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center animate-pulse shadow-lg shadow-blue-500/25 mx-auto">
+          <div className="h-14 w-14 rounded-2xl bg-blue-500 flex items-center justify-center animate-pulse shadow-lg shadow-blue-500/25 mx-auto">
             <TrendingUp className="h-7 w-7 text-white" />
           </div>
           <p className="mt-6 text-muted-foreground font-medium">Loading your progress analysis...</p>
@@ -251,7 +251,7 @@ export const ImprovementAnalysis: FC = () => {
           {/* AI evaluation summary – headline + summary + ai_summary */}
           <div
             className={`rounded-2xl border p-6 ${
-              isDark ? "bg-gradient-to-br from-blue-950/30 to-indigo-950/20 border-blue-800/40" : "bg-gradient-to-br from-blue-50 to-indigo-50/50 border-blue-200/80"
+              isDark ? "bg-blue-950/30 border-blue-800/40" : "bg-blue-50 border-blue-200/80"
             }`}
           >
             <div className="flex items-center gap-2 mb-2">
@@ -628,7 +628,7 @@ export const ImprovementAnalysis: FC = () => {
         {/* Arrow / Improvement */}
         <div className="flex items-center justify-center">
           <div className="flex flex-col items-center gap-2">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/25">
+            <div className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center shadow-lg shadow-blue-500/25">
               <ArrowRight className="h-6 w-6 text-white" />
             </div>
             {data.improvementPercentage != null && hasAfter && (
@@ -659,7 +659,7 @@ export const ImprovementAnalysis: FC = () => {
           className="app-panel rounded-2xl p-6"
         >
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center">
               <span className="text-lg font-bold text-white">2</span>
             </div>
             <h2 className="font-semibold text-contrast">Where You Are Now</h2>
@@ -816,7 +816,7 @@ export const ImprovementAnalysis: FC = () => {
                     <div
                       className={`shrink-0 w-9 h-9 rounded-xl flex items-center justify-center ${
                         isUser
-                          ? "bg-gradient-to-br from-blue-500 to-indigo-600 text-white"
+                          ? "bg-blue-500 text-white"
                           : isDark
                             ? "bg-zinc-700 text-zinc-300"
                             : "bg-gray-200 text-gray-600"
@@ -827,7 +827,7 @@ export const ImprovementAnalysis: FC = () => {
                     <div
                       className={`max-w-[85%] rounded-2xl px-4 py-3 ${
                         isUser
-                          ? "bg-gradient-to-br from-blue-500 to-indigo-600 text-white"
+                          ? "bg-blue-500 text-white"
                           : isDark
                             ? "bg-zinc-800/80 border border-zinc-700/60 text-zinc-100"
                             : "bg-gray-100 border border-gray-200/80 text-gray-900"
