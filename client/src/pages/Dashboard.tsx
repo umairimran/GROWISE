@@ -198,6 +198,7 @@ export const Dashboard: FC<DashboardProps> = ({
   const [pathReportPathId, setPathReportPathId] = useState<number | null>(null);
   const [fetchedLatestResult, setFetchedLatestResult] = useState<AssessmentResult | null>(null);
   const [selectedViewSessionId, setSelectedViewSessionId] = useState<number | null>(null);
+  const [dashboardTab, setDashboardTab] = useState<"overview" | "assessments" | "insights">("overview");
   const [viewSessionResult, setViewSessionResult] = useState<AssessmentResult | null>(null);
   const [isLoadingViewResult, setIsLoadingViewResult] = useState(false);
   const hasLoadedRef = useRef(false);
@@ -473,6 +474,28 @@ export const Dashboard: FC<DashboardProps> = ({
         </Panel>
       ) : (
         <>
+          <div className="flex border-b border-border mb-4">
+            {([
+              { key: "overview" as const, label: "Overview" },
+              { key: "assessments" as const, label: "Assessments" },
+              { key: "insights" as const, label: "Insights" },
+            ]).map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setDashboardTab(tab.key)}
+                className={`px-4 py-2.5 text-sm font-semibold transition-colors ${
+                  dashboardTab === tab.key
+                    ? "text-violet-400 border-b-2 border-violet-500 bg-violet-500/5"
+                    : "text-muted-foreground hover:text-contrast hover:bg-surface/50 border-b-2 border-transparent"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {dashboardTab === "overview" && (
+          <>
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <div className="app-panel p-4 sm:p-5">
               <div className="text-[10px] sm:text-xs uppercase tracking-wide text-muted-foreground mb-1 sm:mb-2">Assessments</div>
@@ -503,193 +526,273 @@ export const Dashboard: FC<DashboardProps> = ({
             </div>
           </div>
 
-          <div className="app-panel p-4 sm:p-5 lg:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
-              <div>
-                <h2 className="font-display text-base sm:text-lg font-medium text-contrast">Your Activity</h2>
-                <p className="text-xs text-muted-foreground">
-                  {timelineData?.totalEvents ?? 0} events
-                </p>
+          {/* Row 2: Activity chart + Progress Overview side by side */}
+          <div className="grid grid-cols-1 lg:grid-cols-[1.5fr,1fr] gap-3">
+            <div className="app-panel p-4">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <h2 className="font-display text-sm font-semibold text-contrast">Your Activity</h2>
+                <span className="text-[11px] text-muted-foreground">
+                  {timelineData?.totalEvents ?? 0} events · {timelineData?.startDate ? `${formatDate(timelineData.startDate)} - ${formatDate(timelineData.endDate)}` : "—"}
+                </span>
               </div>
-              <div className="text-xs text-muted-foreground">
-                {timelineData?.startDate ? `${formatDate(timelineData.startDate)} - ${formatDate(timelineData.endDate)}` : "No activity window"}
-              </div>
+              {timelineChartData.length > 0 ? (
+                <div className="h-[150px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={timelineChartData}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? "rgba(255,255,255,0.1)" : "#f0f0f0"} />
+                      <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: isDark ? "#9ca3af" : "#6b7280" }} minTickGap={20} />
+                      <YAxis axisLine={false} tickLine={false} allowDecimals={false} tick={{ fontSize: 10, fill: isDark ? "#9ca3af" : "#6b7280" }} width={24} />
+                      <Tooltip contentStyle={{ borderRadius: "10px", border: isDark ? "1px solid #333" : "1px solid #e5e7eb", boxShadow: "0 8px 24px rgba(0,0,0,0.12)", backgroundColor: isDark ? "#111111" : "#ffffff", color: isDark ? "#ffffff" : "#111827", fontSize: "12px" }} />
+                      <Area type="monotone" dataKey="events" stroke="#3B82F6" strokeWidth={2} fill="#3B82F6" fillOpacity={0.12} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
+                  Complete your first assessment to start tracking progress.
+                </div>
+              )}
             </div>
 
-            {timelineChartData.length > 0 ? (
-              <div className="h-[240px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={timelineChartData}>
-                    <defs>
-                      <linearGradient id="activityGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.22} />
-                        <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      vertical={false}
-                      stroke={isDark ? "rgba(255,255,255,0.1)" : "#f0f0f0"}
-                    />
-                    <XAxis
-                      dataKey="label"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 11, fill: isDark ? "#9ca3af" : "#6b7280" }}
-                      minTickGap={20}
-                    />
-                    <YAxis
-                      axisLine={false}
-                      tickLine={false}
-                      allowDecimals={false}
-                      tick={{ fontSize: 11, fill: isDark ? "#9ca3af" : "#6b7280" }}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        borderRadius: "12px",
-                        border: isDark ? "1px solid #333" : "1px solid #e5e7eb",
-                        boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
-                        backgroundColor: isDark ? "#111111" : "#ffffff",
-                        color: isDark ? "#ffffff" : "#111827",
-                      }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="events"
-                      stroke="#3B82F6"
-                      strokeWidth={2}
-                      fill="url(#activityGradient)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            ) : (
-              <div className="rounded-xl border border-dashed border-gray-200 dark:border-border p-8 text-center text-sm text-muted-foreground">
-                Complete your first assessment to start tracking your progress here.
-              </div>
-            )}
-          </div>
-
-          {pathReport && pathReportPathId && (
-            <div className="rounded-xl border border-green-200 dark:border-green-900/40 bg-green-50 dark:bg-green-950/30 px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div className="flex items-start gap-3">
-                <FileText className="h-6 w-6 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
-                <div>
-                  <h3 className="font-medium text-green-900 dark:text-green-100">Path Completion Report</h3>
-                  <p className="text-sm text-green-700 dark:text-green-300 mt-1 line-clamp-2">
-                    {pathReport.learningSummary.slice(0, 180)}
-                    {pathReport.learningSummary.length > 180 ? "…" : ""}
-                  </p>
+            <div className="app-panel p-4">
+              <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3">Progress Overview</h3>
+              <div className="space-y-2.5 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground flex items-center gap-2 text-xs"><BarChart3 className="h-3.5 w-3.5" />Evaluation Attempts</span>
+                  <span className="font-semibold text-contrast">{dashboardData?.evaluations.totalCompleted ?? 0}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground flex items-center gap-2 text-xs"><Clock3 className="h-3.5 w-3.5" />Latest Assessment</span>
+                  <span className="font-semibold text-contrast text-xs">{formatDate(latestAssessment?.date)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground flex items-center gap-2 text-xs"><TrendingUp className="h-3.5 w-3.5" />Selected Tracks</span>
+                  <span className="font-semibold text-contrast">{dashboardData?.tracks.totalSelected ?? 0}</span>
                 </div>
               </div>
-              <div className="flex flex-wrap gap-2 shrink-0">
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => goTo(`/improvement/${pathReportPathId}`)}
-                  className="gap-2"
-                >
-                  <TrendingUp className="h-4 w-4" />
-                  Progress Analysis
+              {dashboardData?.skillProfile && (
+                <div className="mt-3 pt-3 border-t border-border space-y-2">
+                  {dashboardData.skillProfile.strengths.length > 0 && (
+                    <div>
+                      <div className="text-[10px] text-muted-foreground mb-1.5 uppercase tracking-wider font-bold">Strengths</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {dashboardData.skillProfile.strengths.slice(0, 3).map((item) => (
+                          <span key={item} className="text-[10px] px-2 py-0.5 rounded-full bg-green-900/20 text-green-300 border border-green-900/40">{item}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {dashboardData.skillProfile.weaknesses.length > 0 && (
+                    <div>
+                      <div className="text-[10px] text-muted-foreground mb-1.5 uppercase tracking-wider font-bold">Focus Areas</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {dashboardData.skillProfile.weaknesses.slice(0, 3).map((item) => (
+                          <span key={item} className="text-[10px] px-2 py-0.5 rounded-full bg-red-900/20 text-red-300 border border-red-900/40">{item}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              {/* Next step CTA */}
+              <div className="mt-3 pt-3 border-t border-border">
+                <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Next Step</div>
+                <p className="text-xs text-muted-foreground mb-2">
+                  {displayResult?.comprehensiveReport?.weaknesses?.length
+                    ? <>Focus on <span className="font-medium text-contrast">{displayResult.comprehensiveReport.weaknesses[0]?.area}</span></>
+                    : learningCompletion < 100 && dashboardData?.learning.totalContentItems
+                      ? <>{dashboardData.learning.completedItems}/{dashboardData.learning.totalContentItems} items completed</>
+                      : totalAssessments > 0
+                        ? "Take another assessment"
+                        : "Start your first assessment"
+                  }
+                </p>
+                <Button size="sm" onClick={learningCompletion < 100 ? onOpenLearningPath : onStartAssessment} className="w-full">
+                  {learningCompletion < 100 ? "Continue Learning" : "Choose Track"}
                 </Button>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={onOpenLearningPath}
-                  className="gap-2"
-                >
-                  <FileText className="h-4 w-4" />
-                  View Full Report
+              </div>
+            </div>
+          </div>
+          </>
+          )}
+
+          {dashboardTab === "insights" && (
+          <>
+          {pathReport && pathReportPathId && (
+            <div className="rounded-xl border border-green-900/40 bg-green-950/30 px-4 py-3 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <FileText className="h-4 w-4 text-green-400 shrink-0" />
+                <span className="text-sm font-medium text-green-100 truncate">Path Completion Report</span>
+              </div>
+              <div className="flex gap-2 shrink-0">
+                <Button size="sm" variant="secondary" onClick={() => goTo(`/improvement/${pathReportPathId}`)} className="gap-1.5">
+                  <TrendingUp className="h-3.5 w-3.5" /> Analysis
+                </Button>
+                <Button size="sm" variant="secondary" onClick={onOpenLearningPath} className="gap-1.5">
+                  <FileText className="h-3.5 w-3.5" /> Report
                 </Button>
               </div>
             </div>
           )}
 
-          <div className="flex flex-col gap-4">
-            <div className="grid grid-cols-1 lg:grid-cols-[1.2fr,1fr] xl:grid-cols-[1.5fr,1fr] gap-4 lg:gap-6">
-              <div className="app-panel p-4 sm:p-5">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-3">
-                  <div>
-                    <h2 className="font-display text-base sm:text-lg font-medium text-contrast">Your Assessments</h2>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => void handleOpenComparison()}
-                    disabled={selectedSessionIds.length !== 2}
-                    className="gap-2"
-                  >
-                    <GitCompareArrows className="h-4 w-4" />
-                    Compare
-                  </Button>
+          <div className="flex flex-col gap-3">
+              {isLoadingViewResult ? (
+                <div className="bg-surface p-6 rounded-2xl border border-border flex flex-col items-center justify-center min-h-[200px]">
+                  <div className="h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3" />
+                  <p className="text-xs text-muted-foreground">Loading AI report...</p>
                 </div>
-
-                {assessmentHistory?.improvement && (
-                  <div className="mb-4 rounded-xl border border-blue-200 dark:border-blue-900/40 bg-blue-50 dark:bg-blue-950/30 px-4 py-3">
-                    <div className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-300 font-medium">
-                      <TrendingUp className="h-4 w-4" />
-                      Improvement: {formatPercent(assessmentHistory.improvement.improvementPercentage, 1)} (
-                      {assessmentHistory.improvement.levelProgression})
+              ) : displayResult?.comprehensiveReport ? (
+                <div className="bg-surface p-4 rounded-2xl text-contrast shadow-md border border-border">
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <h3 className="font-display text-sm font-semibold flex items-center gap-1.5">
+                      <Sparkles className="h-4 w-4 text-blue-300 shrink-0" />
+                      Assessment Report
+                    </h3>
+                    <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                      {displayResult.topic && <span className="font-medium text-contrast">{displayResult.topic}</span>}
+                      {displayResult.sessionId && <span>#{displayResult.sessionId}</span>}
                     </div>
                   </div>
-                )}
-
-                {sortedHistory.length > 0 ? (
-                  <div className="space-y-2 max-h-[260px] sm:max-h-[300px] overflow-y-auto pr-1">
-                    <p className="text-[11px] text-muted-foreground mb-2">
-                      Select an assessment to see details
+                  <p className="text-xs text-muted-foreground mb-2 leading-relaxed line-clamp-3">
+                    {displayResult.comprehensiveReport.executive_summary}
+                  </p>
+                  {displayResult.comprehensiveReport.overall_assessment && (
+                    <p className="text-xs text-muted-foreground mb-2 leading-relaxed line-clamp-2">
+                      {displayResult.comprehensiveReport.overall_assessment}
                     </p>
-                    {sortedHistory.map((entry) => {
+                  )}
+
+                  {displayResult.comprehensiveReport.dimension_breakdown?.length ? (
+                    <div className="mb-3">
+                      <h4 className="text-[10px] font-bold text-blue-400 uppercase tracking-wider mb-1.5">Dimensions</h4>
+                      <div className="flex flex-wrap gap-1.5">
+                        {displayResult.comprehensiveReport.dimension_breakdown.map((d, i) => (
+                          <div key={i} className="rounded-md bg-surface border border-border px-2 py-1 text-[11px]">
+                            <span className="text-muted-foreground">{d.dimension}</span>
+                            <span className="ml-1.5 font-medium text-blue-300">{d.score.toFixed(0)}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                  {displayResult.comprehensiveReport.learning_priorities?.length > 0 && (
+                    <div className="mb-3">
+                      <h4 className="text-[10px] font-bold text-blue-400 uppercase tracking-wider mb-1.5">Learning Priorities</h4>
+                      {(() => {
+                        const rationales = displayResult.comprehensiveReport.learning_priorities.map((p) => p.rationale);
+                        const uniqueRationales = [...new Set(rationales)];
+                        const sharedRationale = uniqueRationales.length === 1 ? uniqueRationales[0] : null;
+                        return (
+                          <>
+                            {sharedRationale && <p className="text-muted-foreground text-[10px] mb-1">{sharedRationale}</p>}
+                            <div className="flex flex-wrap gap-1.5">
+                              {displayResult.comprehensiveReport.learning_priorities.map((p, i) => (
+                                <span key={i} className="inline-flex items-baseline gap-1 rounded-md bg-blue-900/20 border border-blue-800/40 px-2 py-1 text-[11px]">
+                                  <span className="font-medium text-blue-300">{i + 1}.</span>
+                                  <span className="text-muted-foreground">{p.topic}</span>
+                                </span>
+                              ))}
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  )}
+                  <Button
+                    onClick={() => onOpenLearningPath(displayResult?.learningPathId, displayResult?.topic ?? null)}
+                    variant="secondary"
+                    size="sm"
+                    className="w-full justify-between"
+                  >
+                    Continue Learning
+                    <ArrowRight className="h-3.5 w-3.5 ml-2" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="bg-surface p-4 rounded-2xl text-contrast shadow-md border border-border">
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <h3 className="font-display text-sm font-semibold flex items-center gap-1.5">
+                      <Sparkles className="h-4 w-4 text-blue-300 shrink-0" />
+                      AI Insight
+                    </h3>
+                    {displayResult?.topic && displayResult?.sessionId && (
+                      <span className="text-[11px] text-muted-foreground">{displayResult.topic} · #{displayResult.sessionId}</span>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-3 leading-relaxed">{insightMessage}</p>
+                  <Button
+                    onClick={() => onOpenLearningPath(displayResult?.learningPathId, displayResult?.topic ?? null)}
+                    variant="secondary"
+                    size="sm"
+                    className="w-full justify-between"
+                  >
+                    Continue Learning
+                    <ArrowRight className="h-3.5 w-3.5 ml-2" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          </>
+          )}
+
+          {dashboardTab === "assessments" && (
+            <div className="app-panel p-4">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="font-display text-sm font-semibold text-contrast">Your Assessments</h2>
+                <Button size="sm" variant="secondary" onClick={() => void handleOpenComparison()} disabled={selectedSessionIds.length !== 2} className="gap-1.5">
+                  <GitCompareArrows className="h-3.5 w-3.5" /> Compare
+                </Button>
+              </div>
+
+              {assessmentHistory?.improvement && (
+                <div className="mb-3 rounded-lg border border-blue-900/40 bg-blue-950/30 px-3 py-2">
+                  <div className="flex items-center gap-2 text-xs text-blue-300 font-medium">
+                    <TrendingUp className="h-3.5 w-3.5" />
+                    Improvement: {formatPercent(assessmentHistory.improvement.improvementPercentage, 1)} ({assessmentHistory.improvement.levelProgression})
+                  </div>
+                </div>
+              )}
+
+              {sortedHistory.length > 0 ? (
+                <div className="space-y-1.5 max-h-[220px] overflow-y-auto pr-1">
+                  <p className="text-[10px] text-muted-foreground mb-1">Select an assessment to see details</p>
+                  {sortedHistory.map((entry) => {
                     const isCompareSelected = selectedSessionIds.includes(entry.sessionId);
                     const isViewSelected = selectedViewSessionId === entry.sessionId;
                     return (
                       <div
                         key={entry.sessionId}
-                        className={`flex items-start gap-3 rounded-xl border p-3 transition-all cursor-pointer ${
+                        className={`flex items-start gap-2.5 rounded-xl border p-2.5 transition-all cursor-pointer ${
                           isViewSelected
-                            ? "border-blue-400 dark:border-blue-500 bg-blue-50 dark:bg-blue-950/50 ring-2 ring-blue-200 dark:ring-blue-800"
+                            ? "border-blue-500 bg-blue-950/50 ring-1 ring-blue-800"
                             : isCompareSelected
-                              ? "border-blue-300 dark:border-blue-800 bg-blue-50/70 dark:bg-blue-950/30"
-                              : "border-gray-200 dark:border-border bg-gray-50/60 dark:bg-zinc-900/40 hover:border-gray-300 dark:hover:border-zinc-600 hover:bg-gray-50 dark:hover:bg-zinc-900/60"
+                              ? "border-blue-800 bg-blue-950/30"
+                              : "border-border bg-surface/40 hover:border-zinc-600 hover:bg-surface/60"
                         }`}
                         onClick={() => fetchSessionForView(entry.sessionId)}
                         role="button"
                         tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            fetchSessionForView(entry.sessionId);
-                          }
-                        }}
+                        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fetchSessionForView(entry.sessionId); } }}
                         aria-pressed={isViewSelected}
                       >
                         <input
                           type="checkbox"
-                          className="mt-1 shrink-0"
+                          className="mt-0.5 shrink-0"
                           checked={isCompareSelected}
-                          onChange={(e) => {
-                            e.stopPropagation();
-                            toggleSessionSelection(entry.sessionId);
-                          }}
+                          onChange={(e) => { e.stopPropagation(); toggleSessionSelection(entry.sessionId); }}
                           onClick={(e) => e.stopPropagation()}
                           aria-label={`Select session ${entry.sessionId} for comparison`}
                         />
                         <div className="flex-1 min-w-0">
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-                            <div className="font-medium text-sm text-contrast truncate">
-                              {entry.trackName || `Track #${entry.trackId ?? "N/A"}`}
-                            </div>
-                            <div className="text-sm font-semibold text-contrast">
-                              {formatScore(entry.score)}
-                            </div>
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="font-medium text-xs text-contrast truncate">{entry.trackName || `Track #${entry.trackId ?? "N/A"}`}</span>
+                            <span className="text-xs font-semibold text-contrast shrink-0">{formatScore(entry.score)}</span>
                           </div>
-                          <div className="text-xs text-muted-foreground mt-1">
-                            Session #{entry.sessionId} • {formatDate(entry.attemptDate)} • {formatLevel(entry.detectedLevel)}
+                          <div className="text-[11px] text-muted-foreground mt-0.5">
+                            #{entry.sessionId} · {formatDate(entry.attemptDate)} · {formatLevel(entry.detectedLevel)}
                           </div>
                           {entry.aiReasoning && (
-                            <div className="text-xs text-gray-600 dark:text-gray-300 mt-2 line-clamp-2">
-                              {entry.aiReasoning}
-                            </div>
+                            <div className="text-[11px] text-muted-foreground mt-1 line-clamp-1">{entry.aiReasoning}</div>
                           )}
                         </div>
                       </div>
@@ -697,291 +800,43 @@ export const Dashboard: FC<DashboardProps> = ({
                   })}
                 </div>
               ) : (
-                <div className="rounded-xl border border-dashed border-gray-200 dark:border-border p-8 text-center">
-                  <p className="text-sm text-muted-foreground mb-4">
-                    You haven't completed any assessments yet.
-                  </p>
-                  <Button onClick={onStartAssessment}>Start Assessment</Button>
+                <div className="rounded-xl border border-dashed border-border p-6 text-center">
+                  <p className="text-xs text-muted-foreground mb-3">No assessments yet.</p>
+                  <Button size="sm" onClick={onStartAssessment}>Start Assessment</Button>
                 </div>
               )}
 
-                {/* Skill breakdown tiles - directly beneath assessment selection */}
-                {displayResult?.comprehensiveReport &&
-                  ((displayResult.comprehensiveReport.strengths?.length ?? 0) > 0 ||
-                    (displayResult.comprehensiveReport.weaknesses?.length ?? 0) > 0) && (
-                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-border">
-                    <h3 className="text-[11px] sm:text-xs font-semibold text-slate-600 dark:text-gray-400 mb-3 uppercase tracking-wider">
-                      Skill breakdown
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {displayResult.comprehensiveReport.strengths?.map((s, i) => (
-                        <div
-                          key={`s-${i}`}
-                          className="rounded-xl bg-green-900/15 dark:bg-green-900/20 border border-green-700/30 dark:border-green-800/40 p-3"
-                        >
-                          <div className="flex items-center justify-between gap-2 mb-1">
-                            <span className="font-medium text-green-700 dark:text-green-300 text-xs">{s.area}</span>
-                            <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-green-800/40 text-green-300 shrink-0">strength</span>
-                          </div>
-                          <p className="text-gray-600 dark:text-gray-400 text-[11px] whitespace-normal break-words">{s.evidence}</p>
+              {/* Skill breakdown tiles */}
+              {displayResult?.comprehensiveReport &&
+                ((displayResult.comprehensiveReport.strengths?.length ?? 0) > 0 ||
+                  (displayResult.comprehensiveReport.weaknesses?.length ?? 0) > 0) && (
+                <div className="mt-3 pt-3 border-t border-border">
+                  <h3 className="text-[10px] font-bold text-muted-foreground mb-2 uppercase tracking-wider">Skill breakdown</h3>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {displayResult.comprehensiveReport.strengths?.map((s, i) => (
+                      <div key={`s-${i}`} className="rounded-lg bg-green-900/15 border border-green-800/40 p-2">
+                        <div className="flex items-center justify-between gap-1 mb-0.5">
+                          <span className="font-medium text-green-300 text-[11px] truncate">{s.area}</span>
+                          <span className="text-[8px] px-1 py-0.5 rounded bg-green-800/40 text-green-300 shrink-0">strength</span>
                         </div>
-                      ))}
-                      {displayResult.comprehensiveReport.weaknesses?.map((w, i) => (
-                        <div
-                          key={`w-${i}`}
-                          className="rounded-xl bg-amber-900/15 dark:bg-amber-900/20 border border-amber-700/30 dark:border-amber-800/40 p-3"
-                        >
-                          <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
-                            <span className="font-medium text-amber-700 dark:text-amber-300 text-xs">{w.area}</span>
-                            <span
-                              className={`text-[9px] px-1.5 py-0.5 rounded-md shrink-0 ${
-                                w.priority === "high"
-                                  ? "bg-red-900/50 text-red-300"
-                                  : w.priority === "medium"
-                                    ? "bg-amber-900/50 text-amber-300"
-                                    : "bg-blue-900/50 text-blue-300"
-                              }`}
-                            >
-                              {w.priority}
-                            </span>
-                          </div>
-                          <p className="text-gray-600 dark:text-gray-400 text-[11px] whitespace-normal break-words mb-1">{w.evidence}</p>
-                          <p className="text-blue-600 dark:text-blue-400 text-[11px] whitespace-normal break-words">→ {w.recommendation}</p>
+                        <p className="text-muted-foreground text-[10px] line-clamp-2">{s.evidence}</p>
+                      </div>
+                    ))}
+                    {displayResult.comprehensiveReport.weaknesses?.map((w, i) => (
+                      <div key={`w-${i}`} className="rounded-lg bg-amber-900/15 border border-amber-800/40 p-2">
+                        <div className="flex items-center justify-between gap-1 mb-0.5">
+                          <span className="font-medium text-amber-300 text-[11px] truncate">{w.area}</span>
+                          <span className={`text-[8px] px-1 py-0.5 rounded shrink-0 ${w.priority === "high" ? "bg-red-900/50 text-red-300" : w.priority === "medium" ? "bg-amber-900/50 text-amber-300" : "bg-blue-900/50 text-blue-300"}`}>{w.priority}</span>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex flex-col gap-4">
-              {isLoadingViewResult ? (
-                <div className="bg-surface p-8 rounded-2xl border border-border flex flex-col items-center justify-center min-h-[280px]">
-                  <div className="h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4" />
-                  <p className="text-sm text-gray-400">Loading AI report...</p>
-                </div>
-              ) : displayResult?.comprehensiveReport ? (
-                <div className="space-y-4">
-                  <div className="bg-surface p-4 sm:p-5 rounded-2xl text-contrast shadow-lg border border-border">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
-                      <h3 className="font-display text-base sm:text-lg font-medium flex items-center gap-2">
-                        <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-blue-300 shrink-0" />
-                        Your Assessment Report
-                      </h3>
-                      <div className="flex items-center gap-2 text-xs text-gray-400">
-                        {displayResult.topic && (
-                          <span className="font-medium text-gray-300">{displayResult.topic}</span>
-                        )}
-                        {displayResult.sessionId && (
-                          <span>Session #{displayResult.sessionId}</span>
-                        )}
+                        <p className="text-muted-foreground text-[10px] line-clamp-1">{w.evidence}</p>
+                        <p className="text-blue-400 text-[10px] line-clamp-1">→ {w.recommendation}</p>
                       </div>
-                    </div>
-                    <p className="text-sm text-gray-300 mb-2 leading-relaxed">
-                      {displayResult.comprehensiveReport.executive_summary}
-                    </p>
-                    {displayResult.comprehensiveReport.overall_assessment && (
-                      <p className="text-sm text-gray-400 mb-3 leading-relaxed">
-                        {displayResult.comprehensiveReport.overall_assessment}
-                      </p>
-                    )}
-
-                    {displayResult.comprehensiveReport.dimension_breakdown?.length ? (
-                      <div className="mb-4">
-                        <h4 className="text-[11px] font-semibold text-blue-400 uppercase tracking-wide mb-2">
-                          Dimension scores
-                        </h4>
-                        <div className="flex flex-wrap gap-2">
-                          {displayResult.comprehensiveReport.dimension_breakdown.map((d, i) => (
-                            <div
-                              key={i}
-                              className="rounded-lg bg-gray-800/50 border border-gray-700/50 px-2.5 py-1.5 text-xs"
-                            >
-                              <span className="text-gray-300">{d.dimension}</span>
-                              <span className="ml-2 font-medium text-blue-300">{d.score.toFixed(0)}%</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
-                    {displayResult.comprehensiveReport.learning_priorities?.length > 0 && (
-                      <div className="mb-4">
-                        <h4 className="text-[11px] font-semibold text-blue-400 uppercase tracking-wide mb-2">
-                          Learning Priorities
-                        </h4>
-                        {(() => {
-                          const rationales = displayResult.comprehensiveReport.learning_priorities.map((p) => p.rationale);
-                          const uniqueRationales = [...new Set(rationales)];
-                          const sharedRationale = uniqueRationales.length === 1 ? uniqueRationales[0] : null;
-                          return (
-                            <>
-                              {sharedRationale && (
-                                <p className="text-gray-500 text-[11px] mb-2">{sharedRationale}</p>
-                              )}
-                              <div className="flex flex-wrap gap-2">
-                                {displayResult.comprehensiveReport.learning_priorities.map((p, i) => (
-                                  <span
-                                    key={i}
-                                    className="inline-flex items-baseline gap-1.5 rounded-lg bg-blue-900/20 border border-blue-800/40 px-2.5 py-1.5 text-xs"
-                                  >
-                                    <span className="font-medium text-blue-300">{i + 1}.</span>
-                                    <span className="text-gray-300">{p.topic}</span>
-                                    {!sharedRationale && (
-                                      <span className="text-gray-500 text-[11px]">— {p.rationale}</span>
-                                    )}
-                                  </span>
-                                ))}
-                              </div>
-                            </>
-                          );
-                        })()}
-                      </div>
-                    )}
-                    <Button
-                      onClick={() => onOpenLearningPath(displayResult?.learningPathId, displayResult?.topic ?? null)}
-                      variant="primary"
-                      className="h-11 w-full justify-between border-transparent"
-                    >
-                      Continue Learning
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
+                    ))}
                   </div>
-                </div>
-              ) : (
-                <div className="bg-surface p-4 sm:p-6 rounded-2xl text-contrast shadow-lg border border-border">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
-                    <h3 className="font-display text-base sm:text-lg font-medium flex items-center gap-2">
-                      <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-blue-300 shrink-0" />
-                      Your AI Insight
-                    </h3>
-                    {displayResult?.topic && displayResult?.sessionId && (
-                      <span className="text-xs text-gray-400">
-                        {displayResult.topic} • Session #{displayResult.sessionId}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-300 mb-4 leading-relaxed">{insightMessage}</p>
-                  <Button
-                    onClick={() => onOpenLearningPath(displayResult?.learningPathId, displayResult?.topic ?? null)}
-                    variant="primary"
-                    className="h-11 w-full justify-between border-transparent"
-                  >
-                    Continue Learning
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                  <p className="text-[11px] text-gray-400 mt-3">
-                    Opens your latest backend learning path and stage content.
-                  </p>
                 </div>
               )}
-
-              <div className="app-panel p-4 sm:p-5">
-                <h3 className="font-display text-xs sm:text-sm font-bold mb-3 text-muted-foreground uppercase tracking-wide">
-                  Progress Overview
-                </h3>
-                <div className="space-y-3 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground flex items-center gap-2">
-                      <BarChart3 className="h-4 w-4" />
-                      Evaluation Attempts
-                    </span>
-                    <span className="font-semibold text-contrast">
-                      {dashboardData?.evaluations.totalCompleted ?? 0}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground flex items-center gap-2">
-                      <Clock3 className="h-4 w-4" />
-                      Latest Assessment Date
-                    </span>
-                    <span className="font-semibold text-contrast">
-                      {formatDate(latestAssessment?.date)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4" />
-                      Selected Tracks
-                    </span>
-                    <span className="font-semibold text-contrast">
-                      {dashboardData?.tracks.totalSelected ?? 0}
-                    </span>
-                  </div>
-                </div>
-
-                {dashboardData?.skillProfile && (
-                  <div className="mt-5 pt-4 border-t border-gray-200 dark:border-border space-y-3">
-                    {dashboardData.skillProfile.strengths.length > 0 && (
-                      <div>
-                        <div className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">
-                          Strengths
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {dashboardData.skillProfile.strengths.slice(0, 3).map((item) => (
-                            <span
-                              key={item}
-                              className="text-[11px] px-2 py-1 rounded-full bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-100 dark:border-green-900/40"
-                            >
-                              {item}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {dashboardData.skillProfile.weaknesses.length > 0 && (
-                      <div>
-                        <div className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">
-                          Focus Areas
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {dashboardData.skillProfile.weaknesses.slice(0, 3).map((item) => (
-                            <span
-                              key={item}
-                              className="text-[11px] px-2 py-1 rounded-full bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-100 dark:border-red-900/40"
-                            >
-                              {item}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Suggested next step & quick stats */}
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 rounded-2xl border border-blue-200/50 dark:border-blue-800/40 p-4">
-                <h3 className="text-xs font-semibold text-blue-800 dark:text-blue-300 uppercase tracking-wide mb-3">
-                  What to do next
-                </h3>
-                {displayResult?.comprehensiveReport?.weaknesses?.length ? (
-                  <p className="text-sm text-slate-700 dark:text-gray-300 mb-2">
-                    Focus on <span className="font-medium text-blue-700 dark:text-blue-300">
-                      {displayResult.comprehensiveReport.weaknesses[0]?.area}
-                    </span> — {displayResult.comprehensiveReport.weaknesses[0]?.recommendation.slice(0, 80)}
-                    {displayResult.comprehensiveReport.weaknesses[0]?.recommendation.length > 80 ? "…" : ""}
-                  </p>
-                ) : learningCompletion < 100 && dashboardData?.learning.totalContentItems ? (
-                  <p className="text-sm text-slate-700 dark:text-gray-300 mb-2">
-                    Continue your learning path — {dashboardData.learning.completedItems} of {dashboardData.learning.totalContentItems} items completed.
-                  </p>
-                ) : totalAssessments > 0 ? (
-                  <p className="text-sm text-slate-700 dark:text-gray-300 mb-2">
-                    Take another assessment to track your improvement.
-                  </p>
-                ) : (
-                  <p className="text-sm text-slate-700 dark:text-gray-300 mb-2">
-                    Start your first assessment to get personalized insights.
-                  </p>
-                )}
-                <Button size="sm" onClick={learningCompletion < 100 ? onOpenLearningPath : onStartAssessment} className="mt-2">
-                  {learningCompletion < 100 ? "Continue Learning" : "Choose Track"}
-                </Button>
-              </div>
             </div>
-          </div>
-        </div>
+          )}
         </>
       )}
 
