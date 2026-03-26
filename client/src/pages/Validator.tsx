@@ -1,18 +1,20 @@
-import { FC, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { FC, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { UNSAFE_LocationContext, UNSAFE_NavigationContext } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import {
   AlertTriangle,
   Bot,
   CheckCircle,
+  ChevronDown,
   Clock3,
+  History,
   MessageSquare,
   Play,
   RefreshCw,
   Send,
   Sparkles,
   TrendingUp,
-  User,
+  Zap,
 } from "lucide-react";
 import { parseDecimal } from "../api/adapters/numeric";
 import { ApiHttpError } from "../api/http";
@@ -22,9 +24,18 @@ import {
   type EvaluationResultResponse,
   type EvaluationSessionResponse,
 } from "../api/services/evaluation";
+import { learningService } from "../api/services/learning";
 import { progressService, type ProgressEvaluationHistory } from "../api/services/progress";
 import { Button } from "../components/Button";
 import { WorkspaceFrame, Panel, InlineNotice, HeroBadge } from "../components/workspace";
+
+interface LearningPathOption {
+  path_id: number;
+  track_name?: string;
+  status?: string;
+}
+
+type SidebarTab = "start" | "result" | "sessions" | "progress";
 
 const MIN_DIALOGUES_TO_COMPLETE = 3;
 
@@ -90,7 +101,6 @@ export const Validator: FC = () => {
     return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
   }, [search]);
 
-  const [pathIdInput, setPathIdInput] = useState(() => (queryPathId ? String(queryPathId) : ""));
   const [draftResponse, setDraftResponse] = useState("");
 
   const [mySessions, setMySessions] = useState<EvaluationSessionResponse[]>([]);
@@ -99,6 +109,9 @@ export const Validator: FC = () => {
   const [result, setResult] = useState<EvaluationResultResponse | null>(null);
   const [evaluationHistory, setEvaluationHistory] = useState<ProgressEvaluationHistory | null>(null);
 
+  const [learningPaths, setLearningPaths] = useState<LearningPathOption[]>([]);
+  const [selectedPathId, setSelectedPathId] = useState<number | null>(queryPathId);
+
   const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -106,6 +119,13 @@ export const Validator: FC = () => {
 
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [sidebarTab, setSidebarTab] = useState<SidebarTab>("start");
+
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [dialogues]);
 
   const loadEvaluationHistory = useCallback(async () => {
     const history = await progressService.getEvaluationHistory();
@@ -163,11 +183,26 @@ export const Validator: FC = () => {
       setErrorMessage(null);
 
       try {
-        const sessions = await loadMySessions();
+        const [sessions, paths] = await Promise.all([
+          loadMySessions(),
+          learningService.getMyPaths().catch(() => [] as LearningPathOption[]),
+        ]);
         await loadEvaluationHistory();
 
         if (!isMounted) {
           return;
+        }
+
+        setLearningPaths(
+          paths.map((p: any) => ({
+            path_id: p.path_id,
+            track_name: p.track_name ?? `Path #${p.path_id}`,
+            status: p.status,
+          })),
+        );
+
+        if (paths.length > 0 && !selectedPathId) {
+          setSelectedPathId(paths[0].path_id);
         }
 
         let initialSession =
@@ -237,11 +272,11 @@ export const Validator: FC = () => {
     }
   }, [loadEvaluationHistory, loadMySessions, loadSession]);
 
-  const handleCreateSession = async () => {
-    const pathId = Number(pathIdInput);
+  const handleCreateSession = async (pathIdOverride?: number) => {
+    const pathId = pathIdOverride ?? selectedPathId;
 
-    if (!Number.isInteger(pathId) || pathId <= 0) {
-      setErrorMessage("Enter a valid track ID to start a new evaluation session.");
+    if (!pathId || !Number.isInteger(pathId) || pathId <= 0) {
+      setErrorMessage("Select a learning path to start a new evaluation session.");
       return;
     }
 
@@ -251,7 +286,6 @@ export const Validator: FC = () => {
 
     try {
       const createdSession = await evaluationService.createSession(pathId);
-      setPathIdInput("");
 
       const sessions = await loadMySessions();
       const matchingSession =
@@ -307,6 +341,7 @@ export const Validator: FC = () => {
       try {
         const completedResult = await evaluationService.complete(activeSession.evaluation_id);
         setResult(completedResult);
+        setSidebarTab("result");
       } catch (error) {
         if (
           error instanceof ApiHttpError &&
@@ -315,6 +350,7 @@ export const Validator: FC = () => {
         ) {
           const existingResult = await evaluationService.getResult(activeSession.evaluation_id);
           setResult(existingResult);
+          setSidebarTab("result");
         } else {
           throw error;
         }
@@ -364,496 +400,328 @@ export const Validator: FC = () => {
 
   if (isBootstrapping) {
     return (
-      <div className="h-[calc(100vh-140px)] flex items-center justify-center bg-gradient-to-b from-transparent via-background to-background">
+      <div className="h-[calc(100vh-124px)] flex items-center justify-center">
         <div className="text-center">
           <div className="relative inline-block">
-            <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center animate-pulse shadow-lg shadow-blue-500/25">
-              <Sparkles className="h-7 w-7 text-white" />
+            <div className="h-16 w-16 rounded-2xl bg-violet-500 flex items-center justify-center animate-pulse shadow-xl shadow-violet-500/30">
+              <Sparkles className="h-8 w-8 text-white" />
             </div>
-            <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 blur-xl animate-pulse" />
+            <div className="absolute -inset-2 rounded-3xl bg-violet-500/20 blur-2xl animate-pulse" />
           </div>
-          <p className="mt-6 text-muted-foreground font-medium">Loading evaluation workspace...</p>
-          <p className="mt-1 text-sm text-muted-foreground">Preparing your skill evaluation workspace</p>
+          <p className="mt-6 text-contrast font-semibold text-lg">Preparing workspace</p>
+          <p className="mt-1 text-sm text-muted-foreground">Loading your evaluation sessions...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex w-full min-w-0 flex-col gap-6 pb-10">
-      {/* Header */}
-      <header className="app-panel relative overflow-hidden p-6">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-blue-400/10 to-transparent dark:from-indigo-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-        <div className="relative flex flex-col sm:flex-row justify-between items-start gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200/50 dark:border-blue-800/50">
-                <Bot className="h-3 w-3" />
-                Skill Evaluation
+    <div className="flex flex-col" style={{ height: "calc(100vh - 124px)" }}>
+      {/* Compact header bar */}
+      <div className="shrink-0 flex flex-wrap items-center justify-between gap-2 mb-2">
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide bg-violet-500/15 text-violet-400 border border-violet-500/25">
+            <Zap className="h-2.5 w-2.5" />
+            Validator
+          </span>
+          {activeSession && (
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+              activeSession.status === "completed"
+                ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/25"
+                : "bg-amber-500/15 text-amber-400 border border-amber-500/25"
+            }`}>
+              {activeSession.status === "completed" ? "Completed" : "In Progress"}
+              {activeSession ? ` · #${activeSession.evaluation_id}` : ""}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {errorMessage && <span className="text-[10px] text-red-400 truncate max-w-[200px]">{errorMessage}</span>}
+          {statusMessage && <span className="text-[10px] text-blue-400">{statusMessage}</span>}
+          <Button size="sm" variant="outline" onClick={() => void handleRetryWorkspaceLoad()} disabled={Boolean(statusMessage)} className="h-7 text-xs px-2">
+            <RefreshCw className={`h-3 w-3 ${statusMessage ? "animate-spin" : ""}`} />
+          </Button>
+        </div>
+      </div>
+
+      {/* Main content: flex row that fills remaining height */}
+      <div className="flex-1 min-h-0 flex gap-3">
+        {/* ── LEFT: Chat area ── */}
+        <div className="flex-1 min-w-0 flex flex-col rounded-xl border border-border bg-card/90 shadow-sm overflow-hidden">
+          {/* Chat header */}
+          <div className="shrink-0 px-4 py-2 border-b border-border flex items-center justify-between">
+            <span className="flex items-center gap-2 text-sm font-semibold text-contrast">
+              <MessageSquare className="h-3.5 w-3.5 text-violet-400" />
+              Interview
+            </span>
+            {activeSession && (
+              <span className="text-[10px] text-muted-foreground">
+                {dialogueCount} msg{dialogueCount !== 1 ? "s" : ""}
+                {activeSession.path_id && ` · Path #${activeSession.path_id}`}
               </span>
-              {activeSession && (
-                <span
-                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    activeSession.status === "completed"
-                      ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300"
-                      : "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300"
+            )}
+          </div>
+
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-2">
+            {!activeSession && (
+              <div className="h-full flex flex-col items-center justify-center text-center">
+                <Bot className="h-10 w-10 text-violet-400/50 mb-2" />
+                <p className="text-sm text-muted-foreground">No active session. Start one from the right panel.</p>
+              </div>
+            )}
+            {activeSession && dialogues.length === 0 && (
+              <div className="h-full flex flex-col items-center justify-center text-center">
+                <Sparkles className="h-10 w-10 text-violet-400/50 mb-2 animate-pulse" />
+                <p className="text-sm text-muted-foreground">Session ready. Waiting for first question...</p>
+              </div>
+            )}
+            {dialogues.map((dialogue) => {
+              const isUser = dialogue.speaker.toLowerCase() === "user";
+              return (
+                <div key={dialogue.dialogue_id} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
+                  <div className={`max-w-[85%] rounded-xl px-3 py-1.5 ${
+                    isUser
+                      ? "bg-violet-500 text-white"
+                      : "bg-surface/80 border border-border text-contrast"
+                  }`}>
+                    <div className={`text-sm leading-relaxed prose prose-sm max-w-none ${isUser ? "text-white [&_*]:text-white" : "text-contrast"}`}>
+                      {isUser ? (
+                        <p className="whitespace-pre-wrap m-0">{dialogue.message_text}</p>
+                      ) : (
+                        <ReactMarkdown components={{
+                          p: ({ children }) => <p className="m-0 mb-1 last:mb-0">{children}</p>,
+                          strong: ({ children }) => <strong className="font-semibold text-inherit">{children}</strong>,
+                        }}>
+                          {dialogue.message_text}
+                        </ReactMarkdown>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+            <div ref={chatEndRef} />
+          </div>
+
+          {/* Input */}
+          <div className="shrink-0 border-t border-border p-3 bg-card/95">
+            <textarea
+              id="validator-reply"
+              value={draftResponse}
+              onChange={(e) => setDraftResponse(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (canRespond) void handleSendResponse(); } }}
+              placeholder={activeSession ? (activeSession.status === "completed" ? "Evaluation completed. Start a new session." : "Type your response...") : "Start a session first"}
+              disabled={!canRespond}
+              rows={2}
+              className="w-full p-2.5 text-sm rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-violet-500/50 disabled:opacity-50 bg-surface border border-border text-contrast placeholder-muted"
+            />
+            <div className="flex items-center justify-between mt-2">
+              <div className="text-[10px] text-muted-foreground">
+                {activeSession && activeSession.status !== "completed" ? (
+                  remainingDialogues > 0
+                    ? <span>{remainingDialogues} more before completion</span>
+                    : <span className="text-emerald-400 font-semibold">Ready to complete</span>
+                ) : activeSession?.status === "completed" ? <span>Completed</span> : null}
+              </div>
+              <div className="flex gap-1.5">
+                <Button variant="outline" size="sm" onClick={() => setDraftResponse("")} disabled={!draftResponse} className="h-7 text-xs px-2">Clear</Button>
+                <Button size="sm" onClick={handleSendResponse} disabled={!canRespond || !draftResponse.trim()} isLoading={isSending} className="h-7 text-xs px-3">
+                  <Send className="h-3 w-3 mr-1" /> Send
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── RIGHT: Tabbed sidebar ── */}
+        <div className="shrink-0 w-[280px] min-h-0 flex flex-col rounded-xl border border-border bg-card/90 shadow-sm overflow-hidden">
+          {/* Tab bar */}
+          <div className="shrink-0 flex border-b border-border">
+            {([
+              { key: "start" as SidebarTab, label: "Start", icon: Zap },
+              { key: "result" as SidebarTab, label: "Result", icon: CheckCircle },
+              { key: "sessions" as SidebarTab, label: "Sessions", icon: History },
+              { key: "progress" as SidebarTab, label: "Progress", icon: TrendingUp },
+            ]).map((tab) => {
+              const Icon = tab.icon;
+              const isActive = sidebarTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setSidebarTab(tab.key)}
+                  className={`flex-1 flex items-center justify-center gap-1 px-1 py-2 text-[10px] font-bold uppercase tracking-wide transition-colors ${
+                    isActive
+                      ? "text-violet-400 border-b-2 border-violet-500 bg-violet-500/5"
+                      : "text-muted-foreground hover:text-contrast hover:bg-surface/50 border-b-2 border-transparent"
                   }`}
                 >
-                  {activeSession.status}
-                </span>
-              )}
-            </div>
-            <h1 className="font-display text-2xl sm:text-3xl font-bold text-contrast tracking-tight">
-              Skill Evaluation
-            </h1>
-            <p className="mt-1 text-muted-foreground text-sm">
-              AI interviewer with full context — your track, assessment, and learning journey.
-            </p>
+                  <Icon className="h-3 w-3" />
+                  {tab.label}
+                </button>
+              );
+            })}
           </div>
-          <div className="flex items-center gap-3">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => void handleRetryWorkspaceLoad()}
-              disabled={Boolean(statusMessage)}
-              className="shrink-0"
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${statusMessage ? "animate-spin" : ""}`} />
-              Refresh
-            </Button>
-            <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
-              <Clock3 className="h-4 w-4" />
-              <span>
-                {activeSession
-                  ? `Session #${activeSession.evaluation_id}`
-                  : "No active session"}
-              </span>
-            </div>
-          </div>
-        </div>
-      </header>
 
-      {/* Error */}
-      {errorMessage && (
-        <InlineNotice tone="error" action={<Button size="sm" variant="ghost" onClick={() => void handleRetryWorkspaceLoad()}>Retry</Button>}>
-          {errorMessage}
-        </InlineNotice>
-      )}
-
-      {/* Status */}
-      {statusMessage && (
-        <InlineNotice tone="info">
-          {statusMessage}
-        </InlineNotice>
-      )}
-
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)] xl:items-start">
-        {/* Main chat area */}
-        <div className="flex min-h-0 min-w-0 flex-col gap-4">
-          <div className="app-panel flex min-h-0 flex-col overflow-hidden xl:min-h-[min(85vh,calc(100vh-10rem))]">
-            {/* Chat header */}
-            <div
-              className="px-6 py-4 border-b border-border flex items-center justify-between bg-surface"
-            >
-              <span className="flex items-center gap-2 font-medium text-contrast">
-                <MessageSquare className="h-4 w-4 text-blue-500" />
-                Interview Session
-              </span>
-              {activeSession && (
-                <span className="text-xs text-muted-foreground">
-                  {dialogueCount} message{dialogueCount !== 1 ? "s" : ""}
-                  {activeSession.path_id && ` · Path #${activeSession.path_id}`}
-                </span>
-              )}
-            </div>
-
-            {/* Messages — scrollable; min height so input stays usable */}
-            <div className="min-h-[min(280px,45vh)] flex-1 overflow-y-auto p-6 space-y-5 [scrollbar-gutter:stable]">
-              {!activeSession && (
-                <div className="h-full min-h-[280px] flex flex-col items-center justify-center text-center">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center mb-4">
-                    <Bot className="h-8 w-8 text-blue-500" />
-                  </div>
-                  <p className="text-muted-foreground font-medium">No active session</p>
-                  <p className="mt-1 text-sm text-muted-foreground max-w-xs">
-                    Select a track and create a session to begin.
-                  </p>
-                </div>
-              )}
-
-              {activeSession && dialogues.length === 0 && (
-                <div className="h-full min-h-[280px] flex flex-col items-center justify-center text-center">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center mb-4 animate-pulse">
-                    <Sparkles className="h-8 w-8 text-blue-500" />
-                  </div>
-                  <p className="text-muted-foreground font-medium">Session ready</p>
-                  <p className="mt-1 text-sm text-muted-foreground max-w-xs">
-                    The AI interviewer will send the first message. Check back shortly.
-                  </p>
-                </div>
-              )}
-
-              {dialogues.map((dialogue, idx) => {
-                const isUser = dialogue.speaker.toLowerCase() === "user";
-                return (
-                  <div
-                    key={dialogue.dialogue_id}
-                    className={`flex gap-3 ${isUser ? "flex-row-reverse" : ""}`}
-                    style={{ animationDelay: `${idx * 50}ms` }}
-                  >
-                    <div
-                      className={`shrink-0 w-9 h-9 rounded-xl flex items-center justify-center ${
-                        isUser
-                          ? "bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md shadow-blue-500/25"
-                          : "bg-surface border border-border text-muted-foreground"
-                      }`}
-                    >
-                      {isUser ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
-                    </div>
-                    <div
-                      className={`max-w-[85%] rounded-2xl px-4 py-3 ${
-                        isUser
-                          ? "bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md shadow-blue-500/20"
-                          : "bg-surface border border-border text-contrast"
-                      }`}
-                    >
-                      <div
-                        className={`text-[11px] font-medium uppercase tracking-wider mb-1.5 ${
-                          isUser ? "text-blue-100" : "text-muted-foreground"
-                        }`}
-                      >
-                        {isUser ? "You" : "AI Interviewer"}
+          {/* Tab content */}
+          <div className="flex-1 overflow-y-auto p-3">
+            {/* Start tab */}
+            {sidebarTab === "start" && (
+              <>
+                {learningPaths.length > 0 ? (
+                  <div className="space-y-2">
+                    <p className="text-[11px] text-muted-foreground">Select a learning path and begin a new evaluation interview.</p>
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <select
+                          value={selectedPathId ?? ""}
+                          onChange={(e) => setSelectedPathId(e.target.value ? Number(e.target.value) : null)}
+                          className="w-full appearance-none border border-border rounded-lg px-2 py-1.5 pr-7 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500/50 bg-surface text-contrast cursor-pointer"
+                        >
+                          {learningPaths.map((lp) => (
+                            <option key={lp.path_id} value={lp.path_id}>{lp.track_name || `Path #${lp.path_id}`}</option>
+                          ))}
+                        </select>
+                        <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground pointer-events-none" />
                       </div>
-                      <div
-                        className={`text-sm leading-relaxed prose prose-sm max-w-none ${
-                          isUser
-                            ? "text-white [&_*]:text-white"
-                            : "text-contrast"
-                        }`}
-                      >
-                        {isUser ? (
-                          <p className="whitespace-pre-wrap m-0">{dialogue.message_text}</p>
-                        ) : (
-                          <ReactMarkdown
-                            components={{
-                              p: ({ children }) => <p className="m-0 mb-2 last:mb-0">{children}</p>,
-                              strong: ({ children }) => (
-                                <strong className="font-semibold text-inherit">{children}</strong>
-                              ),
-                            }}
+                      <Button size="sm" onClick={() => void handleCreateSession()} isLoading={isCreatingSession} disabled={isCreatingSession || !selectedPathId} className="h-7 text-xs px-3 shrink-0">
+                        <Play className="h-3 w-3 mr-1" /> Go
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-muted-foreground">No learning paths found. Complete an assessment first.</p>
+                )}
+              </>
+            )}
+
+            {/* Result tab */}
+            {sidebarTab === "result" && (
+              <div className="space-y-2">
+                {result ? (
+                  <>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      <div className="rounded-lg p-2 bg-blue-500/8 border border-blue-500/15 text-center">
+                        <div className="text-[8px] font-bold uppercase tracking-wider text-blue-400">Reason</div>
+                        <div className="font-bold text-contrast text-sm">{formatScore(result.reasoning_score)}</div>
+                      </div>
+                      <div className="rounded-lg p-2 bg-fuchsia-500/8 border border-fuchsia-500/15 text-center">
+                        <div className="text-[8px] font-bold uppercase tracking-wider text-fuchsia-400">Problem</div>
+                        <div className="font-bold text-contrast text-sm">{formatScore(result.problem_solving)}</div>
+                      </div>
+                      <div className="rounded-lg p-2 bg-emerald-500/8 border border-emerald-500/15 text-center">
+                        <div className="text-[8px] font-bold uppercase tracking-wider text-emerald-400">Ready</div>
+                        <div className={`font-bold text-xs uppercase ${readinessColor(result.readiness_level)}`}>{result.readiness_level.replace(/_/g, " ")}</div>
+                      </div>
+                    </div>
+                    <div className="text-[11px] text-muted-foreground leading-relaxed line-clamp-3 bg-surface/50 rounded-lg p-2 border border-border">
+                      {result.final_feedback}
+                    </div>
+                    <div className="flex gap-1.5">
+                      <Button variant="secondary" size="sm" onClick={() => goTo(`/evaluation/${activeSession!.evaluation_id}`)} className="flex-1 h-7 text-[10px]">
+                        <MessageSquare className="h-3 w-3 mr-1" /> Report
+                      </Button>
+                      {activeSession?.path_id && (
+                        <Button variant="outline" size="sm" onClick={() => goTo(`/improvement/${activeSession!.path_id}`)} className="flex-1 h-7 text-[10px]">
+                          <TrendingUp className="h-3 w-3 mr-1" /> Analysis
+                        </Button>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-[11px] text-muted-foreground">
+                    {activeSession?.status === "in_progress" ? "Complete the interview to see your result." : "Select or start a session first."}
+                  </p>
+                )}
+                <Button onClick={handleCompleteEvaluation} isLoading={isCompleting} disabled={!canComplete} className="w-full h-7 text-xs">
+                  Complete Evaluation
+                </Button>
+              </div>
+            )}
+
+            {/* Sessions tab */}
+            {sidebarTab === "sessions" && (
+              <div className="space-y-1.5">
+                <div className="text-[10px] text-muted-foreground">{sessionsPreview.length} session{sessionsPreview.length !== 1 ? "s" : ""}</div>
+                {sessionsPreview.length === 0 ? (
+                  <p className="text-[11px] text-muted-foreground">No sessions yet. Start one from the Start tab.</p>
+                ) : (
+                  sessionsPreview.map((session) => (
+                    <button
+                      key={session.evaluation_id}
+                      onClick={() => void loadSession(session.evaluation_id, session)}
+                      className={`w-full text-left rounded-lg px-2.5 py-1.5 text-xs transition-all ${
+                        activeSession?.evaluation_id === session.evaluation_id
+                          ? "bg-violet-500/15 border border-violet-500/30"
+                          : "bg-surface/50 border border-transparent hover:bg-surface hover:border-border"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-contrast">#{session.evaluation_id}</span>
+                        <span className={`text-[9px] font-bold uppercase ${session.status === "completed" ? "text-emerald-400" : "text-blue-400"}`}>
+                          {session.status === "completed" ? "Done" : "Active"}
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">Path #{session.path_id} · {formatDateTime(session.started_at)}</div>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* Progress tab */}
+            {sidebarTab === "progress" && (
+              <>
+                {!evaluationHistory ? (
+                  <Button size="sm" variant="outline" onClick={() => void handleRetryWorkspaceLoad()} className="h-7 text-xs">Retry</Button>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex gap-1.5">
+                      <div className="flex-1 rounded-lg p-2 bg-violet-500/8 border border-violet-500/15 text-center">
+                        <div className="text-[8px] font-bold uppercase text-violet-400">Done</div>
+                        <div className="text-lg font-bold text-contrast">{evaluationHistory.totalEvaluations}</div>
+                      </div>
+                      {evaluationHistory.progression && (
+                        <div className="flex-1 rounded-lg p-2 bg-emerald-500/8 border border-emerald-500/15">
+                          <div className="text-[8px] font-bold uppercase text-emerald-400">Improve</div>
+                          <div className="text-[10px] text-emerald-300 font-medium mt-0.5">
+                            R +{formatScore(evaluationHistory.progression.improvement.reasoningImprovement)}
+                          </div>
+                          <div className="text-[10px] text-emerald-300 font-medium">
+                            PS +{formatScore(evaluationHistory.progression.improvement.problemSolvingImprovement)}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    {historyPreview.length > 0 && (
+                      <div className="space-y-1">
+                        {historyPreview.slice(0, 5).map((item) => (
+                          <button
+                            key={item.evaluationId}
+                            type="button"
+                            onClick={() => void loadSession(item.evaluationId)}
+                            className={`w-full text-left rounded-lg px-2.5 py-1.5 text-xs transition-colors ${
+                              activeSession?.evaluation_id === item.evaluationId
+                                ? "bg-violet-500/15 border border-violet-500/30"
+                                : "bg-surface/50 border border-transparent hover:bg-surface hover:border-border"
+                            }`}
                           >
-                            {dialogue.message_text}
-                          </ReactMarkdown>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Input area — always visible at bottom */}
-            <div
-              className="flex-shrink-0 border-t border-border p-4 bg-surface"
-            >
-              <label htmlFor="validator-reply" className="block text-sm font-medium text-contrast mb-2">
-                Your answer
-              </label>
-              <textarea
-                id="validator-reply"
-                value={draftResponse}
-                onChange={(e) => setDraftResponse(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    if (canRespond) {
-                      void handleSendResponse();
-                    }
-                  }
-                }}
-                placeholder={
-                  activeSession
-                    ? activeSession.status === "completed"
-                      ? "This evaluation is completed. Start a new session to continue."
-                      : "Type your response to the AI interviewer..."
-                    : "Start a session to begin your evaluation"
-                }
-                disabled={!canRespond}
-                className="w-full min-h-[100px] p-4 text-sm rounded-xl resize-none transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 bg-surface border border-border text-contrast placeholder-muted"
-              />
-              <div className="flex flex-wrap items-center gap-3 justify-between mt-3">
-                <div className="text-xs text-muted-foreground">
-                  {activeSession && activeSession.status !== "completed" ? (
-                    remainingDialogues > 0 ? (
-                      <span>
-                        {remainingDialogues} more message{remainingDialogues === 1 ? "" : "s"} before completion
-                      </span>
-                    ) : (
-                      <span className="text-emerald-600 dark:text-emerald-400 font-medium">
-                        Ready to complete evaluation
-                      </span>
-                    )
-                  ) : activeSession?.status === "completed" ? (
-                    <span>Responses are saved to your session</span>
-                  ) : null}
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setDraftResponse("")}
-                    disabled={draftResponse.length === 0}
-                  >
-                    Clear
-                  </Button>
-                  <Button
-                    onClick={handleSendResponse}
-                    disabled={!canRespond || draftResponse.trim().length === 0}
-                    isLoading={isSending}
-                  >
-                    <Send className="h-4 w-4 mr-2" />
-                    Send
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Sidebar */}
-        <div className="flex min-h-0 min-w-0 flex-col gap-4">
-          {/* Start session */}
-          <div
-            className="app-panel p-5"
-          >
-            <h2 className="font-semibold text-contrast mb-1">Start New Session</h2>
-            <p className="text-xs text-muted-foreground mb-3">
-              Enter your learning track ID to begin an evaluation.
-            </p>
-            <input
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              value={pathIdInput}
-              onChange={(e) => setPathIdInput(e.target.value.replace(/\D/g, ""))}
-              placeholder="Enter your track name or ID"
-              className="w-full border border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3 bg-surface text-contrast placeholder-muted"
-            />
-            <Button
-              type="button"
-              onClick={handleCreateSession}
-              isLoading={isCreatingSession}
-              disabled={isCreatingSession || !pathIdInput.trim()}
-              className="w-full"
-            >
-              <Play className="h-4 w-4 mr-2" />
-              Create Session
-            </Button>
-          </div>
-
-          {/* Result */}
-          <div
-            className="app-panel p-5"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <h2 className="font-semibold text-contrast">Evaluation Result</h2>
-                {activeSession && (
-                  <p className="text-[11px] text-muted-foreground mt-0.5">
-                    {activeSession.status === "completed"
-                      ? `Session #${activeSession.evaluation_id} · Path #${activeSession.path_id ?? "—"}`
-                      : "Complete the interview to see your result"}
-                  </p>
-                )}
-              </div>
-              {activeSession?.status === "completed" ? (
-                <CheckCircle className="h-5 w-5 text-emerald-500 shrink-0" />
-              ) : (
-                <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0" />
-              )}
-            </div>
-
-            {result ? (
-              <div className="space-y-3 text-sm">
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-xl p-3 bg-surface border border-border">
-                    <div className="text-xs text-muted-foreground">Reasoning</div>
-                    <div className="font-bold text-contrast text-lg">{formatScore(result.reasoning_score)}</div>
-                  </div>
-                  <div className="rounded-xl p-3 bg-surface border border-border">
-                    <div className="text-xs text-muted-foreground">Problem Solving</div>
-                    <div className="font-bold text-contrast text-lg">{formatScore(result.problem_solving)}</div>
-                  </div>
-                </div>
-                <div className="rounded-xl p-3 bg-surface border border-border">
-                  <div className="text-xs text-muted-foreground">Readiness</div>
-                  <div className={`font-bold uppercase ${readinessColor(result.readiness_level)}`}>
-                    {result.readiness_level.replace(/_/g, " ")}
-                  </div>
-                </div>
-                <div className="prose prose-sm max-h-[min(60vh,640px)] max-w-none overflow-y-auto rounded-xl bg-surface p-3 text-muted-foreground [scrollbar-gutter:stable]">
-                  <ReactMarkdown>{result.final_feedback}</ReactMarkdown>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-2 py-2">
-                <p className="text-sm text-muted-foreground">
-                  {activeSession?.status === "in_progress"
-                    ? "Complete the interview and click \"Complete Evaluation\" to see your result."
-                    : "Select a completed session from \"My Sessions\" or \"Progress\" below to view your past evaluation results."}
-                </p>
-              </div>
-            )}
-
-            <Button
-              onClick={handleCompleteEvaluation}
-              isLoading={isCompleting}
-              disabled={!canComplete}
-              className="w-full mt-3"
-            >
-              Complete Evaluation
-            </Button>
-            {result && activeSession && (
-              <div className="flex flex-col gap-2 mt-3">
-                <Button
-                  variant="secondary"
-                  onClick={() => goTo(`/evaluation/${activeSession.evaluation_id}`)}
-                  className="w-full"
-                >
-                  <MessageSquare className="h-4 w-4 mr-2" />
-                  View Full Report
-                </Button>
-                {activeSession.path_id && (
-                  <Button
-                    variant="outline"
-                    onClick={() => goTo(`/improvement/${activeSession.path_id}`)}
-                    className="w-full"
-                  >
-                    <TrendingUp className="h-4 w-4 mr-2" />
-                    View Progress Analysis
-                  </Button>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Sessions list */}
-          <div className="app-panel flex max-h-[min(45vh,420px)] flex-col overflow-hidden p-5 md:max-h-[min(50vh,480px)]">
-            <h2 className="font-semibold text-contrast mb-1">My Sessions</h2>
-            <p className="text-[11px] text-muted-foreground mb-3">Click a completed session to view result</p>
-            <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1 [scrollbar-gutter:stable]">
-              {sessionsPreview.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No sessions yet. Create one to get started.</p>
-              ) : (
-                sessionsPreview.map((session) => (
-                  <button
-                    key={session.evaluation_id}
-                    onClick={() => void loadSession(session.evaluation_id, session)}
-                    className={`w-full text-left rounded-xl px-3 py-2.5 text-sm transition-all ${
-                      activeSession?.evaluation_id === session.evaluation_id
-                        ? "bg-blue-500/15 dark:bg-blue-500/20 border border-blue-500/40 text-blue-700 dark:text-blue-300"
-                        : "border border-border hover:bg-surface hover:border-border"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium">#{session.evaluation_id}</span>
-                      <span
-                        className={`text-xs font-medium uppercase ${
-                          session.status === "completed"
-                            ? "text-emerald-600 dark:text-emerald-400"
-                            : "text-blue-600 dark:text-blue-400"
-                        }`}
-                      >
-                        {session.status}
-                      </span>
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-0.5">
-                      Path #{session.path_id} · {formatDateTime(session.started_at)}
-                    </div>
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* History */}
-          <div className="app-panel flex max-h-[min(45vh,420px)] flex-col overflow-hidden p-5 md:max-h-[min(50vh,480px)]">
-            <h2 className="font-semibold text-contrast mb-3 flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-blue-500" />
-              Progress
-            </h2>
-            {!evaluationHistory ? (
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">History unavailable.</p>
-                <Button size="sm" variant="outline" onClick={() => void handleRetryWorkspaceLoad()}>
-                  Retry
-                </Button>
-              </div>
-            ) : (
-              <div className="min-h-0 flex-1 space-y-3 overflow-y-auto text-sm [scrollbar-gutter:stable]">
-                <div className="rounded-xl p-3 bg-surface border border-border">
-                  <div className="text-xs text-muted-foreground">Completed</div>
-                  <div className="text-xl font-bold text-contrast">{evaluationHistory.totalEvaluations}</div>
-                </div>
-
-                {evaluationHistory.progression && (
-                  <div
-                    className="rounded-xl p-3 space-y-1 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/40"
-                  >
-                    <div className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">Improvement</div>
-                    <div className="text-xs text-emerald-600 dark:text-emerald-300">
-                      Reasoning +{formatScore(evaluationHistory.progression.improvement.reasoningImprovement)}
-                    </div>
-                    <div className="text-xs text-emerald-600 dark:text-emerald-300">
-                      Problem Solving +
-                      {formatScore(evaluationHistory.progression.improvement.problemSolvingImprovement)}
-                    </div>
-                    {evaluationHistory.progression.improvement.readinessProgression && (
-                      <div className="text-xs text-emerald-600 dark:text-emerald-300">
-                        {evaluationHistory.progression.improvement.readinessProgression}
+                            <div className="flex items-center justify-between">
+                              <span className="font-semibold text-contrast">#{item.evaluationId}</span>
+                              <span className={`text-[9px] font-bold uppercase ${readinessColor(item.readinessLevel ?? "")}`}>
+                                {item.readinessLevel?.replace(/_/g, " ") ?? "-"}
+                              </span>
+                            </div>
+                            <div className="text-[10px] text-muted-foreground">
+                              {item.trackName || "Unknown"} · R {formatScore(item.reasoningScore)} · PS {formatScore(item.problemSolvingScore)}
+                            </div>
+                          </button>
+                        ))}
                       </div>
                     )}
                   </div>
                 )}
-
-                <div className="space-y-2">
-                  <p className="text-[11px] text-muted-foreground">
-                    Click a past evaluation to view full result →
-                  </p>
-                  {historyPreview.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No completed evaluations yet.</p>
-                  ) : (
-                    historyPreview.map((item) => (
-                      <button
-                        key={item.evaluationId}
-                        type="button"
-                        onClick={() => void loadSession(item.evaluationId)}
-                        className={`w-full text-left rounded-xl px-3 py-2.5 transition-colors ${
-                          activeSession?.evaluation_id === item.evaluationId
-                            ? "bg-blue-500/15 dark:bg-blue-500/20 border border-blue-500/40"
-                            : "bg-surface border border-border hover:bg-surface hover:border-border"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium">#{item.evaluationId}</span>
-                          <span className={`text-xs font-medium uppercase ${readinessColor(item.readinessLevel ?? "")}`}>
-                            {item.readinessLevel ?? "-"}
-                          </span>
-                        </div>
-                        <div className="text-xs text-muted-foreground">{item.trackName || "Unknown"}</div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          R {formatScore(item.reasoningScore)} · PS {formatScore(item.problemSolvingScore)}
-                        </div>
-                        {item.finalFeedback && (
-                          <p className="text-[11px] text-muted-foreground mt-1.5 line-clamp-2">
-                            {item.finalFeedback}
-                          </p>
-                        )}
-                      </button>
-                    ))
-                  )}
-                </div>
-              </div>
+              </>
             )}
           </div>
         </div>
