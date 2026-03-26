@@ -380,7 +380,7 @@ export const Validator: FC = () => {
   }
 
   return (
-    <div className="h-auto lg:h-[calc(100vh-140px)] flex flex-col gap-6 pb-20 lg:pb-0">
+    <div className="flex w-full min-w-0 flex-col gap-6 pb-10">
       {/* Header */}
       <header className="app-panel relative overflow-hidden p-6">
         <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-blue-400/10 to-transparent dark:from-indigo-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
@@ -447,12 +447,10 @@ export const Validator: FC = () => {
         </InlineNotice>
       )}
 
-      <div className="flex-1 grid grid-cols-1 xl:grid-cols-3 gap-6 min-h-0">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)] xl:items-start">
         {/* Main chat area */}
-        <div className="xl:col-span-2 flex flex-col gap-4 min-h-0">
-          <div
-            className="app-panel flex-1 flex flex-col min-h-0 overflow-hidden"
-          >
+        <div className="flex min-h-0 min-w-0 flex-col gap-4">
+          <div className="app-panel flex min-h-0 flex-col overflow-hidden xl:min-h-[min(85vh,calc(100vh-10rem))]">
             {/* Chat header */}
             <div
               className="px-6 py-4 border-b border-border flex items-center justify-between bg-surface"
@@ -469,8 +467,8 @@ export const Validator: FC = () => {
               )}
             </div>
 
-            {/* Messages — scrollable so input stays visible */}
-            <div className="flex-1 min-h-[200px] max-h-[min(50vh,420px)] p-6 overflow-y-auto space-y-5">
+            {/* Messages — scrollable; min height so input stays usable */}
+            <div className="min-h-[min(280px,45vh)] flex-1 overflow-y-auto p-6 space-y-5 [scrollbar-gutter:stable]">
               {!activeSession && (
                 <div className="h-full min-h-[280px] flex flex-col items-center justify-center text-center">
                   <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center mb-4">
@@ -623,7 +621,7 @@ export const Validator: FC = () => {
         </div>
 
         {/* Sidebar */}
-        <div className="flex flex-col gap-4 min-h-0">
+        <div className="flex min-h-0 min-w-0 flex-col gap-4">
           {/* Start session */}
           <div
             className="app-panel p-5"
@@ -693,8 +691,7 @@ export const Validator: FC = () => {
                     {result.readiness_level.replace(/_/g, " ")}
                   </div>
                 </div>
-                <div className="prose prose-sm max-w-none rounded-xl p-3 bg-surface text-muted-foreground">
-
+                <div className="prose prose-sm max-h-[min(60vh,640px)] max-w-none overflow-y-auto rounded-xl bg-surface p-3 text-muted-foreground [scrollbar-gutter:stable]">
                   <ReactMarkdown>{result.final_feedback}</ReactMarkdown>
                 </div>
               </div>
@@ -741,12 +738,10 @@ export const Validator: FC = () => {
           </div>
 
           {/* Sessions list */}
-          <div
-            className="app-panel p-5 flex-1 min-h-0 overflow-hidden flex flex-col"
-          >
+          <div className="app-panel flex max-h-[min(45vh,420px)] flex-col overflow-hidden p-5 md:max-h-[min(50vh,480px)]">
             <h2 className="font-semibold text-contrast mb-1">My Sessions</h2>
             <p className="text-[11px] text-muted-foreground mb-3">Click a completed session to view result</p>
-            <div className="space-y-2 overflow-y-auto flex-1 min-h-0 pr-1">
+            <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1 [scrollbar-gutter:stable]">
               {sessionsPreview.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No sessions yet. Create one to get started.</p>
               ) : (
@@ -782,9 +777,7 @@ export const Validator: FC = () => {
           </div>
 
           {/* History */}
-          <div
-            className="app-panel p-5 flex-1 min-h-0 overflow-hidden flex flex-col"
-          >
+          <div className="app-panel flex max-h-[min(45vh,420px)] flex-col overflow-hidden p-5 md:max-h-[min(50vh,480px)]">
             <h2 className="font-semibold text-contrast mb-3 flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-blue-500" />
               Progress
@@ -797,7 +790,7 @@ export const Validator: FC = () => {
                 </Button>
               </div>
             ) : (
-              <div className="space-y-3 text-sm flex-1 min-h-0 overflow-y-auto">
+              <div className="min-h-0 flex-1 space-y-3 overflow-y-auto text-sm [scrollbar-gutter:stable]">
                 <div className="rounded-xl p-3 bg-surface border border-border">
                   <div className="text-xs text-muted-foreground">Completed</div>
                   <div className="text-xl font-bold text-contrast">{evaluationHistory.totalEvaluations}</div>

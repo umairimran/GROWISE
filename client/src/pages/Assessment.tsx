@@ -369,7 +369,7 @@ export const Assessment: FC<AssessmentProps> = ({ onComplete, onExit }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background pt-20">
+      <div className="min-h-screen bg-background pt-16">
         <div className="page-shell py-10">
           <Panel className="p-10 text-center">
             <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
@@ -385,7 +385,7 @@ export const Assessment: FC<AssessmentProps> = ({ onComplete, onExit }) => {
 
   if (!currentQuestion) {
     return (
-      <div className="min-h-screen bg-background pt-20">
+      <div className="min-h-screen bg-background pt-16">
         <div className="page-shell py-10">
           <Panel className="p-10 text-center">
             <AlertCircle className="mx-auto h-10 w-10 text-danger" />
@@ -409,155 +409,148 @@ export const Assessment: FC<AssessmentProps> = ({ onComplete, onExit }) => {
   }
 
   return (
-    <div className="min-h-screen bg-background pt-20">
-      <div className="page-shell py-6 sm:py-8">
-        <div className="grid gap-6 xl:grid-cols-[0.34fr,0.66fr]">
-          <div className="space-y-6">
-            <Panel className="p-6 sm:sticky sm:top-24">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <StatusPill tone="accent">Assessment live</StatusPill>
-                  <h1 className="mt-4 font-display text-3xl font-semibold text-contrast">
-                    {track?.track_name || `Track #${session?.track_id ?? ""}`}
-                  </h1>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                    Stay focused. Each answer is submitted directly to the assessment session.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowExitModal(true)}
-                  className="inline-flex items-center gap-2 rounded-full border border-border bg-surface/75 px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-contrast"
-                >
-                  <LogOut className="h-4 w-4" />
-                  Exit
-                </button>
-              </div>
-
-              <div className="mt-6 rounded-[24px] border border-border bg-surface/70 p-4">
-                <div className="flex items-center justify-between">
-                  <div className="metric-label">Time remaining</div>
-                  <div className="inline-flex items-center gap-2 text-lg font-semibold text-contrast">
-                    <Clock3 className="h-4 w-4 text-primary" />
-                    {formatTime(timeLeft)}
-                  </div>
-                </div>
-                <div className="mt-4 h-2 overflow-hidden rounded-full bg-contrast/8">
-                  <div
-                    className="h-full rounded-full bg-primary transition-all duration-300"
-                    style={{ width: `${progressValue}%` }}
-                  />
-                </div>
-                <div className="mt-3 flex items-center justify-between text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                  <span>
-                    Question {currentQuestionIndex + 1} / {questions.length}
-                  </span>
-                  <span>{Math.round(progressValue)}%</span>
-                </div>
-              </div>
-
-              <div className="mt-6 space-y-3">
-                <StatusPill tone={difficultyTone(currentQuestion.difficulty)}>
-                  Difficulty: {currentQuestion.difficulty}
-                </StatusPill>
-                <StatusPill tone="neutral">Type: {currentQuestion.question_type}</StatusPill>
-                <StatusPill tone="neutral">
-                  {questions.length - currentQuestionIndex - 1} questions after this
-                </StatusPill>
-              </div>
-
-              <div className="mt-6 rounded-[24px] border border-border bg-surface/55 p-4">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="h-4 w-4 text-primary" />
-                  <div className="font-semibold text-contrast">Answering guidance</div>
-                </div>
-                <ul className="mt-3 space-y-2 text-sm leading-6 text-muted-foreground">
-                  <li>Answer directly and keep your reasoning tight.</li>
-                  <li>Multiple-choice submissions advance immediately.</li>
-                  <li>Free-text answers should be specific enough to evaluate.</li>
-                </ul>
-              </div>
-            </Panel>
+    <div className="flex min-h-screen flex-col bg-background pt-16">
+      {/* Sticky strip: fixed under app header (h-16) — timer + guidance only */}
+      <div className="sticky top-16 z-40 border-b border-border bg-background/95 shadow-sm backdrop-blur-md">
+        <div className="page-shell py-4 sm:py-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between lg:gap-6">
+            <div className="min-w-0 flex-1">
+              <StatusPill tone="accent">Assessment live</StatusPill>
+              <h1 className="mt-2 font-display text-xl font-semibold tracking-tight text-contrast sm:text-2xl">
+                {track?.track_name || `Track #${session?.track_id ?? ""}`}
+              </h1>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground sm:text-sm sm:leading-6">
+                Stay focused. Each answer is submitted directly to the assessment session.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowExitModal(true)}
+              className="inline-flex shrink-0 items-center gap-2 self-start rounded-full border border-border bg-surface/75 px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-contrast lg:self-center"
+            >
+              <LogOut className="h-4 w-4" />
+              Exit
+            </button>
           </div>
 
-          <div className="space-y-6">
-            {errorMessage && (
-              <div className="status-banner" data-tone="error">
-                <AlertCircle className="mt-0.5 h-4 w-4 text-danger" />
-                <span className="text-sm leading-6 text-contrast">{errorMessage}</span>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => void loadSessionData()}
-                  disabled={isSubmittingAnswer || Boolean(statusMessage)}
-                >
-                  Retry
-                </Button>
-              </div>
-            )}
-
-            <Panel className="p-6 sm:p-8">
-              <div className="flex flex-wrap items-center gap-2">
-                <StatusPill tone="accent">Question {currentQuestionIndex + 1}</StatusPill>
-                <StatusPill tone={difficultyTone(currentQuestion.difficulty)}>
-                  {currentQuestion.difficulty}
-                </StatusPill>
-                <StatusPill tone="neutral">{currentQuestion.question_type}</StatusPill>
-              </div>
-
-              <div className="mt-6">
-                <div className="markdown-content text-lg sm:text-xl">
-                  <ReactMarkdown>{parsedQuestion.prompt}</ReactMarkdown>
+          <div className="mt-4 grid gap-4 lg:grid-cols-2 lg:gap-5">
+            <div className="rounded-2xl border border-border bg-surface/80 p-4 shadow-sm">
+              <div className="flex items-center justify-between gap-3">
+                <div className="metric-label">Time remaining</div>
+                <div className="inline-flex items-center gap-2 text-lg font-semibold tabular-nums text-contrast">
+                  <Clock3 className="h-4 w-4 shrink-0 text-primary" />
+                  {formatTime(timeLeft)}
                 </div>
               </div>
-
-              <div className="mt-8">
-                {isMcqWithOptions ? (
-                  <div className="space-y-3">
-                    {parsedQuestion.options.map((option, index) => (
-                      <button
-                        key={`${currentQuestion.question_id}-${index}`}
-                        type="button"
-                        onClick={() => void submitCurrentAnswer(option)}
-                        disabled={statusMessage !== null || isSubmittingAnswer}
-                        className="group flex w-full items-start gap-4 rounded-[24px] border border-border bg-surface/70 px-4 py-4 text-left transition-all hover:border-primary/25 hover:bg-surface disabled:cursor-not-allowed disabled:opacity-60 sm:px-5"
-                      >
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-sm font-semibold text-primary transition-colors group-hover:bg-primary group-hover:text-white">
-                          {String.fromCharCode(65 + index)}
-                        </div>
-                        <div className="pt-1 text-base leading-7 text-contrast">{option}</div>
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <label htmlFor="assessment-answer" className="field-label">
-                      Your answer
-                    </label>
-                    <textarea
-                      id="assessment-answer"
-                      className="field-textarea min-h-[220px]"
-                      placeholder="Write your response..."
-                      value={freeTextAnswer}
-                      onChange={(event) => setFreeTextAnswer(event.target.value)}
-                      disabled={statusMessage !== null || isSubmittingAnswer}
-                    />
-                    <div className="flex justify-end">
-                      <Button
-                        onClick={() => void submitCurrentAnswer(freeTextAnswer)}
-                        disabled={!freeTextAnswer.trim() || statusMessage !== null || isSubmittingAnswer}
-                        size="lg"
-                      >
-                        Submit answer
-                        <ArrowRight className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
+              <div className="mt-4 h-2 overflow-hidden rounded-full bg-contrast/8">
+                <div
+                  className="h-full rounded-full bg-primary transition-all duration-300"
+                  style={{ width: `${progressValue}%` }}
+                />
               </div>
-            </Panel>
+              <div className="mt-3 flex items-center justify-between text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                <span>
+                  Question {currentQuestionIndex + 1} / {questions.length}
+                </span>
+                <span>{Math.round(progressValue)}%</span>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-surface/70 p-4 shadow-sm">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 shrink-0 text-primary" />
+                <div className="font-semibold text-contrast">Answering guidance</div>
+              </div>
+              <ul className="mt-3 list-disc space-y-1.5 pl-4 text-sm leading-relaxed text-muted-foreground">
+                <li>Answer directly and keep your reasoning tight.</li>
+                <li>Multiple-choice submissions advance immediately.</li>
+                <li>Free-text answers should be specific enough to evaluate.</li>
+              </ul>
+            </div>
           </div>
         </div>
+      </div>
+
+      {/* Question + answer — separate scrollable region */}
+      <div className="page-shell flex min-w-0 flex-1 flex-col gap-6 py-6 sm:py-8">
+        {errorMessage && (
+          <div className="status-banner shrink-0" data-tone="error">
+            <AlertCircle className="mt-0.5 h-4 w-4 text-danger" />
+            <span className="text-sm leading-6 text-contrast">{errorMessage}</span>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => void loadSessionData()}
+              disabled={isSubmittingAnswer || Boolean(statusMessage)}
+            >
+              Retry
+            </Button>
+          </div>
+        )}
+
+        <Panel className="relative z-0 min-w-0 p-6 sm:p-8">
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusPill tone="accent">Question {currentQuestionIndex + 1}</StatusPill>
+            <StatusPill tone={difficultyTone(currentQuestion.difficulty)}>
+              {currentQuestion.difficulty}
+            </StatusPill>
+            <StatusPill tone="neutral">{currentQuestion.question_type}</StatusPill>
+            <StatusPill tone="neutral">
+              {questions.length - currentQuestionIndex - 1} questions after this
+            </StatusPill>
+          </div>
+
+          <div className="mt-6">
+            <div className="markdown-content text-lg sm:text-xl">
+              <ReactMarkdown>{parsedQuestion.prompt}</ReactMarkdown>
+            </div>
+          </div>
+
+          <div className="mt-8">
+            {isMcqWithOptions ? (
+              <div className="space-y-3">
+                {parsedQuestion.options.map((option, index) => (
+                  <button
+                    key={`${currentQuestion.question_id}-${index}`}
+                    type="button"
+                    onClick={() => void submitCurrentAnswer(option)}
+                    disabled={statusMessage !== null || isSubmittingAnswer}
+                    className="group flex w-full items-start gap-4 rounded-[24px] border border-border bg-surface/70 px-4 py-4 text-left transition-all hover:border-primary/25 hover:bg-surface disabled:cursor-not-allowed disabled:opacity-60 sm:px-5"
+                  >
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-sm font-semibold text-primary transition-colors group-hover:bg-primary group-hover:text-white">
+                      {String.fromCharCode(65 + index)}
+                    </div>
+                    <div className="pt-1 text-base leading-7 text-contrast">{option}</div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <label htmlFor="assessment-answer" className="field-label">
+                  Your answer
+                </label>
+                <textarea
+                  id="assessment-answer"
+                  className="field-textarea min-h-[220px]"
+                  placeholder="Write your response..."
+                  value={freeTextAnswer}
+                  onChange={(event) => setFreeTextAnswer(event.target.value)}
+                  disabled={statusMessage !== null || isSubmittingAnswer}
+                />
+                <div className="flex justify-end">
+                  <Button
+                    onClick={() => void submitCurrentAnswer(freeTextAnswer)}
+                    disabled={!freeTextAnswer.trim() || statusMessage !== null || isSubmittingAnswer}
+                    size="lg"
+                  >
+                    Submit answer
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </Panel>
       </div>
 
       {statusMessage && (

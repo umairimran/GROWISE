@@ -485,14 +485,14 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
 
       {isReportModalOpen && pathReport && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          className="fixed inset-0 top-16 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md"
           onClick={() => setIsReportModalOpen(false)}
         >
           <Panel
-            className="shadow-xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col"
+            className="max-h-[85vh] w-full max-w-2xl !bg-background flex flex-col overflow-hidden border border-border shadow-2xl ring-1 ring-black/10 dark:!bg-zinc-950 dark:ring-white/10"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+            <div className="flex shrink-0 items-center justify-between border-b border-border bg-background px-5 py-4 dark:bg-zinc-950">
               <h2 className="font-display text-lg font-semibold text-contrast">
                 Path Completion Report
               </h2>
@@ -504,12 +504,12 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-              <div className="prose prose-sm dark:prose-invert max-w-none">
+            <div className="flex-1 space-y-4 overflow-y-auto bg-background px-5 py-4 dark:bg-zinc-950">
+              <div className="prose prose-sm max-w-none dark:prose-invert">
                 <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
                   Learning Summary
                 </h3>
-                <div className="mt-2 text-slate-700 dark:text-gray-300 whitespace-pre-wrap">
+                <div className="mt-2 whitespace-pre-wrap text-slate-700 dark:text-gray-200">
                   {pathReport.learningSummary}
                 </div>
               </div>

@@ -839,11 +839,11 @@ export const Dashboard: FC<DashboardProps> = ({
                     )}
                     <Button
                       onClick={() => onOpenLearningPath(displayResult?.learningPathId, displayResult?.topic ?? null)}
-                      variant="secondary"
-                      className="w-full justify-between bg-white text-slate-900 hover:bg-gray-100 border-none h-11 dark:bg-blue-600 dark:text-white dark:hover:bg-blue-500"
+                      variant="primary"
+                      className="h-11 w-full justify-between border-transparent"
                     >
                       Continue Learning
-                      <ArrowRight className="h-4 w-4 ml-2" />
+                      <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </div>
                 </div>
@@ -863,11 +863,11 @@ export const Dashboard: FC<DashboardProps> = ({
                   <p className="text-sm text-gray-300 mb-4 leading-relaxed">{insightMessage}</p>
                   <Button
                     onClick={() => onOpenLearningPath(displayResult?.learningPathId, displayResult?.topic ?? null)}
-                    variant="secondary"
-                    className="w-full justify-between bg-white text-slate-900 hover:bg-gray-100 border-none h-11 dark:bg-blue-600 dark:text-white dark:hover:bg-blue-500"
+                    variant="primary"
+                    className="h-11 w-full justify-between border-transparent"
                   >
                     Continue Learning
-                    <ArrowRight className="h-4 w-4 ml-2" />
+                    <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                   <p className="text-[11px] text-gray-400 mt-3">
                     Opens your latest backend learning path and stage content.
