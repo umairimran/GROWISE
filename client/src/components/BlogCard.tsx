@@ -60,7 +60,7 @@ export const BlogCard: FC<BlogCardProps> = ({ post, index }) => {
         
         {/* Loading shimmer if no image yet (optional visual hint) */}
         {!post.imageUrl && (
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12 translate-x-[-100%] animate-shimmer" />
+            <div className="absolute inset-0 bg-white/5 skew-x-12 translate-x-[-100%] animate-shimmer" />
         )}
       </div>
 
