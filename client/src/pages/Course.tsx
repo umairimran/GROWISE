@@ -1,4 +1,4 @@
-import { FC, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FC, FormEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import {
@@ -123,6 +123,8 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
   const [courseTab, setCourseTab] = useState<"stages" | "content" | "info">("stages");
 
   const chatMessagesContainerRef = useRef<HTMLDivElement | null>(null);
+  const courseSidebarScrollRef = useRef<HTMLDivElement | null>(null);
+  const pendingSidebarScrollRestore = useRef<number | null>(null);
   const activeStage = useMemo(
     () => stages.find((stage) => stage.stage_id === activeStageId) ?? null,
     [activeStageId, stages],
@@ -150,6 +152,18 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
   useEffect(() => {
     scrollChatToBottom();
   }, [messages, scrollChatToBottom]);
+
+  useLayoutEffect(() => {
+    const pending = pendingSidebarScrollRestore.current;
+    if (pending === null) {
+      return;
+    }
+    const el = courseSidebarScrollRef.current;
+    if (el) {
+      el.scrollTop = pending;
+    }
+    pendingSidebarScrollRestore.current = null;
+  }, [contentItems]);
 
   const loadPathProgress = useCallback(async (pathId: number) => {
     try {
@@ -282,13 +296,18 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
 
     try {
       const currentScrollY = window.scrollY;
+      const sidebarScrollTop = courseSidebarScrollRef.current?.scrollTop ?? 0;
       await action();
+      // Set before loadStageExperience so when React commits the new contentItems,
+      // useLayoutEffect already has the scroll position to restore (avoids a race with loadPathProgress).
+      pendingSidebarScrollRestore.current = sidebarScrollTop;
       await loadStageExperience(activeStageId);
       if (path?.path_id) {
         await loadPathProgress(path.path_id);
       }
       window.scrollTo({ top: currentScrollY });
     } catch (error) {
+      pendingSidebarScrollRestore.current = null;
       setErrorMessage(toErrorMessage(error, "Content action failed."));
     } finally {
       setActiveContentActionKey(null);
@@ -619,7 +638,7 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
           </div>
 
           {/* Tab content */}
-          <div className="flex-1 overflow-y-auto p-3">
+          <div ref={courseSidebarScrollRef} className="flex-1 overflow-y-auto p-3">
             {/* Stages tab */}
             {courseTab === "stages" && (
               <div className="space-y-3">

@@ -12,6 +12,7 @@ Used for:
 
 import json
 import os
+import re
 from typing import Any, Dict, List, Optional
 
 from dotenv import load_dotenv
@@ -19,6 +20,24 @@ from dotenv import load_dotenv
 load_dotenv()
 
 USE_MOCK_AI: bool = os.getenv("USE_MOCK_AI", "true").lower() == "true"
+
+# LLMs sometimes emit instructional placeholders; strip them from interviewer text.
+_PLACEHOLDER_SNIPPETS = (
+    "[candidate name]",
+    "[name]",
+    "[your name]",
+    "[their name]",
+)
+
+
+def _sanitize_interviewer_text(text: str) -> str:
+    """Remove bracket placeholders and tidy spacing so greetings read naturally (e.g. 'Hi,')."""
+    t = (text or "").strip()
+    for snippet in _PLACEHOLDER_SNIPPETS:
+        t = re.sub(re.escape(snippet), "", t, flags=re.IGNORECASE)
+    t = re.sub(r"\s{2,}", " ", t)
+    t = re.sub(r"Hi\s*,\s*", "Hi, ", t, count=1, flags=re.IGNORECASE)
+    return t.strip()
 
 
 def _build_context_block(full_context: Dict[str, Any]) -> str:
@@ -121,6 +140,7 @@ _INTRO_SYSTEM = """You are a senior engineer conducting a real technical intervi
 You have complete context: their track, every assessment question they answered (with scores and evaluator notes), their weak areas, the exact content they studied (titles, descriptions), and learning stages.
 
 CRITICAL RULES:
+- Start with a simple greeting: "Hi," or "Hello," — never use placeholders like [Candidate Name], [Name], or any bracketed name. Never invent a name for them.
 - Sound like a real person. Vary sentence length. Use natural transitions. No bullet points or lists in your speech.
 - NEVER ask generic questions like "Tell me about X" or "How would you apply your learning?"
 - Ask ONE concrete, scenario-based question. Example: "Imagine you're building [specific thing from their track] and [specific problem]. Walk me through how you'd approach it."
@@ -133,9 +153,10 @@ _INTRO_USER_TEMPLATE = """=== FULL CANDIDATE CONTEXT (use this to craft your fir
 
 === YOUR TASK ===
 Write a short, human opening (2–3 paragraphs) that:
-1. Greets them naturally and briefly mentions you've reviewed their assessment and learning path.
-2. Sets the tone: this is a conversation, not a quiz. You'll ask scenario-based questions. Expect 12–18 back-and-forth exchanges.
-3. Asks your FIRST question — a concrete scenario. It MUST:
+1. Greets them with "Hi," or "Hello," only — no names, no placeholders like [Candidate Name].
+2. Briefly mentions you've reviewed their assessment and learning path.
+3. Sets the tone: this is a conversation, not a quiz. You'll ask scenario-based questions. Expect 12–18 back-and-forth exchanges.
+4. Asks your FIRST question — a concrete scenario. It MUST:
    - Be specific to their track and to content they actually studied (use titles from CONTENT CONSUMED)
    - Pose a realistic situation: "Imagine you're...", "Suppose a client asks you to...", "You're debugging X when Y happens..."
    - Target a weak area from their assessment if possible, or test practical application of something they learned
@@ -171,9 +192,10 @@ async def generate_evaluation_intro(context: Dict[str, Any]) -> str:
 
     try:
         raw = await provider.chat_complete(messages, temperature=0.5, timeout=60.0)
-        return raw.strip() if raw and len(raw.strip()) > 50 else _mock_intro(context)
+        out = raw.strip() if raw and len(raw.strip()) > 50 else _mock_intro(context)
+        return _sanitize_interviewer_text(out)
     except Exception:
-        return _mock_intro(context)
+        return _sanitize_interviewer_text(_mock_intro(context))
 
 
 def _mock_intro(context: Dict) -> str:
@@ -270,9 +292,10 @@ async def generate_evaluation_followup(
 
     try:
         raw = await provider.chat_complete(messages, temperature=0.4, timeout=45.0)
-        return raw.strip() if raw and len(raw.strip()) > 20 else _mock_followup(dialogue_history)
+        out = raw.strip() if raw and len(raw.strip()) > 20 else _mock_followup(dialogue_history)
+        return _sanitize_interviewer_text(out)
     except Exception:
-        return _mock_followup(dialogue_history)
+        return _sanitize_interviewer_text(_mock_followup(dialogue_history))
 
 
 def _mock_followup(dialogue_history: List[Dict]) -> str:
