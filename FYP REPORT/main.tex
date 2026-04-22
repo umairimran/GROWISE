@@ -1920,7 +1920,7 @@ It monitors progress, speed and problem areas. Massive alterations cause path up
 Path is displayed as interactive map on front end where the nodes represent modules and display the status. It has used percent, time remaining and milestones. Position, links, and module details are displayed to the users.
 
 \subsection{RAG Implementation for Integrated Learning Sources Context}
-The Retrieval-Augmented Generation (RAG) system is developed on the lines of the smart system that retrieves learning materials to form a knowledge base rich in context. This allows the AI mentor to offer precise and useful guidance in terms of well-selected educational content. This was constructed in a stepwise fashion that manages materials, constructs semantic embeddings, and mining out pertinent content intelligently.
+The Retrieval-Augmented Generation (RAG) system is developed on the lines of the smart system that retrieves learning materials to form a knowledge base rich in context. This was constructed in a stepwise fashion that manages materials, constructs semantic embeddings, and mining out pertinent content intelligently.
 It begins with content importation, during which we collect information such as documentation, tutorials, code snippets, explanations and documentation and prepare it. The back end contains uploading file, picking type and linking to modules administrative tool. It works with PDF, markdown, text and JSON.
 The processing is a breaking down of docs into meaningful pieces. We cut smartly, but we still keep structure structured such as paragraphs, headers, code, sentences, etc. as opposed to cutting by size.
 Every work is converted to embeddings with the models of OpenAI such as text-embedding-ada-002 to obtain vectors that encode the meaning. This facilitates the process of locating the related concepts, not only the identical words.
@@ -2299,9 +2299,9 @@ Before accessing GrowWise, ensure the following are in place:
 Open your web browser and navigate to the GrowWise application URL. You will be presented with the Home page. From here you can:
 
 \begin{itemize}
-    \item Click \textbf{Take Free Assessment} or \textbf{Get Started} to begin. This will take you to the Sign Up page if you do not have an account.
-    \item Click \textbf{Go to Dashboard} if you are already logged in.
-    \item Click \textbf{Blog} in the footer to read platform articles.
+    \item you can click on \textbf{Take Free Assessment} or \textbf{Get Started} button for start using the system. if you dont have account yet then it will takes you to the Sign Up page.
+    \item if you already login before then just click \textbf{Go to Dashboard} and it will go to your dashboard directly.
+    \item there is also a \textbf{Blog} option in the footer area, you can click it for reading the articles that is available on this platform.
 \end{itemize}
 
 \section{Sign Up}
@@ -2309,18 +2309,18 @@ Open your web browser and navigate to the GrowWise application URL. You will be 
 To create a new GrowWise account, follow these steps:
 
 \begin{enumerate}
-    \item From the Home page, click \textbf{Take Free Assessment} or navigate directly to \texttt{/signup}.
-    \item The Sign Up page will load with the heading \textit{Join Grow Wise}.
-    \item Fill in the following fields:
+    \item first go to the Home page and click \textbf{Take Free Assessment} button, or you can also go directly to \texttt{/signup} page.
+    \item after that the Sign Up page will open and you will see a heading that says \textit{Join Grow Wise}.
+    \item now you have to fill all the fields that is given there:
         \begin{itemize}
-            \item \textbf{Full Name}: your complete name.
-            \item \textbf{Email}: a valid email address (used for login and password reset).
-            \item \textbf{Password}: minimum 8 characters.
+            \item \textbf{Full Name}: write your full name here.
+            \item \textbf{Email}: put a valid email address because it will use for login and also for reset password.
+            \item \textbf{Password}: it must be atleast 8 characters long.
         \end{itemize}
-    \item Tick the \textbf{Terms and Conditions} checkbox. The \textbf{Create Account} button will remain disabled until this box is checked.
-    \item Click \textbf{Create Account}. The button will show a loading state while the request is processed.
-    \item On success, you will be automatically logged in and redirected to the Home page. A toast notification will appear: \textit{"Account ready, \{your name\}"}.
-    \item If automatic login fails after registration, a success screen will appear with a \textbf{Proceed to Login} button. Click it to log in manually.
+    \item you also have to tick the \textbf{Terms and Conditions} checkbox otherwise the \textbf{Create Account} button will not become active, it stay disable until you check that box.
+    \item then click \textbf{Create Account} button. it will showing a loading for some time while it processing your request.
+    \item if everything is ok then it will automatic login you and take you back to Home page. also a small toast message will come like \textit{"Account ready, \{your name\}"}.
+    \item but if the automatic login not working after register, then a success screen will appear and there will be a \textbf{Proceed to Login} button, you can click it for login manually.
 \end{enumerate}
 
 \section{Login}
@@ -2539,71 +2539,71 @@ The AI Evaluation module, accessible via \textbf{Real-World Validator} in the le
 
 \subsection{Conducting the AI Interview}
 \begin{enumerate}
-    \item The AI Mentor opens with an introductory question displayed in the chat window (left side).
-    \item Read the question carefully, then type your response in the \textbf{Your answer} text area.
-    \item Press \textbf{Enter} or click \textbf{Send} to submit your response (use Shift+Enter for a new line without submitting).
-    \item The AI will analyse your answer and ask follow-up questions to probe your understanding further.
-    \item Continue answering. You must complete at least \textbf{3 dialogue turns} before you can end the evaluation.
-    \item A hint at the bottom of the chat reminds you of the minimum dialogue requirement.
+    \item when you open the AI Mentor it will show you a first question in the chat window that is on the left side.
+    \item read that question properly and then write your answer in the \textbf{Your answer} text area below.
+    \item after writing press \textbf{Enter} or click the \textbf{Send} button to send your answer. if you want to go new line without sending then use Shift+Enter for that.
+    \item the AI will then look at your answer and ask more questions to check that how much you really understand the topic.
+    \item you have to keep answering. but remember you must do atleast \textbf{3 dialogue turns} before you allowed to end the evaluation.
+    \item there is also a small hint showing at bottom of the chat that remind you about this minimum requirement.
 \end{enumerate}
 
 \subsection{Completing the Evaluation}
 \begin{enumerate}
-    \item Once you have completed at least 3 dialogue turns, the \textbf{Complete Evaluation} button (in the right sidebar under \textbf{Evaluation Result}) becomes active.
-    \item Click \textbf{Complete Evaluation}. The AI will analyse your full conversation and generate a scored report.
-    \item The evaluation result panel will display:
+    \item after you finish atleast 3 dialogue turns, the \textbf{Complete Evaluation} button that is in right sidebar under \textbf{Evaluation Result} section will now become clickable.
+    \item click \textbf{Complete Evaluation} and then the AI will look at your whole conversation and make a scored report for you.
+    \item the evaluation result panel will then showing you these things:
         \begin{itemize}
-            \item \textbf{Reasoning score}: how logically you approached problems.
-            \item \textbf{Problem-solving score}: quality of your solutions.
-            \item \textbf{Job readiness level}: overall readiness rating.
-            \item \textbf{AI feedback}: written narrative of your performance.
+            \item \textbf{Reasoning score}: this show how logically you was solving the problems.
+            \item \textbf{Problem-solving score}: it show the quality of your solutions that you gave.
+            \item \textbf{Job readiness level}: this is like overall rating of how much you are ready for job.
+            \item \textbf{AI feedback}: a written feedback about how you performed in the interview.
         \end{itemize}
-    \item Click \textbf{View Full Report} to open the full Evaluation Report page.
-    \item Click \textbf{View Progress Analysis} to navigate to the Improvement Analysis page.
+    \item click \textbf{View Full Report} if you want to open the full Evaluation Report page.
+    \item click \textbf{View Progress Analysis} to go to the Improvement Analysis page.
 \end{enumerate}
 
 \section{Evaluation Report}
 
-The Evaluation Report page (\texttt{/evaluation/\{id\}}) displays the complete results of a specific evaluation session.
+The Evaluation Report page (\texttt{/evaluation/\{id\}}) is where you can see all the complete results of your evaluation session.
 
 \begin{enumerate}
-    \item The page loads automatically after evaluation completion, or you can access it via \textbf{View Full Report} from the Validator.
-    \item The report shows:
+    \item this page will open automatically when evaluation is done, or you can also open it by clicking \textbf{View Full Report} from the Validator page.
+    \item the report will showing you these informations:
         \begin{itemize}
-            \item Session and path identifiers, and the date of evaluation.
-            \item \textbf{Reasoning}, \textbf{Problem Solving}, and \textbf{Readiness} metric scores.
-            \item \textbf{AI Feedback}: a detailed written evaluation of your performance.
-            \item \textbf{Full Conversation}: the complete transcript of your AI interview session.
+            \item the session and path id, and also the date when you did the evaluation.
+            \item the scores for \textbf{Reasoning}, \textbf{Problem Solving}, and \textbf{Readiness} metrics.
+            \item \textbf{AI Feedback}: a detailed written feedback about your overall performance.
+            \item \textbf{Full Conversation}: you can see the complete conversation that you had with the AI during interview.
         \end{itemize}
-    \item Click \textbf{Back to Validator} to return to the Validator page.
-    \item Click \textbf{View Progress Analysis} to see your full improvement journey.
+    \item click \textbf{Back to Validator} if you want to go back to the Validator page.
+    \item click \textbf{View Progress Analysis} to see your full improvement journey that you made.
 \end{enumerate}
 
 \section{Improvement Analysis}
 
-The Improvement Analysis page (\texttt{/improvement/\{pathId\}}) shows a comprehensive before-and-after comparison of your skills across the entire learning journey.
+The Improvement Analysis page (\texttt{/improvement/\{pathId\}}) is where you can see a full comparison of your skills from before and after the whole learning journey.
 
 \begin{enumerate}
-    \item Access it via \textbf{Progress Analysis} on the Dashboard, the Completion Banner on the Learning Path, or the Validator page.
-    \item The page loads your full progress data. It displays:
+    \item you can access this page from \textbf{Progress Analysis} on the Dashboard, or from the Completion Banner on Learning Path, or also from the Validator page.
+    \item when this page load it will show your full progress data with many things like:
         \begin{itemize}
-            \item An \textbf{AI evaluation summary} banner at the top.
-            \item A \textbf{metrics grid} showing key performance numbers.
-            \item \textbf{Charts} (before vs after comparison graphs).
-            \item A \textbf{story timeline} of your learning journey.
-            \item \textbf{Before} and \textbf{After} skill columns: scores, levels, and optionally expandable initial assessment answers (\textbf{Show/Hide} toggle).
-            \item \textbf{Improvement percentage} in the middle column where applicable.
-            \item A \textbf{Detailed Progress Analysis} written report (AI-generated).
-            \item \textbf{Full Interview Transcript}: click the \textbf{Show} button to expand the complete evaluation conversation.
+            \item a \textbf{AI evaluation summary} banner at the top of the page.
+            \item a \textbf{metrics grid} that showing the important performance numbers.
+            \item some \textbf{Charts} that show before and after comparison graphs.
+            \item a \textbf{story timeline} that show your whole learning journey.
+            \item \textbf{Before} and \textbf{After} skill columns with scores and levels, and you can also expand the initial assessment answers by using the \textbf{Show/Hide} toggle.
+            \item \textbf{Improvement percentage} is shown in the middle column where it is applicable.
+            \item a \textbf{Detailed Progress Analysis} written report that is generated by AI.
+            \item \textbf{Full Interview Transcript}: you can click the \textbf{Show} button to see the complete evaluation conversation.
         \end{itemize}
-    \item At the bottom:
+    \item at the bottom of the page there is two buttons:
         \begin{itemize}
-            \item Click \textbf{Back to Learning Path} to return to \texttt{/course}.
-            \item Click \textbf{Start New Evaluation} to navigate to \texttt{/validator} and run another interview.
+            \item click \textbf{Back to Learning Path} to go back to \texttt{/course} page.
+            \item click \textbf{Start New Evaluation} to go to \texttt{/validator} and do another interview.
         \end{itemize}
 \end{enumerate}
 
-As shown in Figures \ref{fig:insights} and \ref{fig:insight2}, the insights dashboard provides a rich visual view of your learning progress.
+As we can see in Figures \ref{fig:insights} and \ref{fig:insight2}, the insights dashboard is giving a good visual view of your learning progress.
 
 \section{Account and Security Settings}
 
@@ -2669,7 +2669,7 @@ This chapter provided a complete walkthrough of the GrowWise platform. A new use
 
 \chapter{Conclusions}
 \section{Project Summary and Achievements}
-The final project is the construction of GrowWise, an AI-enhanced adaptive learning platform, which seals huge gaps in the way developers learn. It struck the overall target of creating a personalized system centered on approaches, and passing the outdated fixed courses to deliver vibrant, conscious education tailored to each individual. In examining fifteen other platforms we identified such weaknesses as lack of real-time checks on structure, minimal emphasis on problem solving, and complete AI mentoring. The fix consists of Next.js, FastAPI, PostgreSQL, and AI API as the tools of a scalable and simple to maintain platform that develops skills and thought processes.
+so basically in this final project we builded GrowWise which is a AI based adaptive learning platform and we think it is solving many problems that developers are facing when they try to learn new things. the main goal of this project was to make a personalized system that can give proper learning to each person individually instead of just giving same old fixed courses to everyone. when we was looking at around fifteen other platforms we found many problems in them like they dont have proper real time checking, they also dont focus much on problem solving, and there is no proper AI mentoring at all. so to fix all these things we used Next.js, FastAPI, PostgreSQL, and AI API together to build a platform that is scalable and also easy to maintain and it help people to improve their skills and thinking.
 \section{Key Findings and Results}
 The review demonstrated that others excel in areas such as projects (freeCodeCamp, Udacity), adaptive tests (Pluralsight, DataCamp), and AI (CYPHER Learning), but none of them combine it in the way GrowWise does. The arrangement closes the gaps with on-the-fly routes, real-time assistance with AI through RAG pulls, and complete abilities and logic examination. The modular construction allows parting work and tests, and the additions and amendments are not difficult. The complete documentation containing diagrams, interactions and plans provide proper building and rollout.
 \section{Project Scope Coverage and Objectives Achievement}
@@ -2677,18 +2677,18 @@ We went through it all and achieved all objectives. The design manages users, pa
 \section{Challenges Faced and Limitations}
 We hit some hurdles. Combining AI services and maintaining speed required special consideration and adjustments. Responsive design and backups were required to make it work well on devices and networks. The dynamic nature of AI content required powerful error corrections. Constant adjustments were balancing between deep checks and speed. There are limitations such as the use of external AI, which might compromise the uptime and speed. It has gone web based and thus not much on mobile enthusiasts. Besides, its effectiveness is determined by the quality of materials and knowledge base.
 \section{Long-term Recommendations}
-In more detail, the following ideas can be noted:
+there is also some ideas that we think can be done in future to make this platform even more better:
 \begin{itemize}
-\item Mobile Application Development: Add iOS and Android applications to access it and have fun even better.
-\item Advanced AI Capabilities: Have finer AI run code checks, structure reviews, and custom tips that are oriented at learning the language.
-\item Community Features: Have peer reviews, forums and projects that are undertaken in groups.
-\item Industry Integration: Collaborate with companies in actual projects and mentoring.
-\item Advanced Analytics: Develop insights using predictions, gap forecasts, and general measures to keep improving.
-\item Multi-language Support: Support additional languages and structures to access additional developers.
-\item Enterprise Features: Custom paths and make team tools and tracking for companies and schools.
+\item Mobile Application Development: it will be very good if we can add iOS and Android app so that peoples can use it on their phone easily anytime.
+\item Advanced AI Capabilities: the AI can be make more smarter so it can do code checking, structure review, and also give custom tips based on what language the user is learning.
+\item Community Features: we can also add things like peer review, forums, and group projects so that users can learn together with each other.
+\item Industry Integration: it would be nice if we can do collaboration with real companies so users can get actual project experience and mentoring from industry peoples.
+\item Advanced Analytics: we can improve the analytics more by adding prediction features, gap forecasting, and other useful measures to help users keep improving.
+\item Multi-language Support: if we add support for more programming languages and frameworks then more developers from different background can also use this platform.
+\item Enterprise Features: for companies and schools we can make custom learning paths and also add team tools and tracking features for them.
 \end{itemize}
 \section{Final Remarks}
-GrowWise will contribute significantly to the developer education, sealing discontinuities with novel AI and emphasis on methods. The concrete construction and build strategy prepares a platform-altering platform that accommodates dynamically evolving technology. It demonstrates the ability of AI personal learning technology to transform technological learning, providing a scalable solution to students, institutions, and enterprises. The FYP-2 plan continues the momentum on a complete platform that improves the developer skills in the modern world.
+we believe that GrowWise will be very helpful for developers who wants to learn and improve their self. it is fixing many gaps that was existing before by using AI in a smart way and focusing on proper learning methods. the way we designed and builded this platform, we think it can handle the changes that keep happening in technology world. it also show that how AI can really change the way people learn technical things, and it can be useful for students, institutions, and also for companies. the FYP-2 plan will continue from here and we will work to make the platform more complete so it can help more developers to improve their skills in todays world.
 
 % ---------- References ----------
 \renewcommand{\bibname}{References}
