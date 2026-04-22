@@ -1173,14 +1173,14 @@ This section shows the graphical interface of GrowWise. Each figure walks throug
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.9\textwidth]{Figures/Choose Path.png}
-    \caption{Track selection screen where users choose their learning path.}
+    \caption{Track selection screen where users can choose their learning path.}
     \label{fig:choose_path}
 \end{figure}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.9\textwidth]{Figures/skill assesment.png}
-    \caption{Skill assessment page for evaluating users’ technical and problem-solving abilities.}
+    \caption{Skill assessment page for evaluating the user's technical and problem-solving abilities.}
     \label{fig:skill_assessment}
 \end{figure}
 
@@ -1582,124 +1582,124 @@ This chapter tell high level and low level design of our project.
 
 \section{System Overview}
 
-GrowWise is smart AI learning app that make study personal for developer. It check learner skill now, make special path for them, and give smart help with Agentic RAG teacher inside. The system care about teach how to think and do real project to make good problem solving skill.
+GrowWise is intelligent AI learning application, which personalize the study to the developer. It inspect learner skill now, make special way to them and give smart assistance with Agentic RAG teacher inside. System care about teach that teaches how to think and do real project to make good problem solving skill.
 
 \subsection{Learning Management and Modules}
 
-GrowWise put content in small interactive lesson call learning node. Got clear goal, example and real task to do. User go step by step on AI make roadmap. Got check if you ready before next and auto track how you do.
+GrowWise inserted content in small interactive lesson call learning node. Had explicit goal, example and actual task. AI make roadmap step by step user go. Check in on your preparedness before the next and auto monitor your performance.
 
 \subsection{Personalized Learning Paths}
 
-AI planner look your first test and what track you pick. Then make special roadmap only for you. When you study it change path auto from how fast you learn, what you good at and what need more time. So you not study same thing again or jump to too hard too quick.
+AI planner look your initial test and track that you choose. Make special roadmap, then, with you. When you practice change path and not how quickly you can learn, what you can do and what you require longer to learn. But you not study same, again or jump to too hard too quick.
 
 \subsection{Agentic RAG Mentor (Context-Aware Assistance)}
 
-You got smart AI teacher inside app. It find best resource for your lesson now and give easy explain right when you need. You ask anything it answer question, give clear tip and show helpful thing that match what you do now and what you did before.
+You have intelligent AI teacher within app. It locate best resource to your lesson now and explain easy give when you need to. You inquire anything it respond question, provide explicit tip and display helpful thing that correspond to what you presently do and what you did in the past.
 
 \subsection{Assessment and AI Software Engineer Evaluation}
 
-You do quiz, small task and real project challenge. One fake AI engineer check your work same like senior boss. It look your choice, good bad thing and code quality. Then give clear feedback with idea how to better.
+You do quiz, small task and actual project challenge. Check your work like senior boss with one fake AI engineer. It examine your decision, good bad thing and code quality. Then provide feedback with idea how to improve.
 
 \subsection{Progress Insights and Feedback}
 
-Your own dashboard show how you do: how fast you go, what you good at and what still bad. This help you work on weak part, tell next step and make your plan fit you perfect.
+Your personal dashboard displays your performance: How quick you are, what you good at and what still bad. This assist you practice on weak part, say what to do next and make your plan work you.
 
 \subsection{High-Level Technology View}
 
-App build with new clean tool: Next.js for nice front look, FastAPI for quick back end, special AI part with LLM and RAG, and PostgreSQL from Supabase for save all thing. All service in Docker box and run on AWS server. Got good login and power control for safe.
+Make new clean tool app: Next.js to look nice on the front, FastAPI to look fast on the back end, special AI part with LLM and RAG, and PostgreSQL to save everything, Supabase. Every service is deployed in Docker box and run on AWS server. Safe and sound, got good login and power control.
 \section{Design Considerations}
 
-This part talk about main assume, limit and rule that make GrowWise design choice.
+In this section, main assume, limit and rule that make GrowWise design choice are discussed.
 
 \subsection{Assumptions and Dependencies}
 
 \paragraph{Related software and hardware}
 
 \begin{itemize}
-  \item AI service: We depend on good LLM API like OpenAI or Gemini and embedding for RAG. Got normal speed and use limit.
-  \item Data layer: PostgreSQL from Supabase with vector add for search. Plus place for file and picture.
-  \item Hosting: AWS VPS Linux x86-64 with Docker box. No GPU now but maybe later local think.
-  \item Client: New browser like Chrome Firefox Safari with JavaScript on.
+  \item AI service: The system relies on external LLM APIs such as OpenAI or Gemini, along with embedding models for the RAG pipeline. Normal response times and provider rate limits are assumed.
+  \item Data layer: PostgreSQL on Supabase is used for structured data, with vector support for semantic search. Storage is also required for uploaded files and images.
+  \item Hosting: The application runs on an AWS Linux x86-64 VPS using Docker containers. A GPU is not required at this stage, although local inference may be explored later.
+  \item Client: Users need a modern browser such as Chrome, Firefox, or Safari with JavaScript enabled.
 \end{itemize}
 
 \paragraph{Operating systems}
 
 \begin{itemize}
-  \item Server: Linux for real use. CI/CD run in Linux box.
-  \item Developer computer: Windows 10 or 11, macOS or Linux. All got Docker Desktop.
-  \item Runtime base: Python 3.10 or more, Node.js 18 or more, PostgreSQL 14 or more.
+  \item Server: Linux is used in production, and the CI/CD pipeline also runs in a Linux environment.
+  \item Developer computer: Development can be done on Windows 10 or 11, macOS, or Linux, with Docker Desktop available.
+  \item Runtime base: Python 3.10 or later, Node.js 18 or later, and PostgreSQL 14 or later are required.
 \end{itemize}
 
 \paragraph{End-user characteristics}
 
 \begin{itemize}
-  \item Main people: Junior developer who know little code and read English easy.
-  \item Many user got slow or bad internet. App work no internet when can and start again no problem.
-  \item Easy use for all: Keyboard move, good color, screen reader ok.
+  \item Main people: The main users are junior developers with basic coding knowledge who can comfortably read English.
+  \item Many user got slow or bad internet. The application should remain usable on slow or unstable internet connections and recover cleanly after interruptions.
+  \item Easy use for all: The interface should support keyboard navigation, clear visual contrast, and screen reader accessibility.
 \end{itemize}
 
 \paragraph{Possible and probable changes in functionality}
 
 \begin{itemize}
-  \item Maybe change AI company or model. So system got plug adapter and smart try again.
-  \item New lesson and stuff add later. So database and tool made easy to grow.
-  \item Test rule and feedback change time time. So check pipe got version.
+  \item Maybe change AI company or model. The system should support switching providers or models through an adapter-based integration layer with retry handling.
+  \item New lesson and stuff add later. New lessons and learning features should be easy to add without major changes to the database or service structure.
+  \item Test rule and feedback change time time. Assessment rules and feedback logic may change over time, so the evaluation pipeline should be versioned.
 \end{itemize}
 \subsection{General Constraints}
 
 \begin{itemize}
     \item Hardware or Software Environment:
-    App run on small cloud server like AWS or Render. Got only little CPU and RAM so we make everything light and quick.
-    Database and vector place can handle normal amount content and embedding.
-    No GPU in our place. All AI call go to outside like OpenAI or Gemini.
+    The application is expected to run on modest cloud infrastructure such as AWS or Render. Since CPU and memory are limited, the system should stay lightweight and efficient.
+    The database and vector storage should support a typical volume of content and embeddings.
+    No local GPU is assumed, so AI processing depends on external providers such as OpenAI or Gemini.
 
     \item End-User Environment:
-    Work in any new browser on computer laptop or phone.
-    Still ok on slow internet or little stop. Progress save by itself.
-    Design change for every screen size. Look nice feel good everywhere.
+    The platform should work in modern browsers on desktops, laptops, and mobile devices.
+    It should remain usable on slow or unstable internet connections, with progress saved automatically.
+    The interface should adapt to different screen sizes without losing usability.
 
     \item Standards Compliance:
-    We do good privacy. Only keep what need and make it safe.
-    Make for everyone can use: good color, easy read font, keyboard work all.
-    Security follow OWASP rule for login and API key.
+    User privacy should be protected by storing only the data that is needed and securing it properly.
+    The interface should support accessibility through readable typography, sufficient color contrast, and full keyboard navigation.
+    Security practices should follow OWASP guidance for authentication and API key handling.
 
     \item Interface / Protocol Requirements:
-    Everything talk with HTTPS and clean JSON REST API.
-    Session use safe JWT token.
-    Call to outside API got time limit and try again if fail.
+    All communication should use HTTPS and JSON-based REST APIs.
+    Sessions should be managed with secure JWT tokens.
+    External API calls should include timeouts and retry logic where appropriate.
 
     \item Security Requirements:
-    All data encrypt from start to end with HTTPS.
-    Password and token hash good and protect.
-    Admin and student got different power with role control.
+    All data in transit should be protected with HTTPS.
+    Passwords and tokens should be stored securely using strong hashing and protection mechanisms.
+    Role-based access control should separate administrator and student permissions.
 
     \item Performance Requirements:
-    Database search fast for many user same time.
-    AI thing like make plan or check scale good when more student come.
+    Database queries should remain responsive under concurrent use.
+    AI features such as plan generation and automated evaluation should scale as the number of learners grows.
 \end{itemize}
 \subsection{Goals and Guidelines}
 
 \begin{itemize}
-  \item KISS (Keep It Simple): Make everything easy and not complicated. Less hard thing mean we build fast and got less bug.
-  \item Easy-to-Use, Friendly Interface: App must feel simple and nice. Learner can use it without much help. Make them happy to keep going.
+  \item KISS (Keep It Simple): The system should stay straightforward and avoid unnecessary complexity. A simpler design is faster to build, easier to maintain, and less likely to introduce bugs.
+  \item Easy-to-Use, Friendly Interface: The application should feel simple and approachable. Learners should be able to use it with minimal guidance and stay motivated to continue.
 \end{itemize}
 
 \subsection{Development Methods}
 
-We build GrowWise with small part and agile way. This make system can change easy, grow big and easy fix.
+GrowWise was developed in small, manageable modules using an agile process. This makes the system easier to adapt, extend, and maintain.
 
 \begin{itemize}
-    \item Modular Architecture: We cut everything to small alone piece. Like user login, make learning plan, AI check grade, and RAG helper. Each one we build test and fix alone.
-    \item Agile Methodology (Scrum-inspired): We do short work time, show demo often, get feedback quick and always make small better.
-    \item Backend Infrastructure: FastAPI make clean big REST back end. It talk easy with OpenAI, Gemini and other service.
-    \item Frontend Implementation: Next.js + React make fast nice interface. Work good on phone computer everything.
-    \item Data Persistence: PostgreSQL for normal data. Plus vector thing for smart search and RAG help.
-    \item Version Management: GitHub (or GitLab) for work together, make branch and auto CI/CD pipe.
-    \item Methodological Rationale: All this give us can change easy, keep long time and grow when AI or learning need change.
+    \item Modular Architecture: The platform is divided into separate modules such as user authentication, learning plan generation, AI-based grading, and the RAG assistant. Each module can be developed, tested, and improved independently.
+    \item Agile Methodology (Scrum-inspired): Development followed short iterations, regular demos, quick feedback cycles, and steady improvement.
+    \item Backend Infrastructure: FastAPI provides the main REST backend and integrates with external services such as OpenAI, Gemini, and other APIs.
+    \item Frontend Implementation: Next.js and React are used to build a responsive interface that works well across phones, tablets, and computers.
+    \item Data Persistence: PostgreSQL stores structured application data, while vector support enables semantic search and RAG features.
+    \item Version Management: GitHub (or GitLab) is used for collaboration, branching, and automated CI/CD workflows.
+    \item Methodological Rationale: This combination supports flexibility, long-term maintenance, and future growth as the learning and AI requirements evolve.
 \end{itemize}
 
 \section{System Architecture}
-This section describes both the internal architecture of the modules and the external architecture of the system with other systems. A diagrammatic architecture is provided to illustrate the system's structure and interactions.
+This section describes the internal structure of the system modules and the external interactions with other systems. A diagram is included to show the overall architecture and how the parts connect.
 
 \begin{figure}[!h]
     \centering
@@ -1710,32 +1710,32 @@ This section describes both the internal architecture of the modules and the ext
 
 
 \subsection{High-Level System Decomposition}
-The GrowWise platform breaks down into four main parts, each handling its own tasks:
+The GrowWise platform is organized into four main parts, each responsible for a different area of the system:
 \begin{itemize}
-    \item User Interface Layer: Takes care of all interactions with users and offers an easy-to-use web interface
-    \item Application Services Layer: Holds the main business rules and guides user activities
-    \item AI Services Layer: Deals with all AI features like testing skills, creating learning plans, and checking progress
-    \item Data Persistence Layer: Manages storing, getting, and organizing data
+    \item User Interface Layer: Manages user interactions and provides the main web interface
+    \item Application Services Layer: Contains the core business logic and coordinates user activities
+    \item AI Services Layer: Supports AI-driven features such as skill assessment, learning plan generation, and progress evaluation
+    \item Data Persistence Layer: Handles the storage, retrieval, and organization of data
 \end{itemize}
 \subsection{Major System Responsibilities}
-The software system needs to handle these main jobs:
+The software system is responsible for the following main functions:
 \begin{enumerate}
-    \item User Management: Safe login, profile handling, and keeping track of sessions
-    \item Adaptive Learning: Checking user skills on the fly and making custom learning plans
-    \item Content Delivery: Showing interactive lessons with built-in AI help
-    \item Intelligent Evaluation: Using AI to review user progress and project work
-    \item Progress Tracking: Keeping a full record and reports on how users are doing
-    \item Administrative Control: Managing lesson content, paths, and system settings
+    \item User Management: Secure login, profile management, and session handling
+    \item Adaptive Learning: Real-time skill assessment and personalized learning plan generation
+    \item Content Delivery: Delivery of interactive lessons with built-in AI support
+    \item Intelligent Evaluation: AI-assisted review of user progress and project work
+    \item Progress Tracking: Recording learner activity and generating progress reports
+    \item Administrative Control: Managing lesson content, learning paths, and system settings
 \end{enumerate}
 \subsection{Component Roles and Responsibilities}
 \subsubsection{User Interface Layer}
 \begin{itemize}
-    \item Authentication Module: Handles logging in, signing up, and managing sessions
-    \item Track Selection Interface: Lets users pick their area of focus for learning
-    \item Assessment Interface: Shows tests for skill checks and gathers answers
-    \item Learning Dashboard: Displays custom learning plans and tracks progress
-    \item Module Interface: Offers an interactive space for learning with an AI chat built in
-    \item Evaluation Interface: Allows submitting projects and showing feedback
+    \item Authentication Module: Handles login, registration, and session management
+    \item Track Selection Interface: Allows users to choose their learning focus area
+    \item Assessment Interface: Presents skill assessments and collects user responses
+    \item Learning Dashboard: Displays personalized learning plans and progress updates
+    \item Module Interface: Provides an interactive learning space with built-in AI chat support
+    \item Evaluation Interface: Supports project submission and displays feedback
 \end{itemize}
 \subsubsection{Application Services Layer}
 \begin{itemize}
@@ -1748,24 +1748,24 @@ The software system needs to handle these main jobs:
 \end{itemize}
 \subsubsection{AI Services Layer}
 \begin{itemize}
-    \item LLM Integration Service: Connects to outside AI services like OpenAI or Gemini
+    \item LLM Integration Service: Connects to external AI providers such as OpenAI or Gemini
     \item RAG System: Uses retrieval to add context for better AI help
     \item Vector Database: Keeps and searches embeddings of learning materials
     \item Assessment AI: Reviews answers and gives skill scores
-    \item Path Planning AI: Makes flexible learning plans based on user info
-    \item Evaluation AI: Gives feedback like a senior engineer on projects
+    \item Path Planning AI: Generates flexible learning plans based on user information
+    \item Evaluation AI: Provides project feedback in the style of a senior engineer
 \end{itemize}
 \subsubsection{Data Persistence Layer}
 \begin{itemize}
-    \item User Database: Stores user info, login details, and preferences
-    \item Content Database: Handles lessons, paths, and learning resources
-    \item Progress Database: Tracks how users are advancing, what's done, and performance
+    \item User Database: Stores user information, authentication details, and preferences
+    \item Content Database: Stores lessons, learning paths, and supporting resources
+    \item Progress Database: Tracks user progress, completed work, and performance records
     \item Vector Store: Holds embeddings for quick content searches
     \item Session Storage: Manages short-term data and user sessions
 \end{itemize}
 
 \subsection{Component Collaboration and Data Flow}
-The system components collaborate through well-defined interfaces and data flows:
+The system components interact through clearly defined interfaces and data flows:
 
 \begin{enumerate}
     \item User Authentication Flow: Interface Layer → User Service → Database
@@ -1776,12 +1776,12 @@ The system components collaborate through well-defined interfaces and data flows
 \end{enumerate}
 
 \subsection{Architectural Rationale}
-This decomposition was chosen over alternative approaches for the following reasons:
+This decomposition was selected instead of alternative approaches for several reasons:
 
 \begin{itemize}
-    \item Layered Architecture: Provides clear separation of concerns and maintainability
-    \item Microservices Pattern: Enables independent scaling and deployment of AI services
-    \item API-First Design: Facilitates integration with external AI providers and future extensions
+    \item Layered Architecture: Separates responsibilities clearly and makes the system easier to maintain
+    \item Microservices Pattern: Allows AI services to scale and be deployed independently
+    \item API-First Design: Makes integration with external AI providers and future extensions easier
     \item Stateless Services: Ensures scalability and fault tolerance
     \item Modular AI Integration: Allows easy switching between AI providers and models
 \end{itemize}
@@ -1806,49 +1806,49 @@ The AI Services Layer is main part of system. It handle all smart AI thing by co
 This module check user skill use outside AI API. It make question from path user choose and send answer to external AI check. It get back score and weak spot then save in database for make plan. All depend on external AI for make question and grade.
 
 \subsubsection{AI Path Generation Module}
-This module make special plan for every user with help from outside AI. It take test result and send to external API with user path. AI think and send back lesson order with step and goal. Then save plan in database so system can use.
+This module make special plan for every user with help from outside AI. It take test result and send to external API with user path. AI think and send back lesson order with step and goal. Finally, save the plan in database so that system can use it.
 
 \subsubsection{Learning Module with RAG}
-This module give real learning with AI help from outside API. When user ask question or need help it send to external AI with lesson info. AI answer with good explain and tip. It also watch user progress and what they finish.
+This module supports the actual learning process with help from external AI services. When a user asks a question or requests assistance, the system sends the query together with relevant lesson context to the AI service. The response provides explanations and guidance based on the current lesson. The module also tracks user progress and completed activities.
 
 \subsubsection{AI Evaluation Module}
-This module check user project use outside AI API. It send work and answer to external AI for look. AI give deep feedback, score and how to better. Like senior engineer talk, all from external AI.
+This module evaluates user projects through external AI APIs. It sends submitted work to the AI service for analysis, then receives feedback, scoring, and suggestions for improvement. The goal is to provide responses that resemble the type of review a senior engineer might give.
 
 \subsubsection{External API Integration}
-All AI in system come from outside like OpenAI and Gemini. System call these API for test, plan, RAG help and project check. Every part handle own API talk, make request right, get answer and fix error. These API make system smart and fun.
+All AI capabilities in the system rely on external providers such as OpenAI and Gemini. These APIs are used for assessments, learning path generation, RAG-based assistance, and project evaluation. Each module is responsible for preparing requests correctly, handling responses, and managing errors. This approach adds intelligent functionality without requiring in-house model development.
 
 \subsubsection{Data Flow}
-User info go through AI layer, outside API do every step. Test answer go to API for score, plan request go to AI, help question in learning go to RAG external, project check by outside AI. All result save in local database for later and make system good.
+User data moves through the AI layer, with external APIs handling the main AI-driven tasks. Assessment responses are sent for scoring, learning path requests are processed by the planning service, lesson questions are handled through the RAG workflow, and submitted projects are reviewed by AI. The results are then stored in the local database for future use and progress tracking.
 
 \section{Architectural Strategies}
-This part tell key choice we make for GrowWise design.
+This section explains the main architectural choices made for the GrowWise platform.
 
 \subsection{Using External AI APIs}
-We use outside AI like OpenAI and Gemini not make own AI. This way we get new AI easy no train hard. No need fix model or update ourself. Pay only when use so money save.
-Make own model too expensive and hard. Use external let us focus on learning app not AI.
+GrowWise uses external AI providers such as OpenAI and Gemini instead of building custom models from scratch. This allows the platform to access advanced AI capabilities without the cost and complexity of training, maintaining, and updating models internally. It also supports a pay-as-you-use model, which helps control operating costs.
+Building an in-house model would require substantial time, expertise, and infrastructure. By relying on external APIs, the project can focus more directly on the learning platform itself.
 
 \subsection{Using RAG for Smart Help}
-We use RAG mean Retrieval-Augmented Generation for give learner good help. It take info from database and mix with AI for answer. This keep help new and right, no need update hand.
-Old fix page too boring and hard maintain. RAG give what need right time.
+RAG, or Retrieval-Augmented Generation, is used to provide more relevant support to learners. It retrieves information from the system's knowledge base and combines it with AI-generated responses. This helps the platform deliver answers that are more accurate, contextual, and up to date.
+Compared with static help pages, RAG is easier to maintain and better suited to delivering support at the moment the learner needs it.
 
 \subsection{Choosing Modern Technology}
-We pick new tool like Next.js for front, FastAPI for back, PostgreSQL for data. These good with AI and easy use. Make platform fast and strong.
-Old tech slow and hard connect AI. New choice make build quick.
+Modern technologies such as Next.js for the frontend, FastAPI for the backend, and PostgreSQL for data management were selected for the platform. These tools integrate well with AI-based workflows and support reliable web application development.
+Older or less flexible technologies would have made integration and future development more difficult. The selected stack provides a practical balance of speed, maintainability, and scalability.
 
 \subsection{Using Microservices}
-We make system small separate service that talk each other. This let us change one without break all. If one problem other still work.
-Make system strong and easy handle.
+The system follows a microservices-style structure in which major functions are separated into smaller services that communicate with each other. This makes it easier to update or improve one part of the system without affecting the rest.
+It also improves maintainability and reduces the impact of failures in individual services.
 
 \subsection{API-First Design}
-We build everything with API first. This easy connect outside AI and add new thing later. Can make mobile app or connect other system.
-This way platform can change and ready for future.
+The platform is designed with an API-first approach. This makes it easier to integrate external AI providers, extend the system in the future, and support other clients such as mobile applications.
+As a result, the architecture remains flexible and better prepared for future expansion.
 
 \section{Domain Model/Class Diagram}
-The domain model and class diagram show full how GrowWise build. It show main part, what they have, what they do and how connect. Setup split three view that help each other, each look different side how system work.
-View 1: User Journey \& Progress talk how learner go through system. From sign up pick path, check skill, make plan, track progress and get report. This show user flow and how system change from result.
-View 2: AI Services \& Knowledge Management show smart part for personal learning. Got RAG knowledge with vector, AI mentor for talk, path maker for plan change, RAG helper for lesson help.
-View 3: Project Workflow \& Evaluation tell process for task and check. Show how project give to user, how submit and check by AI like engineer, feedback help better. This stress learn by real way and solve true problem.
-All view together show full GrowWise, how data move, user do, and AI fit good for personal learning.
+The domain model and class diagram present the overall structure of GrowWise. They show the main system entities, their attributes and responsibilities, and the relationships between them. The model is organized into three connected views, each focusing on a different aspect of how the system operates.
+View 1: User Journey \& Progress shows how a learner moves through the platform, from registration and path selection to skill assessment, plan generation, progress tracking, and reporting. This view captures the main user flow and the way the system responds to learner performance.
+View 2: AI Services \& Knowledge Management focuses on the intelligent features that support personalized learning. It includes the RAG knowledge layer, vector storage, conversational AI support, learning path generation, and lesson assistance.
+View 3: Project Workflow \& Evaluation describes how practical tasks are assigned, submitted, and reviewed. It shows how project work is evaluated by AI in a way that resembles engineering feedback and how that feedback supports improvement through applied learning.
+Taken together, these views provide a complete picture of GrowWise, including user interaction, data movement, and the role of AI in delivering personalized learning.
 
 \begin{figure}[!h]
     \centering
@@ -1894,7 +1894,7 @@ We document everything well. The APIs receive clear definitions on the uses and 
 We maintain platform user guides and dev guides of the code. In addition, deployment instructions and troubleshooting manuals.
 We update documentations with the changes and go through them regularly to ensure that they are accurate and useful.
 \section{Conclusion}
-This chapter provided a complete design specification of the GrowWise AI-based adaptive learning platform, including overall decisions and construction plans. It began with an in-depth analysis of what the system requires and constrains which resulted in a scalable, expandable structure that addresses the difficulties in teaching developers. The proposed architecture consists of the latest technologies, such as Next.js as the front, FastAPI as the back-end services, PostgreSQL as the database, and AI APIs, as the intelligent path generator, and verification. It is based on learning approaches, where path making on the fly, AI guidance in real-time (through RAG) knowledge pulls, and complete checks analysing the skills as well as problem-solving methods are considered. The decisions are made according to growth, ease of maintenance and user feel and address security, speed and access needs. The modular design enables the part of the building and testing to be made in isolation, which can be improved and added easily. The comprehensive documentation, including class schema, system connections, and construction architecture provide a good groundwork to develop on. The design addresses the primary objectives of a bespoke, flexible platform that transcends predetermined courses in order to provide dynamic systems that are conscious and tailored to the requirements and learning styles of every developer.
+This chapter presented the complete design specification for the GrowWise AI-based adaptive learning platform, covering the main architectural decisions and implementation plan. It began with an analysis of the system requirements and constraints, which guided the development of a scalable and extensible structure for developer-focused learning. The proposed architecture combines Next.js for the frontend, FastAPI for backend services, PostgreSQL for data management, and external AI APIs for learning path generation, guidance, and evaluation. The design supports adaptive learning through dynamic path generation, real-time AI assistance using RAG, and detailed assessment of technical and problem-solving skills. These decisions were made to balance scalability, maintainability, usability, security, performance, and accessibility. The modular structure also allows each part of the system to be developed, tested, and improved independently. Supporting documentation, including the class diagram, system interactions, and architectural model, provides a strong foundation for implementation. Overall, the design meets the main objective of creating a flexible and personalized learning platform that goes beyond fixed courses and adapts to the needs and learning styles of individual developers.
 \chapter{Implementation and Testing}
 The chapter addresses the process of creating and testing the GrowWise prototype. It contains the technology selections, determining the particulars of the keybuilds of the parts, the connections with AI, data archives, test arrangement, and test results, launch, and present constraints.
 \section{Implementation}
@@ -2306,12 +2306,12 @@ Open your web browser and navigate to the GrowWise application URL. You will be 
 
 \section{Sign Up}
 
-To create a new GrowWise account, follow these steps:
+To create a new GrowWise account, you have to follow these steps:
 
 \begin{enumerate}
-    \item first go to the Home page and click \textbf{Take Free Assessment} button, or you can also go directly to \texttt{/signup} page.
-    \item after that the Sign Up page will open and you will see a heading that says \textit{Join Grow Wise}.
-    \item now you have to fill all the fields that is given there:
+    \item First go to the Home page and click \textbf{Take Free Assessment} button, or you can also go directly to \texttt{/signup} page.
+    \item After that the Sign Up page will open and you will see a heading that says \textit{Join Grow Wise}.
+    \item Now you have to fill all the fields that is given there:
         \begin{itemize}
             \item \textbf{Full Name}: write your full name here.
             \item \textbf{Email}: put a valid email address because it will use for login and also for reset password.
@@ -2701,5 +2701,3 @@ we believe that GrowWise will be very helpful for developers who wants to learn 
 \appendix
 
 \end{document}
-
-
