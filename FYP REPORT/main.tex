@@ -109,18 +109,18 @@ By moving away from long, one-size-fits-all courses to a flexible, problem-solvi
 
 \chapter{Introduction}
 
-Since ChatGPT launched in 2022, the way we build software has changed dramatically. Programmers now need to constantly learn new technologies and stay flexible. But traditional programming courses, with their long and rigid lesson plans, can't keep up with how fast things change in tech today.
+Software development has shifted quickly since ChatGPT came out in 2022. Developers now have to pick up new tools and frameworks on a regular basis just to keep their work relevant. Traditional coding courses move too slowly for this kind of pace. They follow fixed schedules and lesson plans that were set months or years ago.
 
-This project make one smart learning app. First it check what the programmer already know. Then it make special study plan only for him. Inside got one AI teacher that give good feedback every time. Also got test that feel like real company job. It help you really understand thing and really can use it. The other page of this report tell how we design it, how we build it, how we test it, and what result we get.
+We built this project to close that gap. The platform starts by testing what a learner already knows, then builds a study plan around their gaps and goals. An AI mentor stays with the learner through each lesson and offers feedback as they work. The assessments we include are designed to feel closer to what a junior developer would face on the job. We want learners to understand the concepts well enough to apply them, not just recall them. The rest of this report walks through how we designed the system, how we built it, how we tested it, and what we found.
 
 \section{Purpose of this Document}
 
-This paper explain how we design, build and test one smart learning platform for programmer. We want change how people learn code by make it faster, more personal and teach real problem solving not just remember code. Old course give same long lesson to everyone but our platform first test what you already know then make special plan only for you and your job dream. Main question is can AI make learning personal and help programmer learn super fast by focus on solve problem. This project show real working app that do it. It test your skill with AI, give personal help from AI teacher and check your code like senior developer. This paper talk everything: how we study problem, design system, build it, test it, what work good, what not good and what we do next.
+This document describes how we designed, built, and tested a learning platform aimed at programmers. We set out to make the learning process faster, more personal, and more focused on problem solving instead of memorization. Most online courses give every learner the same fixed content. Our approach starts with an assessment and then shapes the roadmap around the learner's current level and the career path they want to follow. The question we kept coming back to is whether an AI-driven system can make learning genuinely personal and help developers move through material faster by focusing on how they solve problems. The platform we built tries to answer that. It assesses skills, offers a personalized AI mentor, and reviews code the way a senior developer might. This document covers the research we did, the design decisions we made, how we built the system, what we tested, what worked, what did not, and what we plan to do next.
 
 
 \section{Intended Audience}
 
-This report is for two type people. First is professor, supervisor and examiner who check our project good or not and if it new idea. Second is beginner programmer or self-study coder who want learn fast and better. We write with some hard detail for teacher but also explain easy so normal programmer can understand and use our idea. This way the report work for school mark and also help real coder in future.
+We wrote this report for two groups. The first is the academic side: supervisors, examiners, and faculty who need to assess the project on its technical merit and originality. The second is the practical side: new developers, self-taught coders, and anyone trying to learn programming faster without giving up depth. We kept the technical sections detailed enough for the academic review and wrote the explanations clearly enough that a working programmer can read them and take something useful away.
 
 
 \section{Definitions, Acronyms, and Abbreviations}
@@ -139,179 +139,178 @@ API: Application Programming Interface
 
 \section{Conclusion}
 
-GrowWise is one smart AI learning app for programmer. It give personal study plan, AI teacher help every time, and real hard coding test. It fix old school problem because old way only make people remember code but not think. This report tell the main idea, what we need, and how we design the system. Now we got good start but still not finish. We will keep build and make it better in FYP-2 until GrowWise become full complete app.
+GrowWise is our attempt at a more personal way to learn programming. It builds a plan around each learner, keeps an AI mentor on hand, and sets projects that feel closer to real engineering work. The problem we want to solve is that most traditional courses train people to memorize syntax rather than think through problems. This report explains the core idea, the requirements we pulled together, and the system design we arrived at. What we have now is a solid foundation. We still have work left. We plan to keep building on this during FYP-2 until GrowWise reaches a complete, production-ready state.
 
 
 
 \chapter{Project Vision}
 
-This chapter explain the big idea behind our AI learning platform for programmers. We talk about what is wrong with normal coding courses right now, what we want to fix, our main goals, and what exactly our project will do and will not do. After you read this part, you will understand why we make this system and how it can change the way people learn programming today.
+This chapter covers the thinking behind the platform. We go over what we think is broken in how programming is taught today, what we want to fix, the goals we set for the project, and the boundaries of what we chose to build. By the end of this chapter, readers should understand why we started this project and how we believe it can change the way programmers learn.
 
 \section{Problem Domain Overview}
-GrowWise want fix big problem in how people teach programming now. Most app give same lesson to everybody. The course very hard to change and not look at your level or how you think. This old way make learning slow, waste time on thing you already know, and not teach you how to solve problem good.
+We started GrowWise because most programming courses treat every learner the same way. The lessons rarely adjust to a learner's current skill or the way they think. That kind of rigidity slows people down. Learners often end up spending time on material they already understand, and when they do reach gaps in their knowledge, the course is not designed to notice.
 
-Now tech world change super fast. Programmer need system that teach how to think and solve problem, not just remember code like robot. Most platform only care about you remember syntax good. They not teach you how to choose right way or understand big picture.
+The tech industry moves faster than curricula can keep up with. Developers need to learn how to approach problems, not just repeat syntax. Most platforms still measure success by whether a learner can memorize a snippet or follow a tutorial. They rarely push learners to compare approaches or understand why a design choice works.
 
-GrowWise fix all this problem by use AI. First it test what you already know. Then it make one special learning road only for you. Because of this you only study important thing, learn how to solve problem good, become better super fast, and ready for real programmer job.
+We want to fix this with AI. The system starts with an assessment, then shapes a personal path around the learner. The point is to avoid wasted time, build actual problem-solving skills, and get the learner closer to what a working developer needs to know.
 
 \section{Problem Statement}
 
-Normal learning platform very slow and same for everybody. They not look at your real skill level or how you think.  
-Now we need more teaching that help developer learn how to solve problem, not just remember tool or code stack.
+Most learning platforms move slowly and treat every learner identically. They do not consider current skill levels or how individuals approach problems. Developers need a form of teaching that helps them learn to reason through problems rather than memorize tools and frameworks.
 
 \section{Problem Elaboration}
 
-Now day learning app have many problem together. These problem stop people become good programmer and ready for job. Below we list the main problem this project want fix:
+Current learning platforms have several overlapping issues that make it harder for new developers to become job-ready. The main problems we want to address:
 
 \begin{enumerate}
-  \item No Personal Plan: Most platform give same lesson to all people. But everyone got different skill and learn different way. So same plan for all make people bored and not good.
+  \item No personal plan: Most platforms hand the same lesson to every learner, regardless of background or goals. Learners get bored or lose momentum.
 
-  \item Wrong Level: Many time you study thing you already know or thing too hard. No test first, so you waste time and learn slow.
+  \item Wrong starting level: Courses rarely check what a learner already knows. Time gets spent on familiar material, or learners get thrown into something too advanced.
 
-  \item Course Too Long and Hard to Change: Old course take many week or month. Tech change very fast but course still old. You finish late already.
+  \item Long and rigid courses: Traditional courses run for weeks or months. By the time they finish, the tools have changed.
 
-  \item Only Remember Code: Teacher only make you remember syntax and tool. They not teach how to think and solve problem. When new tool come you stuck.
+  \item Focus on memorization: Most courses teach syntax, not reasoning. When a new tool appears, learners are back where they started.
 
-  \item Not Enough Real Work: Best learn is do real project. But many platform give only small easy task. No hard real job challenge. So you not ready for company work.
+  \item Shallow practice: Real learning happens when someone builds something real. Most platforms offer small, isolated exercises instead.
 \end{enumerate}
 
 \section{Goals and Objectives}
 
-Main goal of this project is make one smart learning app. It teach you how to solve problem real good, not just remember code and tool. We want give programmer fast, only-for-you learning with AI help all the time.
+Our main goal is to build a learning platform that teaches developers how to think through problems, not just how to write code. We want to give learners a faster, more personal experience with AI assistance available whenever they need it.
 
-Our big objectives are:
+The specific objectives:
 
 \begin{enumerate}
-    \item Personal Study Plan: System first test what you know. Then make special plan for you. It look what you strong, what you weak, and what job you want.
+    \item Personal study plan: The system begins with an assessment and then creates a plan based on the learner's strengths, weaknesses, and career goals.
 
-    \item Start Right Level: You begin not too easy not too hard. No waste time on thing you already know. Also not cry because too difficult.
+    \item Right starting point: The learner begins at a level that matches their current skills. No time wasted on the basics if they already know them, and no frustration from jumping straight into advanced material.
 
-    \item Fast and Can Change: No long boring course. Short lesson that change when you learn fast or slow.
+    \item Flexible pacing: Lessons are short and responsive. If a learner moves quickly, the path adjusts. If they struggle, the path slows down.
 
-    \item Teach How to Think: We teach you think like real engineer. Not only remember syntax. We teach logic and system design.
+    \item Reasoning over recall: We focus on teaching engineering thinking, including logic, trade-offs, and system design.
 
-    \item Real Job Test: Give you hard project same like company work. You practice real thing, not baby task.
+    \item Realistic projects: Assignments are closer to what a developer would see at a company. No trivial exercises.
 
-    \item AI Teacher Very Smart: Got one AI mentor like good friend. It find best video or article for you, answer question, and help you every minute.
+    \item Responsive AI mentor: The mentor works like a patient senior engineer. It points to relevant videos or articles, answers questions, and helps when the learner gets stuck.
 \end{enumerate}
 
 \section{Project Scope}
-This project is about make one smart learning app for coder. It change the lesson for every person. It look what you already know, how fast you learn, and what job you want like web or AI. Then it give you only the right thing to study. The platform goes beyond traditional courses by using AI mentors, thorough skill tests, and a focus on teaching problem-solving methods.
+This project is a learning platform for developers. It adjusts the lessons for every learner based on their current skill level, learning speed, and career goals such as web development, AI, or security. From there, it delivers only the content that matters for that path. We wanted the platform to go beyond traditional courses by adding AI mentorship, thorough skill assessments, and a focus on problem-solving methods.
 
 The platform enables users to:
 \begin{itemize}
-    \item Execute secure registration and authentication protocols as authenticated learners.
-    \item Take an initial test that checks both your technical knowledge and problem-solving skills.
-    \item Designate preferred learning specializations (e.g., Web Development, AI Applications, Cybersecurity, etc.).
-    \item Get a custom learning plan created by AI based on your test results and what tech field you chose.
-    \item Use an AI Mentor that gives you explanations when you need them, instant feedback on your work, and suggests helpful learning materials as you go through each lesson.
-    \item Work on realistic project tests that feel like actual programming jobs and check how well you solve problems and design systems.
-    \item Let you see your progress on one personal dashboard. It show what you good at, what still weak, and what you should do next to become better.
+    \item Register and log in through a secure authentication flow.
+    \item Take an initial test that covers both technical knowledge and problem-solving ability.
+    \item Choose a specialization such as web development, AI, or cybersecurity.
+    \item Receive a custom learning plan based on the test results and the chosen specialization.
+    \item Work with an AI mentor that explains concepts, gives feedback on code, and suggests relevant videos or articles as the learner progresses.
+    \item Complete realistic project assignments that check both problem-solving and system design skills.
+    \item Track their own progress on a personal dashboard that shows strengths, weaknesses, and what to focus on next.
 
   \end{itemize}
 
-We build this platform use FastAPI for back end, React.js for front end look nice, and Python for AI part. The AI teacher use RAG to find good video or article and give smart answer. We work Agile way, mean we build little little, test every time, fix fast, and ask user what they like or not like all the time.
+We built the platform on FastAPI for the backend, React.js for the frontend, and Python for the AI components. The AI mentor uses retrieval-augmented generation to pull relevant content and answer learner questions. We followed an Agile workflow with short iterations, frequent testing, early bug fixes, and steady feedback from users.
 
-Project give you this thing:
+What the project delivers:
 \begin{itemize}
-    \item One working web app that you can open in browser and use the smart AI learning.
-    \item Full paper that explain how system work, why we choose this way, how we code it, and how we test.
-    \item Easy user guide book that teach you how to use the app step by step.
+    \item A working web application that runs in a browser and provides the personalized AI learning experience.
+    \item A full report covering how the system works, the choices behind it, the implementation, and the testing.
+    \item A user guide that walks learners through the platform step by step.
 \end{itemize}
 
-But this project NOT do this:
+What the project does not include:
 \begin{itemize}
-    \item Connect with other big school system (LMS).
-    \item Make phone app for Android or iPhone.
-    \item Make super big server for many thousand user. Only small test server is enough.
+    \item Integration with external learning management systems.
+    \item A mobile application for Android or iOS.
+    \item A large-scale deployment for thousands of concurrent users. A small test server is enough for this stage.
 \end{itemize}
 
-Because we make clear what we do and what we not do, now we know exactly what to build and can finish on time.
+Setting these boundaries early gave us a clear build target and a realistic finish line.
 
 \section{Sustainable Development Goal (SDG)}
 
-Our project GrowWise is AI learning app for programmer. It match with United Nations SDG number 4 that is Quality Education. This goal say everyone must get good study and can learn all life. GrowWise help this because it use AI to give personal lesson for every people. Some people slow some people fast no problem. The app change for you. It give fast feedback and real project test so you learn skill that company want now. Also anyone can use it free and study when they want. So it make study fair for poor or busy people and help them get good tech job. This way GrowWise help SDG 4. \ref{fig:sdg_quality_education}.
+GrowWise lines up with UN SDG 4, Quality Education. The goal calls for inclusive, equitable education and lifelong learning for everyone. We support this by using AI to tailor lessons to each learner. Learners who move fast and learners who move slowly get the same attention from the platform. Fast feedback, realistic project work, and current industry topics help users build the skills employers are actually looking for. Because the platform is open to anyone with a browser and can be used on the learner's own schedule, it lowers the barrier for people who cannot afford expensive courses or keep to a fixed class timetable. That is how GrowWise contributes to SDG 4. \ref{fig:sdg_quality_education}.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.5\textwidth]{Figures/Picture3}
-    \caption{SDG 4 Quality Education – this is the goal GrowWise help.}
+    \caption{SDG 4 Quality Education, the goal GrowWise aligns with.}
     \label{fig:sdg_quality_education}
 \end{figure}
 
 \section{Constraints}
 
-When we make this AI learning platform we got some problem and limit:
+Building this platform came with several constraints that shaped our decisions:
 
 \begin{itemize}
-    \item Computer not strong enough: AI like RAG and smart teacher need big power and memory. Our laptop or small server sometime slow or crash.
+    \item Hardware limits: RAG-based AI and mentor models need significant memory and compute. Our development hardware struggles with heavier workloads and occasionally slows down or crashes.
 
-    \item Time very short: This is only Final Year Project so we got few month only. We cannot make super smart system or add too many new thing.
+    \item Limited time: This is a final year project, so we had only a few months. We could not build out every idea we had or add highly advanced capabilities.
 
-    \item Many part hard to connect: We got test AI, mentor AI, and chat AI. Make all work together smooth is difficult and got bug many time.
+    \item Integration complexity: The assessment AI, mentor AI, and chat interface need to work together smoothly, and coordinating them has introduced bugs along the way.
 
-    \item Must have internet all time: Everything use online AI and search. No wifi mean app stop work.
+    \item Internet dependency: All AI features and content retrieval require a network connection. Without one, the platform cannot function.
 
-    \item Only for few people now: This version just for test with small user. We not make big server for thousand people same time. That is for later.
+    \item Small user base for now: This version targets a small test group. A production deployment with thousands of simultaneous users is a later concern.
 \end{itemize}
 
 \section{Business Opportunity}
-GrowWise not only smart learning app but also big money chance. Many people, company and school can pay for it. Normal course not personal and not teach real thinking. GrowWise do both so it got special place in market. Many programmer want fast good skill and company want good worker quick. GrowWise can sell to them and make good business.
+GrowWise is more than a learning app. It also has a clear commercial angle. Individuals, companies, and schools all have reasons to pay for a platform like this. Traditional courses rarely offer personal pacing or real problem-solving training. GrowWise offers both, and that gives it a distinct position in the market. Many programmers want to gain strong skills quickly, and many companies need to onboard developers fast. Both groups are reasonable customer targets, and both can support a healthy business model.
 
 \section{Stakeholders Description/ User Characteristics}
 
-This part talk who will use GrowWise and what they want. We know them good so we can make app they like.
+This section describes who the platform is built for and what they need from it. We spent time understanding both groups so the platform would actually serve them.
 
 \subsection{Stakeholders Summary}
 
-GrowWise got two big group of people:
+GrowWise is built for two main audiences:
 
 \begin{itemize}
-    \item Normal Programmer / Junior Developer: This is main user. They new or little bit know code. Got student, people change job to tech, self study coder, or junior want become better. They want app that know their level, teach slow or fast same them, and teach how to think not remember code. They want ready for real company job.
+    \item Developers and junior programmers: This is the primary audience. They range from students and career switchers to self-taught coders and junior developers looking to level up. They want a platform that matches their skill level, adjusts its pace as they learn, and teaches them how to think about problems rather than memorize solutions. The end goal is to get them ready for actual engineering work.
 
-    \item Tech Company / Boss: Big company or small team that want train worker fast. They want see who learn good who not, give same training to many people, and make sure worker can do real project. They like if app give report and certificate.
+    \item Tech companies and teams: Larger companies and smaller engineering teams that need to train developers efficiently. They want visibility into who is progressing, scalable training for multiple people at once, and assurance that trainees can handle real projects. Progress reports and certificates are useful to them.
 \end{itemize}
 
 \subsection{High-Level Goals and Problems of Stakeholders}
 
 \begin{itemize}
-    \item Junior Programmer: Want personal plan, learn problem solving, not boring remember thing.
+    \item Junior programmers: Want a personal learning plan, practical problem-solving experience, and lessons that avoid rote memorization.
 
-    \item Company: Want worker learn quick, can check progress, and worker ready for real work fast.
+    \item Companies: Want their developers to learn quickly, want clear progress tracking, and want their people to be ready for real work without a long onboarding period.
 \end{itemize}
 
-Because we know what they need, we build GrowWise that make both group happy.
+Understanding what each group needs helps us make design decisions that serve both without compromising either.
 \section{Conclusion}
 
-Chapter 2 tell about GrowWise app. We talk what problem normal coding course have and why it bad. We say what we want fix and what our goal is. We tell what we will do and what we cannot do because time short. Also we say this app can make money later. Now everything clear so next chapter we talk how we design and build the real app.
+This chapter laid out the core idea behind GrowWise. We covered the problems with traditional programming courses and why they matter, the goals we set for ourselves, and the line between what we planned to build and what we had to leave out given our timeline. We also touched on the commercial case for the platform. With all of that on the table, the next chapter moves into how we designed and built the system.
 \chapter{Literature Review / Related Work}
 
-This chapter look at other app and tool already have. We study many platform that do personal learning, give real project, or use AI to teach programmer. All this old work give us good idea for GrowWise. We take best part from them and make better by add RAG for smart answer, AI that check code, and special plan only for junior developer who want learn real skill.
+This chapter covers the tools and platforms we looked at while designing GrowWise. We studied systems that handle personalized learning, project-based practice, or AI-assisted programming instruction. Each one gave us something useful. GrowWise takes what we found most effective from these systems and adds RAG-based knowledge retrieval, AI-driven code review, and a personalized learning plan aimed at junior developers who want to build practical engineering skills.
 \section{Definitions, Acronyms, and Abbreviations}
 
-This part explain short word and hard word we use in this chapter. We write what they mean so you not confuse when read.
+This section clarifies the short forms and specialized terms used in this chapter.
 
 \subsection{Key Definitions}
 
-Adaptive Learning: Smart teaching way that change lesson, speed and style same time when it see how you learn.
+Adaptive Learning: An approach that adjusts lesson content, pacing, and delivery style based on how the learner progresses.
 
-Agentic AI: AI that can think and do work alone like human, no need people tell every thing.
+Agentic AI: AI that can plan and carry out tasks on its own, without needing step-by-step instructions from a user.
 
-Approach-Oriented Learning: Teach you how to think and solve problem, not just remember code line.
+Approach-Oriented Learning: Teaching that focuses on how to think about a problem rather than on memorizing specific code.
 
-Learning Path: Step by step plan what you study, what exercise you do, what test you take.
+Learning Path: A sequence of study materials, exercises, and assessments arranged to help a learner reach a goal.
 
-Micro-Learning: Very small short lesson, only few minute, easy to finish fast.
+Micro-Learning: Short, focused lessons, usually just a few minutes each, designed to fit into busy schedules.
 
-Personalized Learning: Lesson made only for you, match your speed and what you like.
+Personalized Learning: Instruction shaped around an individual learner's pace, interests, and skill level.
 
-RAG (Retrieval-Augmented Generation): Smart AI that search internet or book first, then give correct answer.
+RAG (Retrieval-Augmented Generation): An AI technique where the model first searches a knowledge base, then generates an answer grounded in what it found.
 
-Skill Assessment: Test to check what you already know good and what you still weak.
+Skill Assessment: A test that measures what a learner currently knows and where the gaps are.
 
 
 \section{Detailed Literature Review}
-This Chapter provides an overview of related applications which inpisered the idea of GroWise. A carefully conducted critical analysis have been done for the following application and their relationship with proposed work.
+This section reviews the platforms that inspired GrowWise. We looked at each one carefully and examined how it relates to the work we are doing.
 
 
 
@@ -319,76 +318,76 @@ This Chapter provides an overview of related applications which inpisered the id
 \subsection{Crio.Do}
 
 \subsubsection{Summary}
-Crio.Do \cite{ref:CrioDo:2025} is online learning site. It help student jump from school code to real company job. They work with big company like CRED and give you real project that company actually use. Not just talk theory. You really build app. Good for student and junior developer. After finish you got nice portfolio and ready for job.
+Crio.Do \cite{ref:CrioDo:2025} is an online learning platform designed to bridge the gap between academic programming and actual industry work. It partners with companies such as CRED and assigns learners real projects that match what engineering teams actually build. The focus is on doing, not theorizing. Students and junior developers typically finish with a portfolio of production-style work and a strong base for job applications.
 
 \subsubsection{Critical Analysis (Strengths and Weaknesses)}
-Strengths: Give real job experience. Work with real company so people trust it. Teach skill that company want so easy get job.  
-Weaknesses: Only teach few technology. Beginner can feel too hard. Project take many time, busy people cannot finish.
+Strengths: Offers hands-on experience with projects that mirror industry work. Its partnerships with real companies lend it credibility and align the curriculum with what employers want.
+Weaknesses: Its tech coverage is limited. Beginners can find the projects too difficult. The time commitment is significant, and working learners often struggle to finish.
 
 \subsubsection{Relationship to Proposed Work}
-GrowWise learn from Crio.Do because Crio.Do good at real project. But GrowWise better because it make personal plan for every student with AI. It change lesson for you and teach many more technology.
+We took inspiration from Crio.Do's project-based approach. Our platform goes further by using AI to generate personal learning plans for every user, adjusting content as learners progress, and covering a broader set of technologies.
 
 
 \subsection{The Odin Project}
 
 \subsubsection{Summary}
-The Odin Project \cite{ref:TheOdinProject} is free open website teach full-stack web coding. It give full plan from beginner to finish. You learn HTML, CSS, JavaScript, Git, Node.js, database and more. It not give easy step-by-step video. It make you build real app alone so you learn how to think and fix problem. Everything free and people in community help each other. Good for self study person who want become job ready web developer.
+The Odin Project \cite{ref:TheOdinProject} is a free, open-source curriculum that teaches full-stack web development. It covers HTML, CSS, JavaScript, Git, Node.js, databases, and more, taking learners from beginner to job-ready. Instead of step-by-step video tutorials, it pushes learners to build their own applications, which forces them to develop problem-solving skills along the way. The whole curriculum is free, and a community supports learners along the way. It works well for self-directed people aiming at a web development career.
 
 \subsubsection{Critical Analysis (Strengths and Weaknesses)}
-Strengths: 100% free, good order lesson, big community help you when stuck.  
-Weaknesses: You study alone so lazy people stop easy. Mostly only text, not many video or interactive. Not feel like real company work.
+Strengths: Fully free, well-ordered curriculum, and a large community for support.
+Weaknesses: Heavy self-direction means less motivated learners often drop off. The material is mostly text, which limits interactivity. The exercises do not feel like industry work.
 
 \subsubsection{Relationship to Proposed Work}
-GrowWise like The Odin Project because both teach by build real thing. But GrowWise better because got AI teacher give personal help, change plan for you, and give feedback fast every time.
+Like The Odin Project, we emphasize learning through building. Our platform adds an AI mentor that gives personalized help, adjusts the path based on progress, and delivers fast feedback as learners work.
 \subsection{ProjectLearn.io}
 
 \subsubsection{Summary}
-ProjectLearn.io \cite{ref:ProjectLearn} is one learning site. It teach programming by make real app. It got many tutorial and resource for different tech like web, mobile, game and machine learning. Not small exercise only. You build full app from beginning to end. You see how all part work together. Tutorial sort by tech and hard level. Easy for you find right project for your skill and like. You build good portfolio while learn. Good for student who want show real work not just talk theory.
+ProjectLearn.io \cite{ref:ProjectLearn} is a platform that teaches programming through complete application projects. It offers tutorials for web, mobile, game development, and machine learning. Instead of small exercises, learners build full applications from scratch and see how the parts fit together. Tutorials are grouped by technology and difficulty level, which makes it easy to pick one that matches a learner's current abilities. The platform works well for students who want tangible portfolio pieces rather than pure theory.
 
 \subsubsection{Critical Analysis (Strengths and Weaknesses)}
-Strengths: Many project in different area. Help you make portfolio. Got easy and hard level for all people.  
-Weaknesses: Some tutorial good some bad because many people make. No personal plan for you. Not much interactive thing. Only focus on project.
+Strengths: A wide range of projects across several domains. It helps learners build a portfolio and offers content at multiple difficulty levels.
+Weaknesses: Tutorial quality varies because content comes from many contributors. There is no personalized plan, and the platform does not offer much interactivity beyond the projects themselves.
 
 \subsubsection{Relationship to Proposed Work}
-GrowWise like ProjectLearn.io because both teach by real project. But GrowWise better. It got better order and personal lesson for every student. Use AI to change for you and give fast feedback.
+GrowWise shares the project-based philosophy but adds better structure and personalization. Our AI adjusts the path for each learner and delivers faster feedback throughout.
 
 \subsection{Educative.io}
 
 \subsubsection{Summary}
-Educative.io \cite{ref:Educative} is learning site for programmer who already know some code. It teach hard thing like system design, interview question, backend and big company topic. Best part is you code inside browser, no need open other program. AI look what you do and give personal plan and fast feedback. Good for medium or good developer who want pass big company interview.
+Educative.io \cite{ref:Educative} targets developers who already know the basics. It covers advanced topics like system design, interview preparation, backend engineering, and topics commonly asked about at larger tech companies. Its strongest feature is the in-browser coding environment, which removes the setup friction. Its AI tracks progress and provides personalized paths along with quick feedback. It works well for mid-level developers preparing for interviews.
 
 \subsubsection{Critical Analysis (Strengths and Weaknesses)}
-Strengths: You can code right in website. Got many course for interview and system design. AI make plan only for you.  
-Weaknesses: Must pay money for good course. Not much full-stack basic thing. Too hard for total beginner.
+Strengths: In-browser coding removes setup hassle. Strong catalog for interview and system design topics. AI builds personalized paths.
+Weaknesses: A subscription is required for most content. Full-stack fundamentals are underrepresented. Absolute beginners may find it too advanced.
 
 \subsubsection{Relationship to Proposed Work}
-GrowWise take good idea from Educative.io like code in browser and AI personal plan. But GrowWise focus more on beginner and junior developer. We give full path from start and use more AI to help new people.
+We borrow the in-browser coding and AI-personalization ideas from Educative.io. Our platform focuses more on beginners and junior developers and offers a full path from the start, with more active AI support along the way.
 
 
 \subsection{Codio}
 
 \subsubsection{Summary}
-Codio \cite{ref:Codio} is cloud learning app. It give real coding place inside browser. Got many course like AI, data, security and full-stack. Best thing is you use same tool like real company: GitHub, CI/CD pipeline. No need install anything on your laptop. Good for school and company training because student learn real work style fast.
+Codio \cite{ref:Codio} is a cloud-based learning platform that offers real coding environments inside the browser. Its courses cover AI, data, security, and full-stack development. The standout feature is that learners use the same tooling as working engineers, including GitHub and CI/CD pipelines. There is no local setup required, which makes it popular with schools and corporate training programs that need to get learners productive quickly.
 
 \subsubsection{Critical Analysis (Strengths and Weaknesses)}
-Strengths: Real tool same as company. No setup problem. Many different course.  
-Weaknesses: Too many thing, beginner can confuse. Must pay for good course. Not big community, hard find friend help.
+Strengths: Industry-standard tooling with no setup. A varied catalog of courses.
+Weaknesses: Beginners can feel overwhelmed by the tooling. A subscription is required for serious use. The community around it is smaller, so peer support is limited.
 
 \subsubsection{Relationship to Proposed Work}
-GrowWise like Codio because both give real coding place. But GrowWise easier for beginner. We use AI to change lesson for every student and give help fast. GrowWise not too hard and make personal plan so new developer learn better.
+Like Codio, we offer a real coding environment. Our platform aims to be more beginner-friendly, with AI-driven personalization, responsive help, and a pace that avoids overwhelming new developers.
 
 
 \subsection{Project-Based Learning GitHub Repository}
 
 \subsubsection{Summary}
-This GitHub repo \cite{ref:GitHubProjectBasedLearning} is big free collection that many people add. Got hundred project tutorial for all kind tech: web, mobile, data science, many language. Everything sort by language so easy find. You build full real app from zero and got nice portfolio. Good for people who like study alone but no plan and no teacher help.
+This GitHub repository \cite{ref:GitHubProjectBasedLearning} is a community-maintained collection of project tutorials across many stacks: web, mobile, data science, and a wide range of languages. The list is organized by language, which makes it easy to browse. Learners build full applications from scratch and end up with portfolio-worthy work. It fits independent learners who do not need a guided curriculum or active mentorship.
 
 \subsubsection{Critical Analysis (Strengths and Weaknesses)}
-Strengths: Free, many project, all language, help make good portfolio.  
-Weaknesses: No clear order, beginner easy lost. Some tutorial good some bad. Only text, no code place inside, no fast help when stuck.
+Strengths: Free, a large catalog of projects across many languages, and useful for portfolio building.
+Weaknesses: No structured learning path, which makes it easy for beginners to get lost. Tutorial quality varies widely. Everything is text-based, with no integrated coding environment or quick help when learners get stuck.
 
 \subsubsection{Relationship to Proposed Work}
-GrowWise like this repo because both teach by build real project. But GrowWise better. We give clear step plan, AI teacher help every time, personal lesson, and project become harder same your skill. You never lost and learn faster.
+We share the project-based approach but provide structure the repository lacks. Our platform offers a clear step-by-step plan, an AI mentor that is always available, personal pacing, and projects that grow in difficulty as learners improve. This keeps learners from getting stuck or losing direction.
 
 
 
@@ -396,117 +395,117 @@ GrowWise like this repo because both teach by build real project. But GrowWise b
 \subsection{Udemy}
 
 \subsubsection{Summary}
-Udemy \cite{ref:Udemy} is very big online course shop. Got more than 200,000 course about code, web, data science and many thing. Any teacher can sell their video course. Mostly video lesson, some file to download and little bit coding task. You buy one course cheap, study any time you want. Good for beginner and pro because price low and many choice. But quality not same, some course very good some not good.
+Udemy \cite{ref:Udemy} is a large online course marketplace with more than 200,000 courses across programming, web development, data science, and many other fields. Any instructor can publish and sell a course. The content is mostly video-based, with some downloadable files and occasional coding exercises. Courses are inexpensive and can be taken at the learner's own pace. It serves beginners and experienced developers alike, though course quality is inconsistent.
 
 \subsubsection{Critical Analysis (Strengths and Weaknesses)}
-Strengths: Super many course, cheap price, can study when you free, easy find course by rating.  
-Weaknesses: Course not change for you, no personal plan. Almost no fast feedback. Many course only watch video, no real project. People start but not finish because no one push.
+Strengths: A huge catalog, low prices, flexible pacing, and ratings that help learners choose.
+Weaknesses: Courses are static and offer no personalization. Feedback is almost non-existent. Many courses are passive video-watching with limited hands-on work. Completion rates are low because nothing pushes learners to finish.
 
 \subsubsection{Relationship to Proposed Work}
-Udemy good because got many topic and cheap. But GrowWise much better. We use AI make plan only for you, give fast feedback, real hard project, and AI teacher help every time. GrowWise teach you how to think and solve problem, not just watch video and forget.
+Udemy's strengths lie in catalog size and affordability. Our platform improves on the experience with AI-generated plans, quick feedback, hands-on projects, and a responsive AI mentor. The focus is on thinking and problem-solving, not watching videos and forgetting them later.
 
 \subsection{LinkedIn Learning}
 
 \subsubsection{Summary}
-LinkedIn Learning \cite{ref:LinkedInLearning} is big video course site for job people. It teach tech, business and creative skill. Best part is it connect with your LinkedIn profile. When you finish course, certificate show on your profile so boss can see you learn new thing. It look at your job and skill then suggest course that help your career. Teacher are real expert from company. Good for worker who want look good to boss and get better job.
+LinkedIn Learning \cite{ref:LinkedInLearning} is a video-based learning platform aimed at working professionals. It covers technology, business, and creative skills. The tight LinkedIn integration is its most useful feature: completed courses appear as certificates on a learner's profile, which hiring managers can see directly. Course recommendations are based on the learner's job title and skills. Instructors are typically industry professionals. It suits workers who want to present new skills to employers and progress in their careers.
 
 \subsubsection{Critical Analysis (Strengths and Weaknesses)}
-Strengths: Good quality video, certificate show on LinkedIn, suggest course match your job, many career path.  
-Weaknesses: Mostly only watch video, not much real coding or project. Personal plan not very smart, no AI change for you. No hard test like real work.
+Strengths: Solid video quality, LinkedIn-integrated certificates, career-aligned recommendations, and clear career tracks.
+Weaknesses: Mostly video-based with little hands-on coding or project work. Personalization is shallow. No rigorous assessments that mirror actual engineering work.
 
 \subsubsection{Relationship to Proposed Work}
-LinkedIn Learning good because got nice course and help career. GrowWise learn from it about career plan. But GrowWise much better for real programmer skill. We give AI teacher all time, real hard project, fast feedback, and change lesson every minute for you. GrowWise make you really can code good, not just watch video and get paper.
+We took the career-alignment idea from LinkedIn Learning. Our platform goes further for programmers specifically: an always-available AI mentor, realistic projects, quick feedback, and a learning path that adjusts continuously. The aim is actual capability, not just a certificate on a profile.
 
 \subsection{Microsoft Learn}
 
 \subsubsection{Summary}
-Microsoft Learn \cite{ref:MicrosoftLearn} is free learning site from Microsoft. It teach Azure, Microsoft 365, Power Platform and other Microsoft thing. You can play with real cloud tool in sandbox, no need buy anything. Got clear path for job like developer or admin. It look what you know and suggest next lesson. Everything free, got lab, interactive tutorial and small test. Good if you want work with Microsoft tech.
+Microsoft Learn \cite{ref:MicrosoftLearn} is a free platform from Microsoft that covers Azure, Microsoft 365, the Power Platform, and other Microsoft products. Learners can work with real cloud tools in a sandbox environment at no cost. It offers clear career tracks, including developer and administrator paths, along with recommendations based on what the learner has completed. Everything is free and includes labs, interactive tutorials, and short assessments. It works well for anyone planning to work with Microsoft technology.
 
 \subsubsection{Critical Analysis (Strengths and Weaknesses)}
-Strengths: Free, real Microsoft tool to play, good order path, change little bit for your level.  
-Weaknesses: Only teach Microsoft thing, not other tech. Mostly small exercise, not big real project. Not check how you think or design system, only check you finish task or not.
+Strengths: Free, real Microsoft tooling in sandboxes, well-structured learning paths, and some personalization.
+Weaknesses: Limited to Microsoft technologies. The exercises are mostly small, not full projects. The assessments measure task completion rather than reasoning or system design.
 
 \subsubsection{Relationship to Proposed Work}
-GrowWise learn from Microsoft Learn about personal suggest and free lab. But GrowWise work with any tech, not only Microsoft. We focus on real problem solving, how you think, system design and big project. AI mentor help you every step and give smart advice fast. GrowWise make you real strong programmer, not just Microsoft worker.
+We drew inspiration from Microsoft Learn's personalized recommendations and free lab access. Our platform is not tied to any single vendor and covers a broader set of technologies. The focus is on problem-solving, reasoning, system design, and substantial project work. The AI mentor supports learners at every step with specific, context-aware guidance.
 
 
 \subsection{Pluralsight}
 
 \subsubsection{Summary}
-Pluralsight \cite{pluralsight2023} is pay every month learning site for IT and coder people. Got thousand video course about code, cloud, security and more. Best thing is Skill IQ test. It check how good you are in one tech fast. Then it make personal plan for you, show what you weak and what course to watch. Company love it because can see worker skill number and train team easy.
+Pluralsight \cite{pluralsight2023} is a subscription-based learning platform aimed at IT professionals and developers. Its library covers thousands of video courses on programming, cloud, security, and related topics. The Skill IQ assessment is its signature feature. It measures proficiency in a technology quickly and then generates a personal plan that highlights weak areas and suggests courses. Many companies use it because it provides quantifiable skill data that simplifies team training.
 
 \subsubsection{Critical Analysis}
-Strengths: Very good test system, make real personal plan. Many course, good for company training. Show you compare with other programmer.  
-Weaknesses: Mostly only video, not much real coding inside site. Not teach how to think design or solve big problem. No fast feedback when you code project.
+Strengths: Strong assessment system, genuinely personal learning paths, a large catalog suited to enterprise training, and benchmarking against peers.
+Weaknesses: Mostly video-based with limited hands-on coding. Little emphasis on reasoning, design, or large-scale problem-solving. No quick feedback on learner-written code.
 
 \subsubsection{Relationship to Proposed Work}
-GrowWise and Pluralsight both start with skill test and give personal path. But GrowWise better because not just video. We give real project, teach how to think and design system, and got AI mentor help you every minute with smart answer. GrowWise make you real problem solver, not just watcher.
+Our platform and Pluralsight both begin with an assessment and personalize from there. We go beyond video by offering real projects, reasoning and design evaluation, and an AI mentor that provides specific feedback as learners work. The goal is to develop problem solvers, not course-watchers.
 
 
 \subsection{CYPHER Learning (with CYPHER Agent)}
 
 \subsubsection{Summary}
-CYPHER Learning \cite{cypher2023} is big company learning system (LMS) for train many worker same time. It got one AI call CYPHER Agent. This AI look your job, your skill and what company want, then make personal lesson for you. It find what you weak and give right course fast. Good for big company because can track all worker and finish training easy.
+CYPHER Learning \cite{cypher2023} is an enterprise learning management system used to train large numbers of employees at once. It includes an AI called CYPHER Agent that personalizes content based on job role, current skills, and the employer's needs. The agent identifies gaps and recommends relevant courses. Large organizations use it because it simplifies training rollouts and makes completion easy to track.
 
 \subsubsection{Critical Analysis}
-Strengths: AI really work good for personal plan. Can teach thousand people different thing same time. Save boss time.  
-Weaknesses: Make for normal worker training, not special for programmer. Not teach how to think code or design system. Content too general, not deep tech.
+Strengths: The AI personalization works well. It scales to train many people on different topics at once. It saves administrative time.
+Weaknesses: It is built for general workforce training, not for developer education specifically. It does not teach software reasoning or system design. The content stays general and does not go deep on technical topics.
 
 \subsubsection{Relationship to Proposed Work}
-CYPHER show that AI teacher inside big system can work nice. GrowWise use same idea with RAG Mentor. But GrowWise only for programmer. Our AI give fast help like senior developer, check your project real hard, and teach you how to think and solve problem proper way.
+CYPHER demonstrates that AI-assisted personalization works at scale inside an LMS. Our platform applies a similar idea through the RAG mentor but focuses entirely on programmers. The AI delivers senior-developer-style feedback, assesses projects in depth, and teaches learners how to think about problems.
 
 
 \subsection{DataCamp}
 
 \subsubsection{Summary}
-DataCamp \cite{datacamp2023} is learning site only for data science, analytics and AI. It give short video then you code right away inside browser, no install anything. You use Python, R, SQL real time. It check your code fast and give feedback same minute. AI look how you do and change next lesson easy or hard for you. Also suggest what course good for your job dream. Good for beginner to pro in data field.
+DataCamp \cite{datacamp2023} is a learning platform specialized in data science, analytics, and AI. It uses short videos followed by in-browser coding exercises, with no local installation required. Learners use Python, R, and SQL in real time. The AI adjusts difficulty based on performance and suggests courses aligned with career goals. It serves everyone from beginners to experienced practitioners in data-related roles.
 
 \subsubsection{Critical Analysis}
-Strengths: Real coding inside site, feedback super fast, AI change plan for you, good for learn data skill quick.  
-Weaknesses: Only data science and Python/R, nothing about web or security. Test only small exercise, not big real project. Not check how you think or design system.
+Strengths: Real in-browser coding, fast feedback, adaptive AI-driven paths, and strong content for data-related work.
+Weaknesses: Specializes in data science and limits itself to Python and R, leaving out web development and security. Exercises are small rather than full projects. It does not assess reasoning or system design.
 
 \subsubsection{Relationship to Proposed Work}
-GrowWise like DataCamp because both give fast feedback and change lesson for you. But GrowWise teach all tech, not only data. We give big real project, test how you think and design like senior developer. GrowWise make you full programmer, not just data person.
+Like DataCamp, our platform offers fast feedback and adapts to learners. Our scope is broader, covering more technologies, and we include larger project work that measures reasoning and design the way senior developers would evaluate code.
 
 \subsection{freeCodeCamp}
 
 \subsubsection{Summary}
-freeCodeCamp \cite{freecodecamp2023} is non-profit website teach coding 100% free. Got full course for web developer, data, machine learning and more. You learn by build real project, some project even help real charity. After finish you get free certificate that company like. Now got AI tutor help you. Many people use because free and good.
+freeCodeCamp \cite{freecodecamp2023} is a nonprofit that offers completely free programming education. The curriculum covers web development, data science, machine learning, and more. Learners build real projects, and some projects contribute to actual nonprofit organizations. Certificates are free on completion and well-regarded by employers. An AI tutor has been added recently. A large community uses the platform because it is free and the content is solid.
 
 \subsubsection{Critical Analysis}
-Strengths: Totally free, give real project, certificate real, now got AI help, big community.  
-Weaknesses: You study alone, beginner easy lost, no personal plan, no one push you finish, sometime stuck long time.
+Strengths: Fully free, real projects, recognized certificates, AI tutor, and a large community.
+Weaknesses: Mostly self-directed, so beginners can lose their way. There is no personalized plan, and nothing actively pushes learners to complete courses. Learners sometimes get stuck for long periods.
 
 \subsubsection{Relationship to Proposed Work}
-GrowWise and freeCodeCamp both love real project and want free education. But GrowWise fix the problem. We give personal plan with AI, AI mentor help every minute, give fast feedback, and push you finish. GrowWise make you never lost and learn faster than freeCodeCamp.
+Like freeCodeCamp, we value real project work and accessible education. Our platform addresses what freeCodeCamp does not: a personalized AI-generated plan, an active AI mentor, fast feedback, and more structure to keep learners moving forward.
 
 
 \subsection{Udacity}
 
 \subsubsection{Summary}
-Udacity \cite{udacity2023} sell expensive course call Nanodegree. It teach AI, cloud, data science and more. Big company like Google, Amazon help make the course so content very new and real. You do many hard project like real job and build good portfolio. Got real human mentor check your work and give feedback. After finish you ready for high pay tech job. But price very high.
+Udacity \cite{udacity2023} offers Nanodegree programs at a premium price. The topics include AI, cloud, data science, and related fields. Content is built in partnership with large tech companies such as Google and Amazon, so it stays current and aligned with industry needs. Projects are substantial and mirror actual engineering work. Human mentors review submissions and provide feedback. Graduates are often well-positioned for senior roles, though the cost is high.
 
 \subsubsection{Critical Analysis}
-Strengths: Course very good and match company want. Many real project. Human mentor help you. Got deadline so you finish.  
-Weaknesses: Super expensive. Mentor is human so sometime slow answer. Plan same for everybody, not change when you good or bad fast.
+Strengths: Strong industry-aligned content, substantial projects, human mentors, and deadline structure that encourages completion.
+Weaknesses: Expensive. Human mentor feedback can be slow. The learning path is largely fixed and does not adjust dynamically to learner performance.
 
 \subsubsection{Relationship to Proposed Work}
-Udacity good because teach real project and make you job ready. GrowWise do same but cheaper and better. We not use slow human mentor. We use fast AI mentor 24/7 with RAG and smart check. AI change plan every day for you. You pay less but learn faster and more personal.
+Like Udacity, we focus on realistic projects and job readiness. Our approach replaces slow human mentor feedback with an always-available AI mentor backed by RAG, and the path adjusts as learners progress. Learners pay less and get a more personalized experience.
 
 \subsection{CodeCombat}
 
 \subsubsection{Summary}
-CodeCombat \cite{codecombat2023} is game that teach you code. You play fantasy game and write real Python or JavaScript to move hero and win fight. Very fun, especially for kid and total beginner. When you stuck, AI give hint fast. Level start easy then become hard. Good way to learn basic coding without boring.
+CodeCombat \cite{codecombat2023} teaches programming through a fantasy game. Learners write actual Python or JavaScript to control characters and solve challenges. It works especially well for children and absolute beginners. When learners get stuck, the AI offers hints. The difficulty increases gradually as the game progresses. It makes learning the basics of code enjoyable rather than tedious.
 
 \subsubsection{Critical Analysis}
-Strengths: Super fun, you want play more. Feedback come same second. AI hint help when stuck. Good for young people or first time coder.  
-Weaknesses: Only game style, not teach real big project or how to design system. Problem always got one correct answer, real job not like that. Not good for medium or pro developer.
+Strengths: Engaging and game-like, which keeps learners coming back. Instant feedback and AI-driven hints keep them unstuck. A strong fit for younger learners or first-time coders.
+Weaknesses: The game format does not transfer directly to real project work or system design. Problems have single correct answers, which is not how engineering work operates. Not well suited to intermediate or advanced developers.
 
 \subsubsection{Relationship to Proposed Work}
-GrowWise like CodeCombat because both use AI to give fast help and keep you not stuck. But GrowWise for real programmer, not kid game. We give big real project, AI check how you think and design like senior engineer. GrowWise make you job ready, not just play game.
+Like CodeCombat, our platform uses AI to provide fast guidance and keep learners from getting stuck. Our focus is on working developers rather than gamified learning for beginners. We assign realistic projects and assess reasoning and design the way a senior engineer would. The goal is job readiness, not gameplay.
 
 \section{Literature Review Summary Table}
-The following table provides a comprehensive summary of the learning platforms analyzed in this literature review, highlighting their key features, relevance to the proposed GrowWise system, and identified limitations.
+The following table summarizes the platforms we reviewed, including their key features, their relevance to GrowWise, and the limitations we identified.
 
 \begin{table}[!htbp]
 \footnotesize
@@ -554,111 +553,110 @@ CodeCombat \cite{codecombat2023} & Gamified learning, interactive coding, AI-dri
 
 
 \section{Conclusion}
-In this chapter, we looked at many learning platforms including Crio.Do, The Odin Project, ProjectLearn.io, Educative.io, Codio, GitHub projects, Udemy, LinkedIn Learning, and Microsoft Learn. These platforms focus on learning by doing projects, hands-on practice, and coding exercises, which are great for building skills and portfolios. But most don't offer personalized learning that changes as you go, AI mentors, instant feedback on how well you understand concepts, or custom learning paths based on your current level and what you want to learn.
+In this chapter we examined a range of learning platforms: Crio.Do, The Odin Project, ProjectLearn.io, Educative.io, Codio, the GitHub project-based learning repository, Udemy, LinkedIn Learning, Microsoft Learn, Pluralsight, CYPHER Learning, DataCamp, freeCodeCamp, Udacity, and CodeCombat. These platforms emphasize learning through projects, hands-on practice, and coding exercises, which build solid skills and portfolios. Most do not offer genuinely adaptive learning that changes with the learner, AI mentors, instant feedback on conceptual understanding, or personal paths tied to current skill and career goals.
 
-This review shows what's missing in current platforms  something GrowWise can fill. GrowWise combines personalized AI help, smart resource searching, and project testing to teach you how to think through problems. What we learned from these platforms helps us design GrowWise to fix their problems while improving your critical thinking, problem-solving, and real-world programming skills.
+This review exposed gaps that GrowWise can fill. Our platform combines AI-driven personalization, intelligent resource retrieval, and project-based assessment to teach learners how to reason through problems. What we learned from these platforms guided the design of GrowWise. We addressed their weaknesses while strengthening learners' critical thinking, problem-solving, and practical programming skills.
 \chapter{Software Requirement Specifications}
-This chapter explains the main features of the project. It also describes what the system should do, how it should work, the use cases, and the possible risks involved.
+This chapter describes the main features of the project. It covers what the system should do, how it should work, the use cases it supports, and the risks we have to manage.
 
 \section{List of Features}
 
-GrowWise app got this main thing:
+The main features of GrowWise:
 
 \begin{itemize}
-    \item Sign up and login safe way. You make profile easy.
-    \item Choose what you want learn like AI, Web, Game or other track.
-    \item First day got skill test. App know what you good and what you weak.
-    \item App make special study plan only for you from your test and what track you pick.
-    \item Every lesson got AI teacher. It explain, give hint, show video or article when you need.
-    \item AI give you real project. After you finish, AI check your code, your thinking way, your design and give feedback like senior developer.
-    \item You see your progress page. It show what you strong, what still bad, and what to do next.
-    \item Admin can add new track, put new file for AI to read, and fix thing when broken.
+    \item Secure sign-up and login with straightforward profile creation.
+    \item Choice of learning track, such as AI, web development, or game development.
+    \item An initial skill assessment on day one that identifies strengths and weaknesses.
+    \item A personalized study plan generated from the assessment results and the chosen track.
+    \item An AI mentor available during every lesson that explains concepts, offers hints, and suggests relevant videos or articles.
+    \item AI-assigned realistic projects, followed by an AI-driven code review that evaluates the code, the reasoning behind it, and the design. The feedback resembles what a senior developer would give.
+    \item A progress dashboard that highlights strengths, remaining gaps, and suggested next steps.
+    \item Admin tools for adding new tracks, expanding the AI's knowledge base, and fixing issues when they arise.
 \end{itemize}
 
 
 \section{Functional Requirements}
 
-This part tell what the app can do for each person.
+This section lists what the system can do for each user role.
 
 \subsection{Functional Requirements of Programmers / Developers}
-Programmer user can do this:
+Programmer users can:
 \begin{itemize}
-    \item Make new account and login.
-    \item Pick what track want learn like AI, Web or Game.
-    \item Do first skill test so app know your level.
-    \item Get personal study plan only for you.
-    \item Open each lesson and talk with AI teacher, see example and video.
-    \item Do small task or mini project in every lesson.
-    \item See progress and get feedback what good what bad.
-    \item Finish one big final project. AI check how you think and design.
+    \item Create an account and log in.
+    \item Choose a track such as AI, web development, or game development.
+    \item Take the initial skill assessment so the system can gauge their level.
+    \item Receive a personal study plan.
+    \item Work through each lesson alongside the AI mentor, with examples and video references available.
+    \item Complete short exercises or mini-projects in every lesson.
+    \item See progress over time along with feedback on strengths and weaknesses.
+    \item Complete a final capstone project that the AI evaluates for both code and reasoning.
 \end{itemize}
 
 \subsection{Functional Requirements of Admin}
-Admin can do this:
+Admin users can:
 \begin{itemize}
-    \item Make new track or edit old track.
-    \item Add new lesson, video, article.
-    \item Put new file inside RAG so AI become smarter.
-    \item Look all user path and fix if something wrong.
+    \item Create new tracks or update existing ones.
+    \item Add lessons, videos, and articles.
+    \item Upload new documents into the RAG knowledge base to improve AI responses.
+    \item Review user learning paths and fix issues when something goes wrong.
 \end{itemize}
 
 \subsection{Functional Requirements of System}
-The app itself can do this automatic:
+The system itself can:
 \begin{itemize}
-    \item Keep all user account safe.
-    \item Make personal plan for every new user.
-    \item Give AI teacher help in every lesson.
-    \item Watch your progress and give feedback fast.
-    \item Give big project and check your code with AI like real boss.
-    \item Keep all file and knowledge inside RAG for AI to use.
+    \item Keep user accounts secure.
+    \item Build a personalized plan for each new user.
+    \item Provide AI mentor support during every lesson.
+    \item Track progress and return feedback quickly.
+    \item Assign major projects and evaluate submitted code with AI that mirrors senior-level review.
+    \item Maintain the knowledge base so the AI has current material to draw from.
 \end{itemize}
 
 \section{Quality Attributes}
 
-GrowWise made to be good and easy. Main good point are:
+GrowWise is designed to be reliable and easy to use. The main qualities we focused on:
 
 \begin{itemize}
-    \item Reliability: AI teacher and checker always give right answer. App not crash easy.
-    \item Usability: Everything look simple and clear. You find lesson, video, feedback very easy.
-    \item Maintainability: Code clean and got good order. Later easy add new thing or fix bug.
-    \item Performance: App fast, even many people use same time still smooth.
-    \item Flexibility: Easy add new track, new file for AI, or new feature later.
+    \item Reliability: The AI mentor and evaluator return accurate responses. The platform does not crash under normal load.
+    \item Usability: Screens are simple and clear. Lessons, videos, and feedback are easy to find.
+    \item Maintainability: The code is organized into clean, modular sections so future features and fixes are straightforward.
+    \item Performance: The platform stays responsive even when several users are active at the same time.
+    \item Flexibility: New tracks, knowledge sources, and features can be added without major changes.
 \end{itemize}
 
 \section{Non-Functional Requirements}
 
-This section describes the non-functional requirements of the GrowWise platform, including performance, reliability, usability, reusability, and extensibility.
+This section covers the non-functional requirements of the GrowWise platform, including performance, reliability, usability, reusability, and extensibility.
 
 \subsection{Performance}
-The system should help users learn efficiently and minimize the overall learning time.
+The system should help users learn efficiently and keep overall learning time short.
 
 \subsection{Reliability}
-The website should be available at all times, so users can access learning paths and the AI mentor without interruption.
+The platform should be available continuously so learners can access their paths and the AI mentor without interruption.
 
 \subsection{Usability}
 The platform should be simple to use. Users should quickly understand how to navigate and follow their learning path.
 
 \subsection{Reusability}
-The code should be modular, so it can be reused for new features or updates.
+The code should be modular so components can be reused for new features or updates.
 
 \subsection{Extensibility}
-New learning paths, AI guidance, or project types should be easy to add in the future.
+New learning paths, AI guidance, and project types should be easy to add over time.
 
 \section{Assumptions}
 
-The following assumptions have been made for the GrowWise platform:
+We based the design on the following assumptions:
 
 \begin{itemize}
     \item Users have a web browser on their computer or device that supports JavaScript.
-    \item An internet connection is required to access the platform.
-    \item Users have basic understanding of using a website, like clicking buttons and navigating pages.
-    \item Users have some basic knowledge of programming or development to follow the learning paths.
-    \item Admins know how to create learning paths and manage AI-guided resources.
+    \item Users have an internet connection stable enough to reach the platform.
+    \item Users know basic web navigation, such as clicking links and filling in forms.
+    \item Users have some familiarity with programming, enough to follow the learning paths.
+    \item Admins know how to create learning paths and manage the AI-driven knowledge base.
 \end{itemize}
 
 \section{Use Cases}
-This section lists the use cases used in our application.
-The tables below provide detailed use cases.
+This section lists the use cases our application supports. The tables below document each one in detail.
 
 % --- Use Case 1: User Login ---
 \subsection{User Login}
@@ -1128,22 +1126,22 @@ The tables below provide detailed use cases.
 \end{minipage}
 
 \section{Hardware and Software Requirements}
-List the hardware and software requirements that will be required to develop and deploy the project.
+This section lists the hardware and software needed to develop and deploy the platform.
 \subsection{Hardware Requirements}
 
-The system requires the following hardware components to ensure smooth operation and accessibility:
+The platform needs the following hardware to run reliably:
 
 \begin{itemize}
-    \item Computer: A standard desktop or laptop computer capable of running a modern web browser.
-    
-    \item Internet Connection: A stable internet connection is required to access the platform and interact with AI-based features.
-    
-    \item AWS Virtual Private Server (VPS): The backend of the application will be hosted on an AWS Virtual Private Server to ensure scalability, performance, and secure data processing.
+    \item Computer: A standard desktop or laptop that can run a modern web browser.
+
+    \item Internet connection: A stable connection is required to reach the platform and use the AI features.
+
+    \item AWS Virtual Private Server (VPS): The backend runs on an AWS VPS to provide scalability, performance, and secure data handling.
 \end{itemize}
 
 \subsection{Software Requirements}
 
-The system requires the following software components:
+The following software components are used:
 
 \begin{itemize}
     \item FastAPI
@@ -1163,7 +1161,7 @@ The system requires the following software components:
 
 \section{Graphical User Interface}
 
-This section presents the graphical interface of the GrowWise platform. Each figure shows how the user interacts with different parts of the system    from logging in, choosing a learning path, and taking assessments to viewing AI-generated evaluations and insights.
+This section shows the graphical interface of GrowWise. Each figure walks through a part of the user experience, from login and path selection to assessments, AI evaluation, and progress analytics.
 
 \begin{figure}[H]
   \centering
@@ -1234,11 +1232,11 @@ This section presents the graphical interface of the GrowWise platform. Each fig
 \section{Database Design (if required; this means if you are using noSQL, you will not provide ER but the other design element and data dictonary should still be there. Explain and elaborate your DB design)}
 \subsection{ER Diagram}
 
-The GrowWise platform utilizes PostgreSQL (Supabase) as its primary relational database management system, enhanced with vector support (pgvector extension) to enable efficient storage and retrieval of embeddings for the RAG-based AI mentor functionality. The database design follows a normalized relational model organized into four main functional modules: User Management \& Authentication, Learning Track System, Progress \& Assessment with AI Services, and Project Workflow \& Evaluation.
+GrowWise runs on PostgreSQL through Supabase as the main relational database. We use the pgvector extension to store and retrieve the embeddings the RAG mentor depends on. The schema follows a normalized relational model organized into four functional modules: user management and authentication, the learning track system, progress and assessment with AI services, and the project workflow and evaluation pipeline.
 
-The Entity-Relationship (ER) diagram presented below illustrates the complete database schema, showing all entities, their attributes, primary and foreign key relationships, and cardinality constraints. The design ensures data integrity through proper normalization, supports scalability for multiple concurrent users, and facilitates complex queries required for personalized learning path generation and AI-driven insights.
+The entity-relationship diagram below shows the complete schema, including all entities, their attributes, primary and foreign keys, and cardinality constraints. The design keeps data consistent through normalization, supports concurrent users, and can handle the complex queries needed for generating personal learning paths and AI-driven insights.
 
-The database architecture has been designed to support three complementary PlantUML views that represent different aspects of the system: View 1 focuses on the user journey and progress tracking, View 2 emphasizes AI services and knowledge management, and View 3 details the project workflow and evaluation processes. These views correspond to the PlantUML diagrams (growwise\_view1\_user\_journey.puml, growwise\_view2\_ai\_services.puml, and growwise\_view3\_projects.puml) that provide visual representations of the database structure from different functional perspectives.
+We structured the schema to support three complementary PlantUML views. View 1 covers the user journey and progress tracking. View 2 focuses on AI services and knowledge management. View 3 covers project workflow and evaluation. The PlantUML files (growwise\_view1\_user\_journey.puml, growwise\_view2\_ai\_services.puml, and growwise\_view3\_projects.puml) give visual representations of the database from each of these perspectives.
 
 \begin{figure}[H]
     \centering
@@ -1247,25 +1245,25 @@ The database architecture has been designed to support three complementary Plant
     \label{fig:er_diagram}
 \end{figure}
 
-Key Database Entities and Relationships:
+Key database entities and relationships:
 
 \begin{itemize}
-    \item User Management: The \textit{User} entity serves as the central anchor, maintaining one-to-many relationships with UserTrackSelection, UserProgress, SkillAssessment, PersonalizedLearningPath, UserInsights, AIMentorInteraction, and UserProjectAssignment entities.
+    \item User management: The \textit{User} entity is the central anchor. It has one-to-many relationships with UserTrackSelection, UserProgress, SkillAssessment, PersonalizedLearningPath, UserInsights, AIMentorInteraction, and UserProjectAssignment.
 
-    \item Learning Content Structure: The \textit{LearningTrack} entity has a composition relationship with \textit{LearningModule} (one-to-many), where each track contains multiple ordered modules. Tracks also relate to UserTrackSelection, SkillAssessment, PersonalizedLearningPath, and ProjectAssignment entities.
+    \item Learning content structure: The \textit{LearningTrack} entity has a composition relationship with \textit{LearningModule} (one-to-many). Each track contains multiple ordered modules. Tracks also relate to UserTrackSelection, SkillAssessment, PersonalizedLearningPath, and ProjectAssignment.
 
-    \item Progress Tracking: \textit{UserProgress} links users to specific learning modules, tracking completion status and progress percentages. \textit{SkillAssessment} connects users and tracks to evaluate proficiency levels, which then inform the generation of personalized learning paths.
+    \item Progress tracking: \textit{UserProgress} connects users to specific modules and records completion status and progress percentages. \textit{SkillAssessment} ties users and tracks together to measure proficiency, which then feeds the generation of personalized learning paths.
 
-    \item AI Services: \textit{RAGKnowledgeBase} stores module-specific content with vector embeddings for semantic search, supporting the \textit{AIMentorInteraction} entity that records all AI-powered Q\&A sessions. \textit{PersonalizedLearningPath} maintains AI-generated learning sequences based on assessment results.
+    \item AI services: \textit{RAGKnowledgeBase} stores module-specific content along with vector embeddings for semantic search. It supports the \textit{AIMentorInteraction} entity, which logs every Q\&A exchange with the AI mentor. \textit{PersonalizedLearningPath} holds the AI-generated module sequences built from assessment results.
 
-    \item Project Management: \textit{ProjectAssignment} defines reusable project templates linked to tracks. \textit{UserProjectAssignment} creates individual instances for users, and \textit{ProjectSubmission} stores user work along with AI and human evaluation data.
+    \item Project management: \textit{ProjectAssignment} defines reusable project templates that tie to tracks. \textit{UserProjectAssignment} creates individual project instances for each user. \textit{ProjectSubmission} stores the submitted work along with both AI and human evaluation data.
 \end{itemize}
 
-The complete ER diagram showing all entities, attributes, primary keys (PK), foreign keys (FK), and relationship cardinalities is visualized in the three PlantUML diagrams referenced above, which together provide a comprehensive view of the GrowWise database architecture.
+The complete ER diagram, showing every entity, attribute, primary key, foreign key, and cardinality, is rendered through the three PlantUML diagrams referenced above. Together they give a full picture of the GrowWise database.
 
 \subsection{Data Dictionary}
 
-The data dictionary provides a comprehensive specification of all database tables, their attributes, data types, constraints, and descriptions. This section documents the complete schema for the GrowWise platform, organized by functional modules to facilitate understanding and maintenance. Each table entry includes the attribute name, its data type, applicable constraints (such as primary keys, foreign keys, uniqueness, and null constraints), and a clear description of its purpose and usage within the system.
+The data dictionary documents every table, its columns, data types, constraints, and purpose. This section captures the full schema for the GrowWise platform, grouped by functional module for easier navigation and maintenance. Each entry lists the column name, its data type, applicable constraints such as primary keys, foreign keys, uniqueness, and null rules, along with a short description of what the column represents.
 
 
 
@@ -1554,31 +1552,29 @@ evaluation\_criteria & JSON & NULL & Rubric and evaluation breakdown \\ \hline
 
 \section{Risk Analysis}
 
-This part tell possible problem in project and how we fix them.
+This section covers potential project risks and how we plan to address them.
 
 \subsection{Technical Risks}
 
-System can got bug, server can crash or AI give wrong answer. Also OpenAI or Gemini API can change or stop work. To fix we will check everything and got backup plan ready.
+The platform can run into bugs, server outages, or incorrect AI responses. The OpenAI and Gemini APIs can also change without much warning or go down entirely. We mitigate this through thorough testing and a fallback plan that can switch providers if needed.
 
 \subsection{Business Risks}
 
-Many other learning app already there so get user hard. API and server money can become too much. Our app different and good so people like it. We watch cost close.
+The online learning space is crowded, so gaining users is difficult. API and infrastructure costs can climb quickly. We believe the platform's personalization and project-based evaluation set it apart, and we monitor costs closely to keep the model sustainable.
 
-Second risk is content quality.
-
-AI can give wrong or old info. Sometime it say extra thing no need. To fix admin will check and change content many time.
+A second risk is content quality. The AI can produce incorrect or outdated information, and sometimes adds unnecessary details. We plan to review and refine the content regularly to keep it accurate.
 
 \subsection{User Risks}
 
-Some user find app hard or get bored. To fix we make design easy and nice. AI helper guide user step by step.
+Some users might find the platform difficult or lose motivation along the way. We address this with a clean, approachable design and an AI mentor that guides learners step by step.
 
 \subsection{Security Risks}
 
-User login and share info. If no good security data can lost. We use safe server, strong password and protect all user thing.
+Users log in and share personal information. Weak security can lead to data loss or exposure. We mitigate this through secure hosting, strong password policies, and protective measures across all user data.
 
 \section*{Conclusion}
 
-In this chapter we clear all big info about GrowWise system. It tell main thing, how user and admin use system and how every part work. Functional and non-functional need write good so GrowWise fast, strong and easy use. Quality like speed, easy use and can grow big talk about for make user happy. Chapter also show assume, hardware software need and possible problem in make. Plus it got use case, screen design and database to show how module connect and work together. All this give full plan for build, test and make better the GrowWise learning app.
+This chapter covered the core specifications for GrowWise. It described what the system does, how users and admins interact with it, and how the components fit together. The functional and non-functional requirements are carefully defined so the platform stays fast, reliable, and easy to use. We discussed quality attributes such as performance, usability, and scalability, which all feed into the user experience. The chapter also covered assumptions, hardware and software needs, and likely development risks. On top of that, the use cases, UI designs, and database structure show how modules fit together and how the system operates end to end. Together, these specifications give us a clear plan for building, testing, and improving the platform.
 
 \chapter{High-Level and Low-Level Design}
 
