@@ -172,10 +172,10 @@ class GeminiProvider(BaseAIProvider):
         self._key_index += 1
         return key
 
-    def _base_url_for_key(self, api_key: str) -> str:
+    def _base_url(self) -> str:
         return (
             f"https://generativelanguage.googleapis.com/v1beta/models/"
-            f"{self.model}:generateContent?key={api_key}"
+            f"{self.model}:generateContent"
         )
 
     def is_configured(self) -> bool:
@@ -244,13 +244,16 @@ class GeminiProvider(BaseAIProvider):
 
         for _ in range(keys_to_try):
             api_key = self._next_key()
-            url = self._base_url_for_key(api_key)
+            url = self._base_url()
 
             try:
                 async with httpx.AsyncClient(timeout=timeout) as client:
                     response = await client.post(
                         url,
-                        headers={"Content-Type": "application/json"},
+                        headers={
+                            "Content-Type": "application/json",
+                            "x-goog-api-key": api_key,
+                        },
                         json=payload,
                     )
                     response.raise_for_status()

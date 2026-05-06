@@ -98,12 +98,6 @@ export const Header: FC<HeaderProps> = ({ user, onLogout, onMenuToggle }) => {
                 Testimonials
               </button>
               <button
-                onClick={() => scrollToSection("pricing")}
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-contrast"
-              >
-                Pricing
-              </button>
-              <button
                 onClick={() => navigate("/blog")}
                 className="text-sm font-medium text-muted-foreground transition-colors hover:text-contrast"
               >
@@ -181,9 +175,6 @@ export const Header: FC<HeaderProps> = ({ user, onLogout, onMenuToggle }) => {
           <div className="page-shell flex flex-col space-y-4">
             <button onClick={() => scrollToSection("testimonials")} className="text-left py-2 font-medium text-muted-foreground">
               Testimonials
-            </button>
-            <button onClick={() => scrollToSection("pricing")} className="text-left py-2 font-medium text-muted-foreground">
-              Pricing
             </button>
             <button onClick={() => navigate("/blog")} className="text-left py-2 font-medium text-muted-foreground">
               Blog

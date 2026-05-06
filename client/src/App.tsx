@@ -28,6 +28,16 @@ import { ResetPassword } from "./pages/ResetPassword";
 import { AccountSecurity } from "./pages/AccountSecurity";
 import { authService } from "./api/services/auth";
 import { GuestOnlyRoute, ProtectedRoute } from "./routes/guards";
+import { AdminRoute } from "./routes/AdminRoute";
+import { AdminLayout } from "./components/admin/AdminLayout";
+import { AdminDashboard } from "./pages/admin/AdminDashboard";
+import { TrackList } from "./pages/admin/TrackList";
+import { TrackForm } from "./pages/admin/TrackForm";
+import { KnowledgeBase } from "./pages/admin/KnowledgeBase";
+import { UserList } from "./pages/admin/UserList";
+import { UserDetail } from "./pages/admin/UserDetail";
+import { Analytics } from "./pages/admin/Analytics";
+import { Settings } from "./pages/admin/Settings";
 import { authStore, useAuthStore } from "./state/authStore";
 import { AssessmentResult, User } from "./types";
 import type { components } from "./api/generated/openapi";
@@ -93,6 +103,29 @@ const RoutedAppContent: FC<RoutedAppContentProps> = ({
     await onLogout();
     navigate("/", { replace: true });
   };
+
+  const isAdminRoute = location.pathname.startsWith("/admin");
+
+  if (isAdminRoute) {
+    return (
+      <Routes>
+        <Route element={<AdminRoute />}>
+          <Route element={<AdminLayout />}>
+            <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/tracks" element={<TrackList />} />
+            <Route path="/admin/tracks/:id" element={<TrackForm />} />
+            <Route path="/admin/knowledge-base" element={<KnowledgeBase />} />
+            <Route path="/admin/users" element={<UserList />} />
+            <Route path="/admin/users/:id" element={<UserDetail />} />
+            <Route path="/admin/analytics" element={<Analytics />} />
+            <Route path="/admin/settings" element={<Settings />} />
+          </Route>
+        </Route>
+        <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
+      </Routes>
+    );
+  }
 
   return (
     <div className="antialiased text-gray-900 dark:text-gray-100 bg-background min-h-screen font-sans">

@@ -92,6 +92,25 @@ const progressLabel = (progress: UserContentProgressResponse | null | undefined)
   return `${progress.completion_percentage}% complete`;
 };
 
+const calculateElapsedMinutes = (startedAt: string | null | undefined): number => {
+  if (!startedAt) {
+    return 0;
+  }
+
+  const started = new Date(startedAt);
+  if (Number.isNaN(started.getTime())) {
+    return 0;
+  }
+
+  const elapsedMs = Date.now() - started.getTime();
+  if (elapsedMs <= 0) {
+    return 0;
+  }
+
+  // Round to nearest minute so brief-but-real engagement is still reflected.
+  return Math.max(0, Math.round(elapsedMs / 60000));
+};
+
 export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -351,16 +370,31 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
     currentProgress: UserContentProgressResponse,
   ) => {
     await withContentAction(`update-${contentId}`, async () => {
+      const elapsedMinutes = calculateElapsedMinutes(currentProgress.started_at);
+      const trackedMinutes = Math.max(currentProgress.time_spent_minutes ?? 0, elapsedMinutes);
+
       await contentService.updateContentProgress(contentId, {
         completion_percentage: Math.min(95, currentProgress.completion_percentage + 25),
-        time_spent_minutes: currentProgress.time_spent_minutes + 10,
+        time_spent_minutes: trackedMinutes,
         is_completed: false,
       });
     });
   };
 
-  const handleCompleteContent = async (contentId: number) => {
+  const handleCompleteContent = async (
+    contentId: number,
+    currentProgress: UserContentProgressResponse,
+  ) => {
     await withContentAction(`complete-${contentId}`, async () => {
+      const elapsedMinutes = calculateElapsedMinutes(currentProgress.started_at);
+      const trackedMinutes = Math.max(currentProgress.time_spent_minutes ?? 0, elapsedMinutes);
+
+      if (trackedMinutes !== (currentProgress.time_spent_minutes ?? 0)) {
+        await contentService.updateContentProgress(contentId, {
+          time_spent_minutes: trackedMinutes,
+          is_completed: false,
+        });
+      }
       await contentService.completeContent(contentId);
     });
   };
@@ -784,7 +818,7 @@ export const Course: FC<CourseProps> = ({ onStartAssessment }) => {
                               <Button size="sm" variant="outline" className="h-6 text-[10px] px-2" onClick={() => void handleUpdateProgress(content.content_id, contentProgress)} isLoading={activeContentActionKey === updateKey}>
                                 +25%
                               </Button>
-                              <Button size="sm" variant="secondary" className="h-6 text-[10px] px-2" onClick={() => void handleCompleteContent(content.content_id)} isLoading={activeContentActionKey === completeKey}>
+                              <Button size="sm" variant="secondary" className="h-6 text-[10px] px-2" onClick={() => void handleCompleteContent(content.content_id, contentProgress)} isLoading={activeContentActionKey === completeKey}>
                                 Complete
                               </Button>
                             </>

@@ -404,3 +404,42 @@ def delete_track(
     db.commit()
     return None
 
+
+@router.post(
+    "/{track_id}/regenerate-dimensions",
+    status_code=status.HTTP_202_ACCEPTED,
+)
+async def regenerate_track_dimensions(
+    track_id: int,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    admin_user: models.User = Depends(get_admin_user),
+):
+    """
+    Delete all existing dimensions for a track and regenerate them via AI
+    (Admin only).  Returns immediately; generation runs in the background.
+    """
+    track = db.query(models.Track).filter(models.Track.track_id == track_id).first()
+    if not track:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Track not found",
+        )
+
+    # Remove existing dimensions so we start fresh
+    db.query(models.AssessmentDimension).filter(
+        models.AssessmentDimension.track_id == track_id
+    ).delete()
+    db.commit()
+
+    background_tasks.add_task(
+        _generate_and_store_dimensions,
+        track.track_id,
+        track.track_name,
+    )
+
+    return {
+        "message": f"Dimension regeneration started for track '{track.track_name}'.",
+        "track_id": track_id,
+    }
+

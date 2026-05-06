@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from app.database import Base, SessionLocal, engine
-from app.routers import auth, assessment, chat, content, evaluation, learning, progress, tracks
+from app.routers import admin, auth, assessment, chat, content, evaluation, learning, progress, tracks
 from app import models
 from app.utils import get_password_hash
 
@@ -19,6 +19,9 @@ load_dotenv()
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s  %(message)s", datefmt="%H:%M:%S")
 log = logging.getLogger("growwise")
+# Avoid logging full outbound HTTP URLs (which may contain sensitive query params).
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
 
 
 # ---------------------------------------------------------------------------
@@ -129,6 +132,7 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
+app.include_router(admin.router)
 app.include_router(tracks.router)
 app.include_router(assessment.router)
 app.include_router(learning.router)

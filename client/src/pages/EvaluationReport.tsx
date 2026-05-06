@@ -111,13 +111,15 @@ export const EvaluationReport: FC = () => {
     );
   }
 
+  const validatorPath = session.path_id ? `/validator?pathId=${session.path_id}` : "/validator";
+
   return (
     <WorkspaceFrame
       label={<HeroBadge text="Report" />}
       title="Evaluation report"
       description={`Session #${session.evaluation_id} · Path #${session.path_id}`}
       actions={
-        <Button variant="ghost" size="sm" onClick={() => navigate("/validator")} className="gap-2">
+        <Button variant="ghost" size="sm" onClick={() => navigate(validatorPath)} className="gap-2">
           <ArrowLeft className="h-4 w-4" />
           Back to Validator
         </Button>
@@ -186,7 +188,7 @@ export const EvaluationReport: FC = () => {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => navigate("/validator")}>
+          <Button variant="outline" onClick={() => navigate(validatorPath)}>
             Back to Validator
           </Button>
           {session.path_id && (

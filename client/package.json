@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "start": "vite preview",
     "preview": "vite preview",
     "generate:api-types": "openapi-typescript ../openapi.json -o ./src/api/generated/openapi.ts",
     "test": "vitest run"

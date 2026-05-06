@@ -855,7 +855,7 @@ export const ImprovementAnalysis: FC = () => {
         <Button variant="outline" onClick={() => navigate("/course")}>
           Back to Learning Path
         </Button>
-        <Button onClick={() => navigate("/validator")}>
+        <Button onClick={() => navigate(`/validator?pathId=${data.pathId}`)}>
           Start New Evaluation
         </Button>
       </div>
